@@ -86,7 +86,13 @@ export async function probeConnection(url: string, auth?: { username: string; pa
   if (parsed.valid) {
     const base = `${parsed.scheme}://${parsed.host}:${parsed.port}`
     ;[health, root, internet] = await Promise.all([
-      timedFetch("health", `${base}/global/health`, { headers }),
+      // V2 moved the health endpoint to /api/info; fall back to the V1 path
+      // so diagnostics still pass against older servers.
+      (async () => {
+        const attempt = await timedFetch("health", `${base}/api/info`, { headers })
+        if (attempt.ok || attempt.status !== 404) return attempt
+        return timedFetch("health", `${base}/global/health`, { headers })
+      })(),
       timedFetch("server-root", `${base}/`, { headers }, { requireOk: false }),
       timedFetch("internet", INTERNET_CHECK_URL),
     ])

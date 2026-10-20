@@ -14,7 +14,10 @@ export const TOOL_STATUS: Record<string, string> = {
   write: "Making edits...",
   apply_patch: "Making edits...",
   bash: "Running command...",
+  // V2 renamed bash → shell and task → subagent for tool calls.
+  shell: "Running command...",
   task: "Delegating...",
+  subagent: "Delegating...",
   todowrite: "Planning...",
   todoread: "Planning...",
 }

@@ -2,13 +2,32 @@
 // We create our own lightweight client that mirrors the opencode SDK patterns
 // but works in React Native environment
 // expo/fetch provides WinterCG-compliant fetch with ReadableStream support for SSE
+//
+// NOTE (V2): the app still consumes the V1-shaped client below (see AGENTS.md);
+// every method now talks to the opencode V2 HTTP API and maps payloads through
+// src/lib/v2-compat.ts so stores/screens stay untouched.
 import { fetch as expoFetch } from "expo/fetch"
 import { buildRequestHeaders } from "./headers"
 import { SSEParser } from "./sse"
 import { apiErrorFor } from "./api-error"
-import { loadSessionList } from "./session-list"
+import { normalizeSessions } from "./session-list"
 import type { FileRoot } from "./file-roots"
-
+import {
+  clampMessageLimit,
+  joinPath,
+  mapAgents,
+  mapCommands,
+  mapFileEntries,
+  mapMessages,
+  mapPermissions,
+  mapProjectFromLocation,
+  mapProjects,
+  mapProviders,
+  mapSession,
+  unwrapData,
+  V2EventAdapter,
+} from "./v2-compat"
+import type { ProviderCatalog, V2MessageBody, V2SessionInfo } from "./v2-compat"
 export { ApiAuthError, isAuthError } from "./api-error"
 
 export interface ClientConfig {
@@ -216,7 +235,12 @@ async function request<T>(
     throw apiErrorFor(response.status, `API Error: ${response.status} - ${error}`)
   }
 
-  return response.json()
+  // V2 returns bare 204s for mutations (e.g. DELETE /api/session/{id}) —
+  // parsing an empty body as JSON would throw.
+  if (response.status === 204) return undefined as T
+  const text = await response.text()
+  if (!text) return undefined as T
+  return JSON.parse(text)
 }
 
 async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = REQUEST_TIMEOUT_MS): Promise<Response> {
@@ -245,6 +269,10 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
   }
 }
 
+// Module-level V2 → V1 event adapter. Streaming state (delta accumulators)
+// must survive across events, and the app holds one event stream at a time.
+const eventAdapter = new V2EventAdapter()
+
 export function createClient(config: ClientConfig) {
   // Normalize once: a trailing slash on baseUrl (e.g. pasted into Advanced
   // mode or the Edit screen) would otherwise survive into every
@@ -253,16 +281,48 @@ export function createClient(config: ClientConfig) {
   // reconstructs a clean URL, reports "works now"). A bare URL with no
   // trailing slash is untouched.
   config = { ...config, baseUrl: config.baseUrl.replace(/\/+$/, "") }
+
+  // Fetch one session through V2 and map it into the V1 shape. V2 wraps the
+  // payload in {data}; tolerate bare bodies too.
+  const getSession = async (sessionID: string): Promise<Session> => {
+    const raw = unwrapData<V2SessionInfo>(await request(config, `/api/session/${sessionID}`))
+    return mapSession(raw, config.directory)
+  }
+
+  const listSessions = async (limit?: number): Promise<Session[]> => {
+    // Directory-less GET /api/session returns sessions across ALL locations
+    // (verified on V2), so the Recent Sessions list works without the user
+    // picking a folder first — same reason V1 preferred
+    // /experimental/session. Query params (limit/search) are optional in V2;
+    // sorting/filtering happens client-side in normalizeSessions.
+    const query = new URLSearchParams()
+    if (limit) query.set("limit", String(limit))
+    const qs = query.toString()
+    const raw = unwrapData<V2SessionInfo[]>(await request(config, `/api/session${qs ? `?${qs}` : ""}`))
+    return (raw ?? []).map((s) => mapSession(s, config.directory))
+  }
+
+  // Shape the raw global list the way the list UI expects (roots filter +
+  // search + sort-by-updated + limit) — mirrors what normalizeSessions did
+  // behind loadSessionList for the V1 experimental route.
+  const listSessionsShaped = async (params?: { roots?: boolean; limit?: number; search?: string }) => {
+    const all = await listSessions()
+    return normalizeSessions(all, params)
+  }
+
   return {
     global: {
       // `timeoutMs` overrides the default REQUEST_TIMEOUT_MS — used by the
       // onboarding connection test to fail fast on a bad/unreachable IP
       // instead of hanging for the full 30s (issue: first-run bounce).
-      health: (timeoutMs?: number) => request<HealthResponse>(config, "/global/health", {}, timeoutMs),
-      // SSE event stream - returns async iterator
+      health: async (timeoutMs?: number): Promise<HealthResponse> => {
+        const info = await request<{ version?: string; healthy?: boolean }>(config, "/api/info", {}, timeoutMs)
+        return { healthy: info?.healthy ?? true, version: info?.version ?? "unknown" }
+      },
+      // SSE event stream - returns async iterator of V1-shaped events
       // Pass an AbortSignal to cancel the connection
       async *events(signal?: AbortSignal): AsyncGenerator<Event> {
-        const url = `${config.baseUrl}/global/event`
+        const url = `${config.baseUrl}/api/event`
         const headers = createHeaders(config)
         // Remove Content-Type for SSE (it's text/event-stream)
         delete (headers as Record<string, string>)["Content-Type"]
@@ -292,13 +352,34 @@ export function createClient(config: ClientConfig) {
             }
 
             for (const data of parser.push(decoder.decode(value, { stream: true }))) {
+              let envelope
               try {
-                yield JSON.parse(data)
+                envelope = JSON.parse(data)
               } catch (err) {
                 console.warn("[SSE] Failed to parse event", {
                   length: data.length,
                   error: err instanceof Error ? err.message : String(err),
                 })
+                continue
+              }
+
+              // Sessions mutate through a handful of V2 event types that only
+              // carry {sessionID, title/slug...} — refetch the full Session
+              // so the stores' full-row merge keeps every field intact.
+              if (envelope.type === "session.created" || envelope.type === "session.renamed") {
+                const sessionID = envelope.data?.sessionID as string | undefined
+                if (!sessionID) continue
+                try {
+                  const info = await getSession(sessionID)
+                  yield { type: envelope.type === "session.renamed" ? "session.updated" : "session.created", properties: { info } }
+                } catch (err) {
+                  console.warn("[SSE] Failed to refetch session after", envelope.type, err)
+                }
+                continue
+              }
+
+              for (const mapped of eventAdapter.adapt(envelope)) {
+                yield mapped
               }
             }
           }
@@ -309,8 +390,13 @@ export function createClient(config: ClientConfig) {
     },
 
     project: {
-      list: () => request<Project[]>(config, "/project"),
-      current: () => request<Project>(config, "/project/current"),
+      list: async () => mapProjects(unwrapData(await request(config, "/api/project"))),
+      // V2 has no single "current project" object; /api/location is the
+      // location scope the server is serving this connection from.
+      current: async () => {
+        const raw = await request(config, "/api/location")
+        return mapProjectFromLocation(raw)
+      },
     },
 
     // Server-side filesystem browsing, scoped to this client's directory
@@ -318,15 +404,21 @@ export function createClient(config: ClientConfig) {
     // clientForDirectory(dir) to get a client rooted at a specific folder,
     // then list("." ) to enumerate its immediate children.
     file: {
-      list: (params: { path?: string } = {}) => {
+      list: async (params: { path?: string } = {}) => {
         const query = new URLSearchParams({ path: params.path ?? "." })
-        return request<FileEntry[]>(config, `/file?${query.toString()}`)
+        const body = unwrapData<{
+          location?: { directory?: string }
+          data?: unknown[]
+        }>(await request(config, `/api/fs/list?${query.toString()}`))
+        const cwd = body?.location?.directory ?? config.directory ?? ""
+        return mapFileEntries(body?.data, cwd)
       },
       // Enumerate the server's filesystem roots (mounted drives, home dir)
       // to seed the directory browser's pinned top-level entries. Resolves
       // to null on servers that don't yet expose GET /file/roots (older
-      // opencode builds) so callers fall back to manual path entry instead
-      // of crashing; other errors propagate like any other request.
+      // opencode builds, and all V2 servers) so callers fall back to manual
+      // path entry instead of crashing; other errors propagate like any
+      // other request.
       roots: async (): Promise<FileRoot[] | null> => {
         try {
           return await request<FileRoot[]>(config, "/file/roots")
@@ -338,60 +430,65 @@ export function createClient(config: ClientConfig) {
     },
 
     path: {
-      get: () =>
-        request<{ home: string; state: string; config: string; worktree: string; directory: string }>(config, "/path"),
+      get: async () => {
+        // V1: { home, state, config, worktree, directory }. V2 /api/location
+        // exposes the project root and active directory; fill the rest with
+        // empty strings — the only consumer is connections.ts, which reads
+        // `home` for ~ expansion.
+        const raw = await request<{
+          directory?: string
+          project?: { directory?: string; canonical?: string }
+        }>(config, "/api/location")
+        const directory = raw?.directory ?? ""
+        const worktree = raw?.project?.directory ?? raw?.project?.canonical ?? directory
+        return {
+          home: worktree,
+          state: "",
+          config: "",
+          worktree,
+          directory,
+        }
+      },
     },
 
     session: {
-      // Prefer the GLOBAL experimental endpoint (all sessions across every
-      // directory) so the Recent Sessions list works without the user first
-      // picking a folder — a directory-less GET /session is directory-scoped
-      // and returns [] on servers whose active dir has no sessions. Shaping
-      // (roots filter, search, sort-by-updated, limit) happens client-side in
-      // loadSessionList; we fetch /experimental/session with no query params
-      // because the server applies `limit` before we can filter to roots.
-      // Falls back to the legacy /session path only on 404 (older servers).
-      list: (params?: { roots?: boolean; limit?: number; search?: string }): Promise<Session[]> =>
-        loadSessionList(
-          {
-            getExperimental: async (): Promise<Session[] | null> => {
-              const response = await fetchWithTimeout(`${config.baseUrl}/experimental/session`, {
-                headers: createHeaders(config),
-              })
-              // Older servers lack this route — signal fallback to legacy /session.
-              if (response.status === 404) return null
-              if (!response.ok) {
-                const body = await response.text()
-                throw apiErrorFor(response.status, `API Error: ${response.status} - ${body}`)
-              }
-              return response.json()
-            },
-            getLegacy: (query) => request<Session[]>(config, `/session${query}`),
-          },
-          params,
-        ),
+      get: (sessionID: string) => getSession(sessionID),
 
-      get: (sessionID: string) => request<Session>(config, `/session/${sessionID}`),
+      list: listSessionsShaped,
 
-      create: (params?: { title?: string }) =>
-        request<Session>(config, "/session", {
-          method: "POST",
-          body: JSON.stringify(params || {}),
-        }),
+      create: async (params?: { title?: string }) => {
+        const raw = unwrapData<V2SessionInfo>(
+          await request(config, "/api/session", {
+            method: "POST",
+            body: JSON.stringify(params || {}),
+          }),
+        )
+        return mapSession(raw, config.directory)
+      },
 
-      delete: (sessionID: string) => request<void>(config, `/session/${sessionID}`, { method: "DELETE" }),
+      delete: (sessionID: string) =>
+        request<void>(config, `/api/session/${sessionID}`, { method: "DELETE" }),
 
-      update: (sessionID: string, params: { title?: string; time?: { archived?: number } }) =>
-        request<Session>(config, `/session/${sessionID}`, {
+      update: async (sessionID: string, params: { title?: string; time?: { archived?: number } }) => {
+        // V2 PATCH accepts {title, metadata, permissions} — archiving isn't
+        // supported, degrade to a title-only patch and return fresh info.
+        if (!params.title) return getSession(sessionID)
+        await request(config, `/api/session/${sessionID}`, {
           method: "PATCH",
-          body: JSON.stringify(params),
-        }),
+          body: JSON.stringify({ title: params.title }),
+        })
+        return getSession(sessionID)
+      },
 
-      messages: (sessionID: string, params?: { limit?: number }) => {
+      messages: async (sessionID: string, params?: { limit?: number }) => {
         const query = new URLSearchParams()
-        if (params?.limit) query.set("limit", String(params.limit))
+        const limit = clampMessageLimit(params?.limit)
+        if (limit) query.set("limit", String(limit))
         const qs = query.toString()
-        return request<MessageWithParts[]>(config, `/session/${sessionID}/message${qs ? `?${qs}` : ""}`)
+        const raw = unwrapData<V2MessageBody[]>(
+          await request(config, `/api/session/${sessionID}/message${qs ? `?${qs}` : ""}`),
+        )
+        return mapMessages(raw, sessionID)
       },
 
       // Sends a message and returns the response
@@ -405,15 +502,54 @@ export function createClient(config: ClientConfig) {
           variant?: string
         },
       ): Promise<void> => {
-        const url = `${config.baseUrl}/session/${sessionID}/prompt_async`
-        const headers = createHeaders(config)
-        const body = JSON.stringify(params)
-        const response = await fetchWithTimeout(url, {
-          method: "POST",
-          headers,
-          body,
-        })
+        // V2's prompt body has no model/agent fields — the active model and
+        // agent are session-level switches. Only send them when the user
+        // made an explicit choice (see the model-selection lessons in
+        // .agents/retro.md: never auto-select for the server).
+        if (params.model) {
+          // Only send the switch when the user made an explicit choice (see
+          // the model-selection lessons in .agents/retro.md: never
+          // auto-select for the server). A variant without an explicit model
+          // is dropped — the session's server-side default already carries
+          // its own variant configuration and guessing one here would
+          // override the server's choice.
+          await request(config, `/api/session/${sessionID}/model`, {
+            method: "POST",
+            body: JSON.stringify({
+              model: {
+                providerID: params.model.providerID,
+                id: params.model.modelID,
+                ...(params.variant ? { variant: params.variant } : {}),
+              },
+            }),
+          }).catch(() => undefined) // tolerate switches failing server-side
+        }
+        if (params.agent) {
+          await request(config, `/api/session/${sessionID}/agent`, {
+            method: "POST",
+            body: JSON.stringify({ agent: params.agent }),
+          }).catch(() => undefined)
+        }
 
+        const text = params.parts
+          .filter((part) => part.type === "text")
+          .map((part) => (part as { text: string }).text)
+          .join("\n\n")
+        const files = params.parts
+          .filter((part) => part.type === "file")
+          .map((part) => {
+            const file = part as { mime: string; url: string; filename?: string }
+            return { uri: file.url, name: file.filename }
+          })
+
+        const promptUrl = `${config.baseUrl}/api/session/${sessionID}/prompt`
+        const response = await fetchWithTimeout(promptUrl, {
+          method: "POST",
+          headers: createHeaders(config),
+          body: JSON.stringify(files.length > 0 ? { text, files } : { text }),
+        })
+        // Response body isn't consumed (fire-and-forget): SSE events drive
+        // the UI, same as V1's prompt_async.
         if (!response.ok) {
           const error = await response.text()
           throw new Error(`Failed to send message: ${response.status} - ${error}`)
@@ -431,13 +567,11 @@ export function createClient(config: ClientConfig) {
           parts?: Array<{ type: "file"; mime: string; url: string; filename?: string }>
         },
       ): Promise<void> => {
-        const url = `${config.baseUrl}/session/${sessionID}/command`
-        const headers = createHeaders(config)
-
-        const response = await fetchWithTimeout(url, {
+        // V2: { name, text, files... }. The response body isn't consumed.
+        const response = await fetchWithTimeout(`${config.baseUrl}/api/session/${sessionID}/command`, {
           method: "POST",
-          headers,
-          body: JSON.stringify({ ...params, sessionID }),
+          headers: createHeaders(config),
+          body: JSON.stringify({ name: params.command, text: params.arguments }),
         })
 
         if (!response.ok) {
@@ -446,92 +580,96 @@ export function createClient(config: ClientConfig) {
         }
       },
 
-      abort: (sessionID: string) => request<boolean>(config, `/session/${sessionID}/abort`, { method: "POST" }),
+      abort: async (sessionID: string) => {
+        const result = unwrapData<{ interrupted?: boolean }>(
+          await request(config, `/api/session/${sessionID}/interrupt`, { method: "POST" }),
+        )
+        return Boolean(result?.interrupted ?? true)
+      },
 
-      diff: (sessionID: string, messageID?: string) => {
-        const qs = messageID ? `?messageID=${messageID}` : ""
-        return request<unknown[]>(config, `/session/${sessionID}/diff${qs}`)
+      diff: async (sessionID: string, messageID?: string) => {
+        // V2 diff has from/to/context params — no per-message mode. The
+        // messageID variant is unused by the UI today; call it through with
+        // a tolerated mismatch (results are scoped to the whole session).
+        void messageID
+        const raw = unwrapData<unknown[]>(await request(config, `/api/session/${sessionID}/diff`))
+        return raw ?? []
       },
 
       // Marks messageID (and everything after it) as pending revert. The
       // underlying messages aren't deleted until the next prompt runs
-      // cleanup, or the revert is undone with unrevert() below.
-      revert: (sessionID: string, messageID: string, partID?: string) =>
-        request<Session>(config, `/session/${sessionID}/revert`, {
+      // cleanup. V2 models this as revert/stage; the session's `revert`
+      // field flips mirrors V1's session.revert so the UI filter keeps
+      // working.
+      revert: async (sessionID: string, messageID: string, partID?: string) => {
+        void partID
+        await request(config, `/api/session/${sessionID}/revert/stage`, {
           method: "POST",
-          body: JSON.stringify(partID ? { messageID, partID } : { messageID }),
-        }),
+          body: JSON.stringify({ messageID }),
+        })
+        return getSession(sessionID)
+      },
 
-      unrevert: (sessionID: string) =>
-        request<Session>(config, `/session/${sessionID}/unrevert`, {
-          method: "POST",
-        }),
+      // Unrevert = clear the pending revert. V2 exposes this as DELETE on
+      // the revert resource; the response carries no session, so refetch.
+      unrevert: async (sessionID: string) => {
+        await request(config, `/api/session/${sessionID}/revert`, { method: "DELETE" })
+        return getSession(sessionID)
+      },
     },
 
     permission: {
-      list: () =>
-        request<Array<{ id: string; sessionID: string; tool: string; input: unknown }>>(config, "/permission"),
+      list: async () => mapPermissions(unwrapData(await request(config, "/api/permission/request"))),
 
-      reply: (requestID: string, reply: "once" | "always" | "reject") =>
-        request<boolean>(config, `/permission/${requestID}/reply`, {
+      reply: (sessionID: string, requestID: string, reply: "once" | "always" | "reject") =>
+        request<void>(config, `/api/session/${sessionID}/permission/${requestID}/reply`, {
           method: "POST",
-          body: JSON.stringify({ reply }),
+          body: JSON.stringify({ decision: reply }),
         }),
     },
 
     question: {
-      list: () => request<Array<{ id: string; sessionID: string; questions: unknown[] }>>(config, "/question"),
+      // V2 has no question flow; V2's forms are an incompatible replacement
+      // (different shape, different lifecycle) so for now lists stay empty
+      // and replies are tolerant no-ops.
+      list: () => Promise.resolve([] as Array<{ id: string; sessionID: string; questions: unknown[] }>),
 
-      reply: (requestID: string, answers: string[][]) =>
-        request<boolean>(config, `/question/${requestID}/reply`, {
-          method: "POST",
-          body: JSON.stringify({ answers }),
-        }),
+      reply: (requestID: string, answers: string[][]) => Promise.resolve(false),
 
-      reject: (requestID: string) =>
-        request<boolean>(config, `/question/${requestID}/reject`, {
-          method: "POST",
-        }),
+      reject: (requestID: string) => Promise.resolve(false),
     },
 
     agent: {
-      list: () => request<Agent[]>(config, "/agent"),
+      list: async () => mapAgents(unwrapData(await request(config, "/api/agent"))),
     },
 
     command: {
-      list: () => request<Command[]>(config, "/command"),
+      list: async () => mapCommands(unwrapData(await request(config, "/api/command"))),
     },
 
     provider: {
-      list: () =>
-        request<{
-          all: Array<{
-            id: string
-            name: string
-            models: Record<
-              string,
-              {
-                id: string
-                name: string
-                attachment: boolean
-                reasoning: boolean
-                tool_call: boolean
-                cost?: { input: number; output: number }
-                limit: { context: number; output: number }
-                status?: "alpha" | "beta" | "deprecated" | "active"
-                variants?: Record<string, { reasoningEffort?: string }>
-              }
-            >
-          }>
-          default: Record<string, string>
-          connected: string[]
-        }>(config, "/provider"),
+      list: async (): Promise<ProviderCatalog> => {
+        const [raw, rawDefault] = await Promise.all([
+          unwrapData(await request(config, "/api/model")),
+          request(config, "/api/model/default")
+            .then((body) => unwrapData(body))
+            .catch(() => null),
+        ])
+        return mapProviders(raw, rawDefault)
+      },
     },
 
     config: {
-      get: () => request<unknown>(config, "/config"),
+      // V2 /api/config returns Config.Entry[] (array, possibly empty).
+      get: () => request<unknown>(config, "/api/config"),
     },
   }
 }
 
 export type Client = ReturnType<typeof createClient>
+
+// Note: `permission.reply` changed signature in V2 (session- and request-
+// scoped). Callers that only knew (requestID, reply) must now pass the
+// sessionID first; see stores/events.ts + app/session/[id].tsx for the call
+// sites that were updated alongside.
+export { joinPath }

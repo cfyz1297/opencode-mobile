@@ -495,7 +495,7 @@ export default function SessionScreen() {
       },
     }))
     try {
-      await sessionClient.permission.reply(requestID, reply)
+      await sessionClient.permission.reply(sessionID, requestID, reply)
     } catch (err) {
       console.error("Permission reply failed:", err)
       // Restore the prompt so the user can retry
