@@ -32,11 +32,11 @@ test("quickConnectUrl: whitespace-only input yields empty string", () => {
 })
 
 // BUG-006 (https://github.com/…/BUGS.md): a pasted https:// URL (a public
-// tunnel with no port in it) is handed the http-era default ":4096", which no
-// tunnel serves — Quick Connect against any https URL always fails to connect.
-// Expected: a scheme that came from the pasted value must not fall back to the
-// :4096 default; only a bare host typed without a scheme should.
-test.skip("BUG-006: pasted https URL without a port must not get :4096 appended", () => {
-  assert.equal(quickConnectUrl("https://demo.example.com", ""), "https://demo.example.com")
-  assert.equal(quickConnectUrl("http://demo.example.com", ""), "http://demo.example.com")
+// tunnel with no port in it) used to get the http-era default ":4096", which
+// no tunnel serves — Quick Connect against any https URL always failed.
+// Fixed: default port is now scheme-aware (https -> 443, http -> 4096).
+test("BUG-006: pasted https URL without a port gets :443, not :4096", () => {
+  assert.equal(quickConnectUrl("https://demo.example.com", ""), "https://demo.example.com:443")
+  assert.equal(quickConnectUrl("http://demo.example.com", ""), "http://demo.example.com:4096")
+  assert.equal(quickConnectUrl("https://demo.example.com", "8443"), "https://demo.example.com:8443")
 })

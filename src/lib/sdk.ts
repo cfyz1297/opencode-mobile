@@ -424,10 +424,14 @@ export function createClient(config: ClientConfig) {
     file: {
       list: async (params: { path?: string } = {}) => {
         const query = new URLSearchParams({ path: params.path ?? "." })
-        const body = unwrapData<{
+        // GET /api/fs/list returns { location, data: Entry[] } directly — it is
+        // NOT wrapped in { data: ... }, so unwrapData() would wrongly return
+        // just the `data` array and drop `location` (BUG-001). Read the raw
+        // envelope instead.
+        const body = await request<{
           location?: { directory?: string }
           data?: unknown[]
-        }>(await request(config, `/api/fs/list?${query.toString()}`))
+        }>(config, `/api/fs/list?${query.toString()}`)
         const cwd = body?.location?.directory ?? config.directory ?? ""
         return mapFileEntries(body?.data, cwd)
       },
@@ -599,11 +603,17 @@ export function createClient(config: ClientConfig) {
         },
       ): Promise<void> => {
         // V2: { name, text, files... }. The response body isn't consumed.
-        const response = await fetchWithTimeout(`${config.baseUrl}/api/session/${sessionID}/command`, {
-          method: "POST",
-          headers: createHeaders(config),
-          body: JSON.stringify({ name: params.command, text: params.arguments }),
-        })
+        // No client-side timer: long-running server commands (e.g. /compact)
+        // must not be killed by the default 30s REQUEST_TIMEOUT_MS (BUG-002).
+        const response = await fetchWithTimeout(
+          `${config.baseUrl}/api/session/${sessionID}/command`,
+          {
+            method: "POST",
+            headers: createHeaders(config),
+            body: JSON.stringify({ name: params.command, text: params.arguments }),
+          },
+          0
+        )
 
         if (!response.ok) {
           const error = await response.text()

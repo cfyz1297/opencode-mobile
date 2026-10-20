@@ -40,7 +40,26 @@ function RootLayout() {
     // Navigate to session when user taps a notification. Connection-drop
     // notifications carry no sessionId (they aren't about a session) — route
     // to the home tab instead of "/session/" (an empty, dead-end route).
+    //
+    // Cold-start: when the app is launched from a push tap while the JS
+    // process was dead, the response listener below mounts too late — read
+    // the initial response first and dedupe against it so the same tap isn't
+    // handled twice (BUG-005).
+    let initialHandled = false
+    let initial: { sessionId?: string; category?: string } | null = null
+    ;(async () => {
+      const response = await notifications.getInitialResponse()
+      if (response) {
+        initialHandled = true
+        initial = response
+        if (response.sessionId) router.push(`/session/${response.sessionId}`)
+        else router.push("/")
+      }
+    })()
     const unsubNotifications = notifications.onTap((data) => {
+      if (initialHandled && data.sessionId === initial?.sessionId && data.category === initial?.category) {
+        return // already routed from cold-start
+      }
       if (data.sessionId) router.push(`/session/${data.sessionId}`)
       else router.push("/")
     })

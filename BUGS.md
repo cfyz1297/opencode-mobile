@@ -11,14 +11,14 @@
 
 Сводная таблица:
 
-| # | Severity | Коротко | Файл |
-|---|----------|---------|------|
-| 001 | HIGH | file.list двойной unwrap — браузер папок всегда пуст | src/lib/sdk.ts |
-| 002 | HIGH | /command гибнет по 30с таймауту | src/lib/sdk.ts |
-| 003 | HIGH | failed-ран показывается как успешный «Task completed» | src/lib/v2-compat.ts |
-| 004 | HIGH | Question-flow мёртв под V2 ( вопросы не видны/не отвечаются ) | src/lib/sdk.ts + events.rs + v2-compat.ts |
-| 005 | HIGH | tap по push при холодном старте потерян | src/lib/notifications.ts |
-| 006 | HIGH | Quick Connect: https-URL получает :4096 | app/connection/add.tsx |
+| # | Severity | Коротко | Файл | Статус |
+|---|----------|---------|------|--------|
+| 001 | HIGH | file.list двойной unwrap — браузер папок всегда пуст | src/lib/sdk.ts | FIXED |
+| 002 | HIGH | /command гибнет по 30с таймауту | src/lib/sdk.ts | FIXED |
+| 003 | HIGH | failed-ран показывается как успешный «Task completed» | src/lib/v2-compat.ts | FIXED |
+| 004 | HIGH | Question-flow мёртв под V2 ( вопросы не видны/не отвечаются ) | src/lib/sdk.ts + events.rs + v2-compat.ts | OPEN (требует контракта сервера V2) |
+| 005 | HIGH | tap по push при холодном старте потерян | src/lib/notifications.ts + app/_layout.tsx | FIXED |
+| 006 | HIGH | Quick Connect: https-URL получает :4096 | app/connection/add.tsx + src/lib/quick-connect-url.ts | FIXED |
 | 007 | MED | Test на экране правки даёт ложный 401 | app/connection/[id].tsx |
 | 008 | MED | refreshMessages/loadOlderMessages без seq-guard | src/stores/sessions.ts |
 | 009 | MED | «призрачное» сообщение после неудачной отправки | src/stores/sessions.ts |
@@ -54,6 +54,7 @@ SUSPECT: S-1 jump-to-top на inverted (Android), S-2 shape файлов в prom
 ## HIGH
 
 ### BUG-001 — file.list применяет unwrapData дважды: DirectoryBrowserSheet всегда показывает «нет подпапок»
+**Статус: FIXED (0.2.10)** — `src/lib/sdk.ts` больше не применяет `unwrapData` к ответу `/api/fs/list` (엔дпоинт возвращает `{location, data}` напрямую, без `{data: ...}` обёртки), поэтому `location` больше не теряется.
 - **Где:** `src/lib/sdk.ts:425-433` (+ контракт `unwrapData` в `src/lib/v2-compat.ts:78-87`, ожидаемая форма ответа — `:398-415`).
 - **Симптом:** браузер директорий (выбор папки проекта при добавлении подключения) всегда пуст, для любого сервера и папки.
 - **Доказательство:** sdk.file.list делает:
@@ -69,6 +70,7 @@ SUSPECT: S-1 jump-to-top на inverted (Android), S-2 shape файлов в prom
 - **Тест-пиннинг:** отсутствует (см. выше).
 
 ### BUG-002 — session.command не передаёт timeoutMs: длинные серверные команды убиваются на 30-й секунде
+**Статус: FIXED (0.2.10)** — `fetchWithTimeout` в `command()` теперь вызывается с `timeoutMs = 0` (как в `prompt()`), клиентский таймер отключён, команды не обрываются через 30с.
 - **Где:** `src/lib/sdk.ts:590-606` (вызов `fetchWithTimeout(url, {…})` без третьего аргумента) + `REQUEST_TIMEOUT_MS = 30_000` (`:204`, обработка в `:270-287`).
 - **Симптом:** серверная команда (`/compact`, кастомные / команды, работающие >30с — например, медленный LLM-этап) рвётся: «Request timed out after 30000ms».
 - **Доказательство:** `health()` и `prompt()` выставляют `timeoutMs` явно (`:337` — для health; `:578-582` — `0` для prompt: «No client-side timer… a client-side timer aborting that connection cancels the run server-side»), а `command` — нет.
@@ -77,6 +79,7 @@ SUSPECT: S-1 jump-to-top на inverted (Android), S-2 shape файлов в prom
 - **Фикс:** `fetchWithTimeout(url, {…}, 0)` в `command()` (семантика — как в prompt: без клиентского таймера).
 
 ### BUG-003 — session.execution.failed неотличим от succeeded: «Task completed» на провале, без ошибки, в плюс к store-review
+**Статус: FIXED (0.2.10)** — в `v2-compat.ts` `session.execution.failed` теперь маппится в `session.error` с `data.error.message` (отдельно от `succeeded`/`interrupted` → `session.status: idle`). Store помечает `erroredSessions`, показывает банер ошибки, не засчитывает провал в store-review.
 - **Где:** `src/lib/v2-compat.ts:463-469` (маппинг), потребитель `src/stores/events.ts:266-291`.
 - **Доказательство:**
   ```ts
@@ -106,6 +109,7 @@ SUSPECT: S-1 jump-to-top на inverted (Android), S-2 shape файлов в prom
 - **SUSPECT часть (S-3):** точное имя V2-события/фронтенд-эндпойнта — сверить `GET /openapi.json` живого сервера.
 
 ### BUG-005 — tap по push-уведомлению при холодном старте теряется
+**Статус: FIXED (0.2.10)** — в `notifications.ts` добавлен `getInitialResponse()` (`getLastNotificationResponseAsync`), в `_layout.tsx` он читается при монтировании и маршрутизирует, с дедупликацией против `onTap`-лисенера.
 - **Где:** `src/lib/notifications.ts:167-177` и `app/_layout.tsx:43-46`.
 - **Доказательство:** используется только `Notifications.addNotificationResponseReceivedListener`; `getLastNotificationResponseAsync()` не вызывается нигде (grep). На Android/перезапущенном процессе JS поднимается ПОСЛЕ tap — listener срабатывает до того, как роутер mount’нут (`_layout.tsx:43` подписка происходит в первом эффекте), и expo рекомендует именно `getLastNotificationResponseAsync` для cold-start.
 - **Ожидание:** tap по push открывает нужную сессию даже после смерти процесса; **Факт:** после холодного старта tap игнорируется.

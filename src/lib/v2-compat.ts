@@ -461,10 +461,25 @@ export class V2EventAdapter {
       }
 
       case "session.execution.succeeded":
-      case "session.execution.failed":
       case "session.execution.interrupted": {
         return [
           { type: "session.status", properties: { sessionID: data.sessionID, status: { type: "idle" } } },
+        ]
+      }
+
+      case "session.execution.failed": {
+        // A failed run is NOT a successful completion: surface a v1
+        // session.error so the store marks erroredSessions, shows an error
+        // banner on the active session, and does not count it toward the
+        // store-review prompt (BUG-003).
+        return [
+          {
+            type: "session.error",
+            properties: {
+              sessionID: data.sessionID,
+              error: { message: (data.error as { message?: string })?.message || "Session failed" },
+            },
+          },
         ]
       }
 

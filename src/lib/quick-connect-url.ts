@@ -26,6 +26,10 @@ export function quickConnectUrl(rawIp: string, rawPort: string): string {
     host = rest.slice(0, lastColon)
     pastedPort = rest.slice(lastColon + 1)
   }
-  const finalPort = pastedPort || rawPort.trim() || "4096"
+  // Legacy dev server defaults to 4096, but an https:// tunnel URL (e.g. from
+  // ngrok/cloudflare) serves on 443 — appending :4096 to it always fails to
+  // connect (BUG-006). Default by scheme instead.
+  const defaultPort = scheme === "https" ? "443" : "4096"
+  const finalPort = pastedPort || rawPort.trim() || defaultPort
   return `${scheme}://${host}:${finalPort}`
 }

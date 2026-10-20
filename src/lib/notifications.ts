@@ -175,3 +175,22 @@ export function onTap(handler: (data: NotificationData) => void) {
   })
   return () => subscription.remove()
 }
+
+/**
+ * Cold-start tap: when the app is launched from a push notification while the
+ * JS process is not running, `onTap`'s listener is mounted too late — the
+ * response has already been delivered. Read it here so a cold-start tap still
+ * routes to the right session (BUG-005).
+ */
+export async function getInitialResponse(): Promise<NotificationData | null> {
+  try {
+    const response = await Notifications.getLastNotificationResponseAsync()
+    const raw = response?.notification.request.content.data
+    const data = raw as unknown as NotificationData | undefined
+    if (!data) return null
+    if (data.sessionId || data.category === "connection") return data
+    return null
+  } catch {
+    return null
+  }
+}

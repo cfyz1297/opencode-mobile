@@ -251,23 +251,23 @@ describe("V2EventAdapter", () => {
     assert.deepEqual(idle[0].properties.status, { type: "idle" })
   })
 
-  // BUG-003 (BUGS.md): session.execution.failed currently maps to the exact
-  // same output as succeeded — a bare "session.status: idle" with no error
-  // signal. Downstream, events.ts then treats the failed run as a completed
-  // one: a "Task completed" push notification fires, no error banner is ever
-  // shown, and recordSuccessfulSession() counts the failure toward the
-  // one-time store-review prompt.
-  it.skip("BUG-003: execution.failed must surface an error, not a plain idle status", () => {
+  // BUG-003 (BUGS.md): session.execution.failed used to map to the exact same
+  // output as succeeded — a bare "session.status: idle" with no error signal.
+  // Fixed: failed now emits a v1 session.error with the server's message, so
+  // the store marks erroredSessions, shows an error banner, and does not count
+  // the failure toward the store-review prompt.
+  it("BUG-003: execution.failed emits session.error, not a plain idle status", () => {
     const a = adapter()
     const events = a.adapt({ type: "session.execution.failed", created: 5, data: { sessionID: "ses_1", error: { message: "boom" } } })
-    // The exact desired shape needs a design decision in the fix (a v1
-    // "session.error" event and/or an error flag on the session status);
-    // minimally, a failed run must produce something the stores can
-    // distinguish from a successful completion.
-    const hasErrorSignal = events.some(
-      (event) => event.type === "session.error" || (event as { properties?: { status?: { error?: unknown } } }).properties?.status?.error !== undefined,
-    )
-    assert.ok(hasErrorSignal, "failed run must produce an error signal")
+    assert.equal(events.length, 1)
+    assert.equal(events[0].type, "session.error")
+    assert.deepEqual(events[0].properties, {
+      sessionID: "ses_1",
+      error: { message: "boom" },
+    })
+    // succeeded still maps to plain idle (no regression)
+    const ok = a.adapt({ type: "session.execution.succeeded", created: 6, data: { sessionID: "ses_1" } })
+    assert.deepEqual(ok[0].properties.status, { type: "idle" })
   })
 
 
