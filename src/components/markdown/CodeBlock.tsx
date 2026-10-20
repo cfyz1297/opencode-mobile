@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { View, Text, TouchableOpacity, StyleSheet, useColorScheme, Platform, ScrollView } from "react-native"
 import * as Clipboard from "expo-clipboard"
+import { useTranslation } from "react-i18next"
 import { WIDE_CONTENT_SCROLL_CONFIG } from "../../lib/scroll-config"
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 
 export function CodeBlock({ code, language }: Props) {
   const isDark = useColorScheme() === "dark"
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
@@ -25,7 +27,9 @@ export function CodeBlock({ code, language }: Props) {
       <View style={[styles.header, isDark && styles.headerDark]}>
         <Text style={[styles.language, isDark && styles.languageDark]}>{language || "code"}</Text>
         <TouchableOpacity onPress={copy} hitSlop={8}>
-          <Text style={[styles.copyBtn, isDark && styles.copyBtnDark]}>{copied ? "Copied!" : "Copy"}</Text>
+          <Text style={[styles.copyBtn, isDark && styles.copyBtnDark]}>
+            {copied ? t("chat.message.copied") : t("chat.message.copy")}
+          </Text>
         </TouchableOpacity>
       </View>
       <ScrollView {...WIDE_CONTENT_SCROLL_CONFIG} testID="code-block-scroll" contentContainerStyle={styles.codeScroll}>

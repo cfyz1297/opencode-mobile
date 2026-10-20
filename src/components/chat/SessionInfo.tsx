@@ -244,21 +244,25 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+    flexShrink: 1,
   },
   tokens: {
     fontSize: 14,
     fontWeight: "700",
     color: "#0a0a0a",
     fontVariant: ["tabular-nums"],
+    flexShrink: 1,
   },
   percent: {
     fontSize: 13,
     fontWeight: "500",
+    flexShrink: 1,
   },
   cost: {
     fontSize: 13,
     color: "#999999",
     fontVariant: ["tabular-nums"],
+    flexShrink: 1,
   },
   bar: {
     height: 4,

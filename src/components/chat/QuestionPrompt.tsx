@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
@@ -38,6 +38,15 @@ export function QuestionPrompt({ request, isDark, onReply, onReject }: Props) {
   // an already-resolved request server-side and surfaces a spurious
   // "Reply failed" alert even though the answer went through.
   const replied = useRef(false)
+  const lastRequestId = useRef<string | null>(null)
+  // BUG-019: if the server rejects our reply (network error), the prompt
+  // re-renders with the same request ID — reset the guard so the user can retry.
+  useEffect(() => {
+    if (lastRequestId.current !== request.id) {
+      lastRequestId.current = request.id
+      replied.current = false
+    }
+  }, [request.id])
   const reply = (a: string[][]) => {
     if (replied.current) return
     replied.current = true

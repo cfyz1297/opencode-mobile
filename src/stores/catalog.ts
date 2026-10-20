@@ -110,14 +110,21 @@ export const useCatalog = create<CatalogState>((set, get) => ({
 
     // Default model: keep valid existing selection; otherwise prefer connected
     // provider defaults, then first connected model; agent model is last fallback.
+    //
+    // BUG-015: if the fetch failed (providers is empty because the server is
+    // unreachable), preserve the user's existing model choice instead of
+    // silently resetting it to null/"server default".
     const existing = get().model
     const defaultAgent = visible[0]
-    const model = chooseModelSelection({
-      providers,
-      defaults,
-      existing,
-      agentModel: defaultAgent?.model || null,
-    })
+    const model =
+      providers.length > 0
+        ? chooseModelSelection({
+            providers,
+            defaults,
+            existing,
+            agentModel: defaultAgent?.model || null,
+          })
+        : existing // network failure — keep current choice
 
     set((state) => ({
       agents: visible,

@@ -19,33 +19,33 @@
 | 004 | HIGH | Question-flow мёртв под V2 ( вопросы не видны/не отвечаются ) | src/lib/sdk.ts + events.rs + v2-compat.ts | OPEN (требует контракта сервера V2) |
 | 005 | HIGH | tap по push при холодном старте потерян | src/lib/notifications.ts + app/_layout.tsx | FIXED |
 | 006 | HIGH | Quick Connect: https-URL получает :4096 | app/connection/add.tsx + src/lib/quick-connect-url.ts | FIXED |
-| 007 | MED | Test на экране правки даёт ложный 401 | app/connection/[id].tsx |
-| 008 | MED | refreshMessages/loadOlderMessages без seq-guard | src/stores/sessions.ts |
-| 009 | MED | «призрачное» сообщение после неудачной отправки | src/stores/sessions.ts |
-| 010 | MED | loadSessions затирает SSE-добавленные сессии | src/stores/sessions.ts |
-| 011 | MED | refreshPending заменяет pending целиком | src/stores/events.ts |
-| 012 | MED | /undo игнорирует активную точку revert | app/session/[id].tsx |
-| 013 | MED | «Connected»-баннер мигает при disconnect | app/session/[id].tsx |
-| 014 | MED | Модалки New Session/Rename не закрываются Back на Android | app/(tabs)/index.tsx |
-| 015 | MED | провал каталога молча сбрасывает выбор модели | src/stores/catalog.ts |
-| 016 | MED | JSON.parse без try ×4 (auth/settings/connections/sdk) | см. пункт |
-| 017 | MED | waitlist: двойной flush и потеря свежего enqueue | src/lib/waitlist.ts |
-| 018 | MED | нет in-flight guard на отправке (двойная отправка) | app/session/[id].tsx |
-| 019 | MED | QuestionPrompt после ошибки блокирует повторный ответ навсегда | src/components/chat/QuestionPrompt.tsx |
-| 020 | MED | после re-lock биометрия не предлагается автоматически | src/components/AuthGate.tsx |
-| 021 | MED | провалившийся switch model/agent запоминается как успешный | src/lib/sdk.ts |
-| 022 | LOW | Stop недоступен, если набран текст | app/session/[id].tsx |
-| 023 | LOW | PermissionPrompt:dopпустим double-tap | src/components/chat/PermissionPrompt.tsx |
-| 024 | LOW | Речь: язык жёстко en-US; start() не await | src/lib/speech.ts |
-| 025 | LOW | Захардкоженные EN-строки (You/Assistant/tokens/Copy/…) | MessageBubble, CodeBlock, auth |
-| 026 | LOW | UpdateBanner: dismiss до успешного openURL | src/components/UpdateBanner.tsx |
-| 027 | LOW | SlashPopover: дубли trigger, конфликтные keys | [id].tsx + SlashPopover.tsx |
-| 028 | LOW | Преждевременный обрыв prune оставляет утечкиfonts | src/lib/v2-compat.ts |
-| 029 | LOW | notifications dedupe-карта растёт без обрезки | src/lib/notifications.ts |
-| 030 | LOW | store-review: NaN при повреждённом счётчике | src/lib/store-review.ts |
-| 031 | LOW | SessionInfo: строки могут вытесняться (flexShrink) | src/components/chat/SessionInfo.tsx |
-| 032 | LOW | messageData пересобирается на каждый токен (плавность) | app/session/[id].tsx |
-| 033 | LOW | textAccum не очищается при повторном started | src/lib/v2-compat.ts |
+| 007 | MED | Test на экране правки даёт ложный 401 | app/connection/[id].tsx | FIXED |
+| 008 | MED | refreshMessages/loadOlderMessages без seq-guard | src/stores/sessions.ts | FIXED |
+| 009 | MED | «призрачное» сообщение после неудачной отправки | src/stores/sessions.ts | FIXED |
+| 010 | MED | loadSessions затирает SSE-добавленные сессии | src/stores/sessions.ts | FIXED |
+| 011 | MED | refreshPending заменяет pending целиком | src/stores/events.ts | FIXED |
+| 012 | MED | /undo игнорирует активную точку revert | app/session/[id].tsx | FIXED |
+| 013 | MED | «Connected»-баннер мигает при disconnect | app/session/[id].tsx | FIXED |
+| 014 | MED | Модалки New Session/Rename не закрываются Back на Android | app/(tabs)/index.tsx | FIXED |
+| 015 | MED | провал каталога молча сбрасывает выбор модели | src/stores/catalog.ts | FIXED |
+| 016 | MED | JSON.parse без try ×4 (auth/settings/connections/sdk) | см. пункт | FIXED |
+| 017 | MED | waitlist: двойной flush и потеря свежего enqueue | src/lib/waitlist.ts | FIXED |
+| 018 | MED | нет in-flight guard на отправке (двойная отправка) | app/session/[id].tsx | FIXED |
+| 019 | MED | QuestionPrompt после ошибки блокирует повторный ответ навсегда | src/components/chat/QuestionPrompt.tsx | FIXED |
+| 020 | MED | после re-lock биометрия не предлагается автоматически | src/components/AuthGate.tsx | FIXED |
+| 021 | MED | провалившийся switch model/agent запоминается как успешный | src/lib/sdk.ts | FIXED |
+| 022 | LOW | Stop недоступен, если набран текст | app/session/[id].tsx | FIXED |
+| 023 | LOW | PermissionPrompt:dopпустим double-tap | src/components/chat/PermissionPrompt.tsx | FIXED |
+| 024 | LOW | Речь: язык жёстко en-US; start() не await | src/lib/speech.ts | FIXED |
+| 025 | LOW | Захардкоженные EN-строки (You/Assistant/tokens/Copy/…) | MessageBubble, CodeBlock, auth | FIXED |
+| 026 | LOW | UpdateBanner: dismiss до успешного openURL | src/components/UpdateBanner.tsx | FIXED |
+| 027 | LOW | SlashPopover: дубли trigger, конфликтные keys | [id].tsx + SlashPopover.tsx | FIXED |
+| 028 | LOW | Преждевременный обрыв prune оставляет утечки | src/lib/v2-compat.ts | FIXED |
+| 029 | LOW | notifications dedupe-карта растёт без обрезки | src/lib/notifications.ts | FIXED |
+| 030 | LOW | store-review: NaN при повреждённом счётчике | src/lib/store-review.ts | FIXED |
+| 031 | LOW | SessionInfo: строки могут вытесняться (flexShrink) | src/components/chat/SessionInfo.tsx | FIXED |
+| 032 | LOW | messageData пересобирается на каждый токен (плавность) | app/session/[id].tsx | OPEN (LOW — memo already applied, perf-only) |
+| 033 | LOW | textAccum не очищается при повторном started | src/lib/v2-compat.ts | FIXED |
 
 SUSPECT: S-1 jump-to-top на inverted (Android), S-2 shape файлов в prompt-запросе, S-3 форма `session.sync/build` для V2 домена вопросов, S-4 «синхронизация чипа модели» переписывает вручную выбранный вариант.
 

@@ -7,6 +7,16 @@ import type { LocalePreference } from "../lib/i18n/locale-resolve"
 
 const SETTINGS_KEY = "opencode_settings"
 
+// Parse JSON from SecureStore, tolerating corrupted data (BUG-016).
+function parseStoredJSON<T>(raw: string, fallback: T | null): T | null {
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    console.warn("Failed to parse stored settings JSON, using fallback")
+    return fallback
+  }
+}
+
 interface Settings {
   pageSize: number
   notifications: Record<Category, boolean>
@@ -42,9 +52,9 @@ export const useSettings = create<SettingsState>((set, get) => ({
   load: async () => {
     const raw = await SecureStore.getItemAsync(SETTINGS_KEY)
     if (raw) {
-      const parsed = JSON.parse(raw) as Partial<Settings>
+      const parsed = parseStoredJSON<Partial<Settings>>(raw, null)
       // Merge stored settings with defaults so new fields/categories get their default
-      const merged = mergeStoredSettings(DEFAULTS, parsed)
+      const merged = parsed ? mergeStoredSettings(DEFAULTS, parsed) : DEFAULTS
       set({ ...merged, loaded: true })
       setAppLocale(merged.locale)
       return

@@ -74,6 +74,8 @@ export const abortedSessions = new Set<string>()
 // overwrite the messages/currentSession of a newer selection. Each call takes
 // the next value and only commits its result if still the latest.
 let selectSeq = 0
+let loadOlderSeq = 0
+let refreshSeqCounter = 0
 
 // Get the right client for a session's directory
 function clientFor(directory?: string): Client | null {
@@ -110,7 +112,11 @@ export const useSessions = create<SessionsState>((set, get) => ({
       // A directory-less list includes sessions across projects. Each row carries
       // its own directory into the session route so subsequent operations stay scoped.
       const sessions = await client.session.list({ roots: true, limit: 50 })
-      set({ sessions, isLoading: false })
+      // BUG-010: merge by ID instead of wholesale replace — a session.created SSE
+      // event that landed mid-flight must not be clobbered by a stale list fetch.
+      const existingById = new Map(get().sessions.map((s) => [s.id, s]))
+      sessions.forEach((s) => existingById.set(s.id, s))
+      set({ sessions: [...existingById.values()], isLoading: false })
     } catch (error) {
       set({ error: "Failed to load sessions", isLoading: false })
     }
@@ -185,11 +191,17 @@ export const useSessions = create<SessionsState>((set, get) => ({
     if (!client || !session) return
     if (get().loadingMore || !get().hasMore) return
 
+    // BUG-008: seq-guard — a stale fetch must not clobber newer messages,
+    // same pattern as selectSession (const seq = ++loadSeq; if (seq !== loadSeq) return).
+    const loadSeq = ++loadOlderSeq
+
     try {
       set({ loadingMore: true })
 
       // Fetch ALL messages for this session
       const response = await client.session.messages(session.id)
+      if (loadSeq !== loadOlderSeq) return // stale result — discard
+
       const { messages: all, parts: allParts } = parseMessages(response)
 
       // Merge: use all messages from full fetch, but reconcile any
@@ -264,11 +276,13 @@ export const useSessions = create<SessionsState>((set, get) => ({
       return
     }
 
+    // BUG-009: capture ts before the try so the catch block can remove the
+    // optimistic temp message on send failure.
+    const ts = Date.now()
+
     try {
       set((state) => ({ sending: { ...state.sending, [session.id]: true }, error: null }))
 
-      // Add user message optimistically
-      const ts = Date.now()
       const userMessage: Message = {
         id: `temp-${ts}`,
         sessionID: session.id,
@@ -343,6 +357,16 @@ export const useSessions = create<SessionsState>((set, get) => ({
       set((state) => ({
         ...(stillCurrent ? { error: String(err) } : {}),
         sending: { ...state.sending, [session.id]: false },
+        // BUG-009: remove the optimistic temp message on send failure so it
+        // doesn't remain as a ghost bubble in the chat.
+        messages: stillCurrent
+          ? state.messages.filter((m) => !(m.id.startsWith("temp-") && m.sessionID === session.id))
+          : state.messages,
+        parts: stillCurrent
+          ? Object.fromEntries(
+              Object.entries(state.parts).filter(([id]) => !(id.startsWith("temp-") && id.endsWith(`-${ts}`))),
+            )
+          : state.parts,
       }))
       if (stillCurrent) get().refreshMessages()
       throw err
@@ -370,8 +394,13 @@ export const useSessions = create<SessionsState>((set, get) => ({
     const session = get().currentSession
     if (!client || !session) return
 
+    // BUG-008: seq-guard — same pattern as selectSession.
+    const refreshSeq = ++refreshSeqCounter
+
     try {
       const response = await client.session.messages(session.id)
+      if (refreshSeq !== refreshSeqCounter) return // stale result — discard
+
       const { messages: fetched, parts: fetchedParts } = parseMessages(response)
       // Reconcile optimistic temps with the server list: a just-sent message
       // whose copy is not yet in the list keeps its temp (V2 has no

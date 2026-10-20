@@ -37,12 +37,13 @@ export function UpdateBanner({ isDark }: { isDark: boolean }) {
     setUpdate(null)
   }, [update])
 
-  const onOpen = useCallback(() => {
+  const onOpen = useCallback(async () => {
     if (!update) return
     // Opening the release page is also an implicit "I've seen this version":
-    // do not nag about it again either.
-    void dismissUpdate(update.version)
-    void Linking.openURL(update.url)
+    // do not nag about it again either. But only dismiss after the URL opens —
+    // if openURL fails (no browser), keep the banner visible (BUG-026).
+    const opened = await Linking.openURL(update.url).catch(() => false)
+    if (opened) void dismissUpdate(update.version)
   }, [update])
 
   if (!update) return null

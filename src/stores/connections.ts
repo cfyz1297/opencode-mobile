@@ -65,6 +65,16 @@ function generateId(): string {
   return Crypto.randomUUID().replace(/-/g, "").slice(0, 16)
 }
 
+// Parse JSON from SecureStore, tolerating corrupted data (BUG-016).
+function parseStoredJSON<T>(raw: string, fallback: T): T {
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    console.warn("Failed to parse stored JSON, using fallback")
+    return fallback
+  }
+}
+
 function buildClient(
   url: string,
   directory?: string,
@@ -93,8 +103,8 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
         SecureStore.getItemAsync(CONNECTIONS_KEY),
         SecureStore.getItemAsync(RECENT_DIRS_KEY),
       ])
-      const connections: ServerConnection[] = stored ? JSON.parse(stored) : []
-      const recentDirectories: string[] = recentRaw ? JSON.parse(recentRaw) : []
+      const connections: ServerConnection[] = stored ? parseStoredJSON(stored, []) : []
+      const recentDirectories: string[] = recentRaw ? parseStoredJSON(recentRaw, []) : []
 
       // Find active connection
       const active = connections.find((c) => c.active) || null
@@ -256,10 +266,16 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
 
   testConnection: async (connection, source, password) => {
     try {
+      // BUG-007: on the edit screen the password field is blank ("keep existing"),
+      // so fall back to the saved password instead of testing with no auth at all.
+      let resolvedPassword = password
+      if (!resolvedPassword && source === "edit_test") {
+        resolvedPassword = (await SecureStore.getItemAsync(`${PASSWORDS_PREFIX}${connection.id}`)) ?? undefined
+      }
       const client = createClient({
         baseUrl: connection.url,
         directory: connection.directory,
-        auth: buildAuth(connection.username, password),
+        auth: buildAuth(connection.username, resolvedPassword),
       })
 
       await client.global.health(CONNECTION_TEST_TIMEOUT_MS)

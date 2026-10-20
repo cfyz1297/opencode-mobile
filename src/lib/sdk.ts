@@ -249,7 +249,13 @@ async function request<T>(
   if (response.status === 204) return undefined as T
   const text = await response.text()
   if (!text) return undefined as T
-  return JSON.parse(text)
+  // BUG-016: non-JSON body (HTML proxy page, 502 error page) must surface as
+  // an ApiError, not a raw SyntaxError that leaks into the UI.
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new ApiError(0, `Non-JSON response: ${text.slice(0, 200)}`)
+  }
 }
 
 async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = REQUEST_TIMEOUT_MS): Promise<Response> {
@@ -588,6 +594,8 @@ export function createClient(config: ClientConfig) {
           const error = await response.text()
           throw new Error(`Failed to send message: ${response.status} - ${error}`)
         }
+        // BUG-021: only record the switch as done when the POST actually
+        // succeeded — a failed switch must be retried on the next prompt.
         lastSwitch.set(sessionID, switchKey)
       },
 

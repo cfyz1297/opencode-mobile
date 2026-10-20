@@ -58,11 +58,14 @@ export function useSpeech(onResult: (text: string) => void): SpeechState & Speec
       setError("Microphone permission denied")
       return
     }
-    ExpoSpeechRecognitionModule.start({
-      lang: "en-US",
-      interimResults: true,
-      continuous: true,
-    })
+    // BUG-024: use device locale instead of hardcoded en-US; await start() so
+    // permission/start errors surface as setError instead of unhandled rejection.
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale.split("-")[0] || "en"
+    try {
+      await ExpoSpeechRecognitionModule.start({ lang: `${locale}-US`, interimResults: true, continuous: true })
+    } catch (err: any) {
+      setError(err?.message || "Failed to start speech recognition")
+    }
   }, [])
 
   const stop = useCallback(() => {

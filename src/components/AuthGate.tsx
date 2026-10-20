@@ -15,15 +15,16 @@ export function AuthGate({ children }: Props) {
 
   const { isAuthenticated, settings, hasBiometrics, biometricType, authenticate, error } = useAuth()
 
-  // Auto-prompt the OS biometric dialog once when the lock screen appears, so users
-  // aren't forced to tap "Unlock" on every cold start. If they cancel/fail, the
-  // manual "Unlock" button below is the fallback.
+  // Auto-prompt the OS biometric dialog when the lock screen appears — including
+  // after re-lock from background (see _layout.tsx useEffect on "background").
+  // BUG-020: previously only ran on mount ([] deps), so after re-lock the user
+  // had to tap "Unlock" manually instead of being auto-prompted.
   useEffect(() => {
     if (settings.requireBiometric && hasBiometrics && !isAuthenticated) {
       authenticate()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isAuthenticated])
 
   // If biometric not required, or no biometrics available, show children
   if (!settings.requireBiometric || !hasBiometrics) {

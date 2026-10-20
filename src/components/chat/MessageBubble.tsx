@@ -80,7 +80,9 @@ export const MessageBubble = memo(
             size={14}
             color={isUser ? (isDark ? "#ffffff" : "#0a0a0a") : "#8b5cf6"}
           />
-          <Text style={[s.role, isUser && s.roleUser, isDark && s.textWhite]}>{isUser ? "You" : "Assistant"}</Text>
+          <Text style={[s.role, isUser && s.roleUser, isDark && s.textWhite]}>
+            {isUser ? t("chat.message.roleYou") : t("chat.message.roleAssistant")}
+          </Text>
           {message.model && <Text style={[s.modelTag, isDark && s.modelTagDark]}>{message.model.modelID}</Text>}
           {!isUser && message.modelID && <Text style={[s.modelTag, isDark && s.modelTagDark]}>{message.modelID}</Text>}
         </View>
@@ -164,7 +166,7 @@ export const MessageBubble = memo(
         {/* Tokens/cost for assistant messages */}
         {!isUser && message.tokens && (
           <Text style={[s.tokens, isDark && s.tokensDark]}>
-            {message.tokens.input + message.tokens.output} tokens
+            {message.tokens.input + message.tokens.output} {t("chat.message.tokens")}
             {message.cost ? ` · $${message.cost.toFixed(4)}` : ""}
           </Text>
         )}

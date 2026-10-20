@@ -77,10 +77,27 @@ export async function refreshPending(client: Client, sessionID: string) {
   try {
     const [perms, questions] = await Promise.all([client.permission.list(), client.question.list()])
     const sessionPerms = (perms || []).filter((p: Record<string, unknown>) => p.sessionID === sessionID)
-    const sessionQuestions = (questions || []).filter((q: Record<string, unknown>) => q.sessionID === sessionID)
+    const sessionQuestions = ((questions || []) as Array<{ id: string; sessionID: string; questions: unknown[] }>).filter(
+      (q: Record<string, unknown>) => q.sessionID === sessionID,
+    )
     useEvents.setState((state) => ({
-      permissions: { ...state.permissions, [sessionID]: sessionPerms as any },
-      questions: { ...state.questions, [sessionID]: sessionQuestions as any },
+      // BUG-011: merge by ID instead of wholesale replace — permissions/questions
+      // already answered (optimistically removed) must not be resurrected by a
+      // server list that hasn't caught up yet.
+      permissions: {
+        ...state.permissions,
+        [sessionID]: [
+          ...(state.permissions[sessionID] || []).filter((p) => !sessionPerms.some((sp) => sp.id === p.id)),
+          ...sessionPerms,
+        ],
+      },
+      questions: {
+        ...state.questions,
+        [sessionID]: [
+          ...(state.questions[sessionID] || []).filter((q) => !sessionQuestions.some((sq) => sq.id === q.id)),
+          ...(sessionQuestions as any),
+        ],
+      },
     }))
   } catch (err) {
     console.warn("[Events] Failed to refresh pending:", err)

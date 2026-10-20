@@ -607,7 +607,7 @@ export default function SessionsScreen() {
       </TouchableOpacity>
 
       {/* New Session Info Modal */}
-      <Modal visible={showNewSession} animationType="slide" transparent>
+      <Modal visible={showNewSession} animationType="slide" transparent onRequestClose={() => setShowNewSession(false)}>
         <View style={[styles.modalOverlay, { paddingBottom: kbHeight }]}>
           <TouchableOpacity style={styles.modalDismiss} activeOpacity={1} onPress={() => setShowNewSession(false)} />
           <View style={[styles.modalContent, isDark && styles.modalContentDark]}>
@@ -862,7 +862,7 @@ export default function SessionsScreen() {
       </Modal>
 
       {/* Rename modal */}
-      <Modal visible={!!renaming} animationType="fade" transparent>
+      <Modal visible={!!renaming} animationType="fade" transparent onRequestClose={() => setRenaming(null)}>
         <View
           style={[styles.modalOverlay, { justifyContent: "center" }, { paddingBottom: kbHeight }]}
         >

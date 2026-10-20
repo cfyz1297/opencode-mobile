@@ -159,6 +159,7 @@ export default function SessionScreen() {
 
   // SSE reconnect banner
   const reconnectAttempts = useEvents((s) => s.reconnectAttempts)
+  const connected = useEvents((s) => s.connected)
   const [showConnectedFlash, setShowConnectedFlash] = useState(false)
   const prevReconnecting = useRef(false)
 
@@ -196,7 +197,15 @@ export default function SessionScreen() {
       title: t(`chat.commands.${cmd.trigger}.title`, { defaultValue: cmd.title }),
       description: t(`chat.commands.${cmd.trigger}.description`, { defaultValue: cmd.description }),
     }))
-    return [...custom, ...builtins]
+    // BUG-027: deduplicate triggers — builtin wins over custom with same name
+    // (builtins are checked first in handleSend, so custom duplicates are dead).
+    const seen = new Set<string>()
+    const deduped = [...custom, ...builtins].filter((cmd) => {
+      if (seen.has(cmd.trigger)) return false
+      seen.add(cmd.trigger)
+      return true
+    })
+    return deduped
   }, [serverCommands, t])
 
   // While a revert is pending, the reverted message and everything after it
@@ -366,8 +375,16 @@ export default function SessionScreen() {
         case "undo":
           setInput("")
           {
+            const revertPoint = currentSession?.revert?.messageID
             const lastUser = (messages || [])
-              .filter((m) => m.role === "user" && !m.id.startsWith("temp-"))
+              .filter(
+                (m) =>
+                  m.role === "user" &&
+                  !m.id.startsWith("temp-") &&
+                  // BUG-012: respect the active revert point — only undo messages
+                  // before it, otherwise /undo would skip forward past hidden ones.
+                  (!revertPoint || m.id < revertPoint),
+              )
               .pop()
             if (lastUser) {
               void useSessions.getState().revertToMessage(lastUser.id).then((res) => {
@@ -499,6 +516,9 @@ export default function SessionScreen() {
   // --- Send ---
   const handleSend = async () => {
     if (!input.trim() && attachments.length === 0) return
+    // BUG-018: in-flight guard — prevent double-send from rapid taps or
+    // biometric retry while a previous send is still in progress.
+    if (isSending) return
     const authenticated = await authenticateForMessage()
     if (!authenticated) {
       Alert.alert(t("session.alerts.authRequiredTitle"), t("session.alerts.authRequiredMessage"))
@@ -571,13 +591,16 @@ export default function SessionScreen() {
   // can't use lastDisconnectAt alone; a useRef tracks the prior reconnecting state.
   useEffect(() => {
     const isReconnecting = reconnectAttempts > 0
-    if (prevReconnecting.current && !isReconnecting) {
+    // BUG-013: only flash "Connected" when actually connected — events.ts
+    // disconnect() resets reconnectAttempts to 0, which previously caused the
+    // banner to flash on disconnect.
+    if (prevReconnecting.current && !isReconnecting && connected) {
       setShowConnectedFlash(true)
       const t = setTimeout(() => setShowConnectedFlash(false), 2000)
       return () => clearTimeout(t)
     }
     prevReconnecting.current = isReconnecting
-  }, [reconnectAttempts])
+  }, [reconnectAttempts, connected])
 
   const handlePermissionReply = async (requestID: string, reply: "once" | "always" | "reject") => {
     if (!sessionClient || !sessionID) return
@@ -911,8 +934,9 @@ export default function SessionScreen() {
               maxLength={10000}
               testID="chat-message-input"
             />
-            {/* Stop button: only when busy and no input */}
-            {isSending && !input.trim() && attachments.length === 0 && !speech.listening && (
+            {/* Stop button: when busy — regardless of input, so a follow-up
+                typed mid-run can still be aborted (BUG-022). */}
+            {isSending && !speech.listening && (
               <TouchableOpacity style={s.stopBtn} onPress={abortSession}>
                 <Ionicons name="stop" size={20} color="#ffffff" />
               </TouchableOpacity>

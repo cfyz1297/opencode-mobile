@@ -143,6 +143,11 @@ export async function send(payload: Payload) {
     const cooldown = payload.dedupeCooldownMs ?? 30_000
     if (now - lastSent < cooldown) return
     dedupeSentAt.set(payload.dedupeKey, now)
+    // BUG-029: prune stale dedupe entries so the map doesn't grow unbounded
+    // on long-lived sessions.
+    for (const [key, sentAt] of dedupeSentAt.entries()) {
+      if (now - sentAt > cooldown * 4) dedupeSentAt.delete(key)
+    }
   }
 
   await Notifications.scheduleNotificationAsync({

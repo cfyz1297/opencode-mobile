@@ -498,6 +498,11 @@ export class V2EventAdapter {
 
       case "session.text.started":
       case "session.reasoning.started": {
+        // BUG-033: clear accum for this key so a repeated started event
+        // (server replay/rollback) doesn't append stale text to the new run.
+        const key = `${data.assistantMessageID}|${data.ordinal ?? 0}`
+        if (event.type === "session.text.started") this.textAccum.delete(key)
+        else this.reasoningAccum.delete(key)
         const events: V1Event[] = this.ensureMessage(data, event)
         events.push({
           type: "message.part.updated",
@@ -750,7 +755,17 @@ export class V2EventAdapter {
   private toolNames = new Map<string, string>()
 
   private prune() {
-    if (this.assistants.size <= MAX_TRACKED && this.textAccum.size <= MAX_TRACKED) return
+    // BUG-028: include all tracked maps in the early-return condition —
+    // toolInputs/toolNames/reasoningAccum grow unbounded on long sessions even
+    // when assistants+textAccum stay under the limit.
+    if (
+      this.assistants.size <= MAX_TRACKED &&
+      this.textAccum.size <= MAX_TRACKED &&
+      this.reasoningAccum.size <= MAX_TRACKED &&
+      this.toolInputs.size <= MAX_TRACKED &&
+      this.toolNames.size <= MAX_TRACKED
+    )
+      return
     // Drop everything past the most recent MAX_TRACKED messages to cap memory
     // on long-lived connections. Streaming continues fine: a new message ID
     // just re-registers on its next event.

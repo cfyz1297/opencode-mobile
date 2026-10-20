@@ -51,7 +51,8 @@ async function recordSuccessfulSessionInternal(): Promise<void> {
 
     // Clamp the persisted counter at the threshold — we only need to know
     // "have we reached it", not track an ever-growing lifetime total.
-    const count = Math.min(Number(storedCount ?? "0") + 1, DEFAULT_REVIEW_THRESHOLD)
+    const parsed = Number(storedCount ?? "0")
+    const count = Math.min(Number.isFinite(parsed) ? parsed + 1 : 1, DEFAULT_REVIEW_THRESHOLD)
     await SecureStore.setItemAsync(COUNT_KEY, String(count))
 
     if (!shouldRequestReview(count)) return
