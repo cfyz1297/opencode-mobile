@@ -141,6 +141,47 @@ describe("mapMessages", () => {
     )[0]
     assert.equal(one.parts[0].state?.status, "pending")
   })
+
+  it("keeps a completed compaction and exposes its summary", () => {
+    const [one] = mapMessages(
+      [
+        {
+          type: "compaction",
+          id: "msg_k",
+          time: { created: 10 },
+          status: "completed",
+          reason: "manual",
+          summary: "## Objective\n- ship it",
+        },
+      ],
+      "ses",
+    )
+    assert.equal(one.info.role, "system")
+    assert.equal(one.parts.length, 1)
+    assert.equal(one.parts[0].type, "compaction")
+    assert.equal(one.parts[0].text, "## Objective\n- ship it")
+    assert.equal(one.parts[0].status, "completed")
+  })
+
+  it("keeps a failed compaction with the server error text", () => {
+    const [one] = mapMessages(
+      [
+        {
+          type: "compaction",
+          id: "msg_k2",
+          time: { created: 11 },
+          status: "failed",
+          reason: "manual",
+          error: { type: "compaction.unavailable", message: "Nothing to compact yet" },
+        },
+      ],
+      "ses",
+    )
+    assert.equal(one.info.role, "system")
+    assert.equal(one.parts[0].type, "compaction")
+    assert.equal(one.parts[0].text, "Nothing to compact yet")
+    assert.equal(one.parts[0].status, "failed")
+  })
 })
 
 describe("catalog mappings", () => {

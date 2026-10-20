@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next"
 import { Markdown } from "../markdown"
 import { ToolCallCard } from "./ToolCallCard"
 import { ReasoningBlock } from "./ReasoningBlock"
+import { CompactionCard } from "./CompactionCard"
 import type { Message, Part } from "../../lib/sdk"
 
 const SCREEN_WIDTH = Dimensions.get("window").width
@@ -59,6 +60,11 @@ export const MessageBubble = memo(
       const id = setTimeout(() => setCopied(false), 1500)
       return () => clearTimeout(id)
     }, [copied])
+
+    // Compaction messages carry the stored summary instead of regular text
+    // parts — render them as the TUI's separator + summary block.
+    const compactionPart = parts.find((p) => p.type === "compaction")
+    if (compactionPart) return <CompactionCard part={compactionPart} isDark={isDark} />
 
     return (
       <TouchableOpacity

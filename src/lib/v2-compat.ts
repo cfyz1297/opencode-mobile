@@ -48,6 +48,11 @@ export interface V2MessageBody {
   cost?: number
   tokens?: { input?: number; output?: number; reasoning?: number; cache?: { read?: number; write?: number } }
   error?: { type?: string; message?: string }
+  // Compaction messages (type: "compaction") carry the summary the same way
+  // the TUI shows it, plus a status and the reason it was triggered.
+  status?: string
+  reason?: string
+  summary?: string
 }
 
 export interface V2ContentItem {
@@ -125,7 +130,7 @@ export function mapSession(raw: V2SessionInfo | null | undefined, fallbackDirect
 export function mapMessages(raw: unknown, sessionID: string): MessageWithParts[] {
   const list = Array.isArray(raw) ? raw : []
   const filtered = (list as V2MessageBody[]).filter(
-    (m) => m.type === "user" || m.type === "assistant",
+    (m) => m.type === "user" || m.type === "assistant" || m.type === "compaction",
   )
   return filtered
     .slice()
@@ -146,6 +151,34 @@ function mapMessage(m: V2MessageBody, sessionID: string): MessageWithParts {
       model: (m as { metadata?: { model?: { providerID: string; modelID: string } } }).metadata?.model,
     }
     return { info, parts: userParts(m, sid) }
+  }
+
+  // V2 keeps compaction as a conversation-level message (visible in the TUI
+  // as the summary block). Without this branch the summary is silently
+  // dropped from the app while the TUI still shows it.
+  if (m.type === "compaction") {
+    const info: Message = {
+      id: m.id,
+      sessionID: sid,
+      role: "system",
+      time: { created, completed: created },
+    }
+    const failed = m.status === "failed"
+    const text = failed ? m.error?.message ?? m.error?.type ?? "" : m.summary ?? ""
+    return {
+      info,
+      parts: [
+        {
+          id: `${m.id}_0`,
+          sessionID: sid,
+          messageID: m.id,
+          type: "compaction",
+          text,
+          status: m.status,
+          reason: m.reason,
+        },
+      ],
+    }
   }
 
   const info: Message = {

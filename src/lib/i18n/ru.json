@@ -387,6 +387,7 @@
     "message": {
       "copy": "Скопировать",
       "copied": "Скопировано",
+      "tokens": "токенов",
       "revertHere": "Сбросить до этого момента"
     },
     "variantPicker": {
@@ -418,6 +419,11 @@
     },
     "reasoningBlock": {
       "label": "Размышления"
+    },
+    "compaction": {
+      "title": "Сессия сжата",
+      "running": "Сжатие сессии…",
+      "failed": "Сжатие не удалось"
     },
     "toolCallCard": {
       "fallbackTitle": "Инструмент",

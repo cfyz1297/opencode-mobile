@@ -75,7 +75,7 @@ export interface Session {
 export interface Message {
   id: string
   sessionID: string
-  role: "user" | "assistant"
+  role: "user" | "assistant" | "system"
   parentID?: string
   time: {
     created: number
@@ -121,8 +121,12 @@ export interface Part {
     | "retry"
     | "compaction"
     | "agent"
-  // Text / reasoning part
+  // Text / reasoning / compaction part
   text?: string
+  // Compaction part (V2 message type "compaction"): server status plus the
+  // reason it was started manually/automatically.
+  status?: string
+  reason?: string
   // Tool part
   tool?: string
   callID?: string

@@ -387,6 +387,7 @@
     "message": {
       "copy": "Copy",
       "copied": "Copied",
+      "tokens": "tokens",
       "revertHere": "Reset to this point"
     },
     "variantPicker": {
@@ -418,6 +419,11 @@
     },
     "reasoningBlock": {
       "label": "Thinking"
+    },
+    "compaction": {
+      "title": "Session compacted",
+      "running": "Compacting session…",
+      "failed": "Compaction failed"
     },
     "toolCallCard": {
       "fallbackTitle": "Tool",
