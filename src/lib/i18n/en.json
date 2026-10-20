@@ -1,0 +1,471 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "ok": "OK",
+    "error": "Error",
+    "delete": "Delete",
+    "retry": "Retry",
+    "save": "Save",
+    "shareReport": "Share report"
+  },
+  "settings": {
+    "sections": {
+      "security": "Security",
+      "notifications": "Notifications",
+      "privacy": "Privacy",
+      "about": "About"
+    },
+    "security": {
+      "biometricOpen": {
+        "label": "Require Biometric to Open",
+        "descriptionEnabled": "Use Face ID or Touch ID to unlock the app",
+        "descriptionUnavailable": "Biometric authentication not available"
+      },
+      "biometricSend": {
+        "label": "Require Biometric to Send",
+        "description": "Authenticate before sending messages"
+      },
+      "lockNow": {
+        "label": "Lock App Now",
+        "description": "Require authentication to reopen"
+      }
+    },
+    "notifications": {
+      "disabledNotice": "Notifications are disabled at the system level. Enable them in Settings to receive alerts."
+    },
+    "privacy": {
+      "privacyPolicy": {
+        "label": "Privacy Policy",
+        "description": "What data we collect and how"
+      }
+    },
+    "about": {
+      "version": "Version",
+      "github": {
+        "label": "GitHub",
+        "description": "View source code"
+      },
+      "upstream": {
+        "label": "Original project",
+        "description": "The original OpenCode Mobile"
+      },
+      "docs": {
+        "label": "Documentation",
+        "description": "Learn how to use OpenCode"
+      }
+    },
+    "language": {
+      "label": "Language",
+      "title": "Choose Language",
+      "system": "System Default",
+      "en": "English",
+      "ru": "Russian",
+      "zhHans": "Simplified Chinese"
+    },
+    "footer": {
+      "appName": "OpenCode Mobile",
+      "tagline": "Connect to your AI coding assistant from anywhere"
+    },
+    "alerts": {
+      "notificationsDisabledTitle": "Notifications Disabled",
+      "notificationsDisabledMessage": "Enable notifications for OpenCode in your device settings to receive alerts."
+    }
+  },
+  "session": {
+    "titleFallback": "Session",
+    "toolbar": {
+      "auto": "Auto"
+    },
+    "banners": {
+      "reconnecting": "Reconnecting… (attempt {{attempt}})",
+      "connected": "Connected ✓",
+      "reverted": "Message reverted — resend to confirm",
+      "undo": "Undo"
+    },
+    "empty": {
+      "title": "Start a conversation",
+      "hint": "Type / for commands"
+    },
+    "loadingOlder": "Loading older messages...",
+    "input": {
+      "placeholderListening": "Listening...",
+      "placeholderFollowUp": "Send a follow-up...",
+      "placeholderDefault": "Type a message..."
+    },
+    "actions": {
+      "editMessage": "Edit message",
+      "replace": "Replace"
+    },
+    "alerts": {
+      "messageActionsTitle": "Message actions",
+      "notSupportedTitle": "Not supported",
+      "notSupportedMessage": "Editing sent messages needs a newer opencode server. Please update the server and try again.",
+      "revertAuthFailedTitle": "Authentication failed",
+      "revertAuthFailedMessage": "Your server credentials were rejected. Check your connection and try again.",
+      "editFailedTitle": "Edit failed",
+      "editFailedMessage": "Could not revert to this message. Please try again.",
+      "replaceDraftTitle": "Replace draft?",
+      "replaceDraftMessage": "You have an unsent message in the composer. Editing this message will replace it.",
+      "cameraPermissionTitle": "Permission needed",
+      "cameraPermissionMessage": "Camera access is required to take photos.",
+      "emptyClipboardTitle": "Empty clipboard",
+      "emptyClipboardMessage": "Clipboard does not contain text or an image.",
+      "authRequiredTitle": "Authentication required",
+      "authRequiredMessage": "Biometric authentication is required to send. Please try again.",
+      "sendFailedTitle": "Message not sent",
+      "sendFailedMessage": "Could not send your message. Check your connection and try again.",
+      "replyFailedTitle": "Reply Failed",
+      "replyFailedMessage": "Could not send your response. Please try again.",
+      "rejectFailedTitle": "Reject Failed",
+      "rejectFailedMessage": "Could not send your response. Please try again.",
+      "imageFailedTitle": "Image not attached",
+      "imageFailedMessage": "One or more images could not be processed. Please try a different photo.",
+      "speechErrorTitle": "Voice input failed",
+      "speechErrorMessage": "Could not use voice input. Check your microphone permission and try again."
+    }
+  },
+  "connection": {
+    "shared": {
+      "connectionType": "Connection Type",
+      "types": {
+        "local": "Local",
+        "tunnel": "Tunnel",
+        "cloud": "Cloud"
+      },
+      "name": "Name",
+      "namePlaceholder": "My Server",
+      "serverUrl": "Server URL",
+      "directoryOptional": "Project Directory (Optional)",
+      "authentication": "Authentication",
+      "username": "Username",
+      "password": "Password",
+      "alerts": {
+        "enterName": "Please enter a connection name",
+        "enterUrl": "Please enter a server URL",
+        "invalidUrlTitle": "Invalid URL",
+        "invalidUrlMessage": "Enter a full URL including http:// or https://, e.g. http://192.168.1.100:4096",
+        "connectionFailedTitle": "Connection Failed",
+        "unknownError": "Unknown error",
+        "saveFailedTitle": "Couldn't Save Connection",
+        "saveFailedMessage": "The connection test succeeded, but saving it failed. Please try again."
+      }
+    },
+    "add": {
+      "quick": {
+        "title": "Connect to OpenCode",
+        "subtitle": "Enter your computer's IP address to connect",
+        "ipAddressLabel": "IP Address",
+        "nameOptionalLabel": "Name (optional)",
+        "namePlaceholder": "My Mac",
+        "passwordIfSetLabel": "Password (if set on server)",
+        "passwordPlaceholder": "Leave empty if none",
+        "usernameHintPrefix": "Username defaults to ",
+        "usernameHintMiddle": ". Custom username? Use ",
+        "usernameHintSuffix": ".",
+        "advancedOptionsLink": "Advanced options",
+        "connectButton": "Connect",
+        "helpTitle": "How to find your IP:",
+        "helpMacPrefix": "On your Mac, run:",
+        "helpTailscalePrefix": "Tailscale examples:",
+        "helpProtocolPrefix": "Use ",
+        "helpProtocolMiddle": " for local and Tailscale addresses unless TLS is configured, then use ",
+        "helpProtocolSuffix": ".",
+        "helpRunningPrefix": "Make sure OpenCode is running:",
+        "connectCardTitle": "OpenCode Connect",
+        "connectCardBadge": "Coming Soon",
+        "connectCardDesc": "Bridge your phone to your opencode server — no tunnel setup, no firewall config. One-tap connect from anywhere.",
+        "advancedLink": "Advanced options (tunnels, cloud, auth)"
+      },
+      "waitlist": {
+        "successText": "You're on the list — we'll email you when OpenCode Connect is ready.",
+        "joinButton": "Join Waitlist",
+        "alertTitle": "Join Waitlist",
+        "queuedText": "Saved on this device — we'll finish signing you up as soon as you're back online. You don't have to do anything.",
+        "emailUsLink": "Still not working? Email us instead",
+        "emailUsButton": "Email us",
+        "queueFailedMessage": "We couldn't reach the signup service or save your request on this device. You can email us instead and we'll add you by hand.",
+        "noMailAppMessage": "No email app is available. Please email support@agentlabs.cc with subject \"OpenCode Connect Waitlist\"."
+      },
+      "advanced": {
+        "backToQuick": "Simple mode",
+        "urlHintPrefix": "Local/Tailscale examples: ",
+        "urlHintOr": " or ",
+        "urlHintUse": ". Use ",
+        "urlHintSuffix": " only when TLS is configured.",
+        "directoryHint": "Leave empty to use the server's current directory, or specify a path to work in a different folder.",
+        "saveButton": "Save Connection"
+      },
+      "alerts": {
+        "enterIp": "Please enter your computer's IP address",
+        "connectionFailedMessage": "{{summary}}\n\nTarget: {{target}}\nError: {{error}}"
+      }
+    },
+    "edit": {
+      "notFound": "Connection not found",
+      "directoryHint": "Leave empty to use the server's current directory. Sessions will be created in this folder.",
+      "passwordLabel": "Password (leave empty to keep existing)",
+      "testButton": "Test Connection",
+      "saveButton": "Save Changes",
+      "deleteButton": "Delete Connection",
+      "alerts": {
+        "successTitle": "Success",
+        "successMessage": "Connection successful!",
+        "connectionFailedMessage": "{{summary}}\n\n({{detail}})",
+        "noDetail": "no detail",
+        "deleteTitle": "Delete Connection",
+        "deleteMessage": "Are you sure you want to delete \"{{name}}\"?"
+      }
+    }
+  },
+  "nav": {
+    "sessionsTab": "Sessions",
+    "connectionsTab": "Connections",
+    "settingsTab": "Settings",
+    "addConnectionTitle": "Add Connection",
+    "editConnectionTitle": "Edit Connection"
+  },
+  "connectionsList": {
+    "activeBadge": "Active",
+    "lastConnected": "Last connected: {{date}}",
+    "actionsAlert": {
+      "message": "What would you like to do?",
+      "edit": "Edit"
+    },
+    "empty": {
+      "title": "No Connections",
+      "subtitle": "Add a connection to your OpenCode server"
+    },
+    "header": "Tap to switch, long press for options",
+    "preferences": {
+      "title": "Preferences",
+      "pageSizeLabel": "Messages per page",
+      "pageSizeHint": "How many messages to load when opening a session. Lower = faster."
+    }
+  },
+  "sessionsList": {
+    "untitledSession": "Untitled Session",
+    "time": {
+      "justNow": "Just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    },
+    "filesCount": "{{count}} files",
+    "actions": {
+      "rename": "Rename"
+    },
+    "alerts": {
+      "renameFailedTitle": "Rename failed",
+      "renameFailedMessage": "Could not rename the session. Please try again.",
+      "deleteTitle": "Delete Session",
+      "deleteMessage": "Delete \"{{title}}\"?",
+      "deleteFailedTitle": "Delete failed",
+      "deleteFailedMessage": "Could not delete the session. Please try again.",
+      "createFailedMessage": "Failed to create session. Check your connection and try again."
+    },
+    "empty": {
+      "noConnectionTitle": "No Connection",
+      "noConnectionSubtitle": "Connect to a computer running opencode serve on your network or via Tailscale to get started.",
+      "setupGuideLink": "How to set up a server",
+      "addConnectionButton": "Add Connection",
+      "tryDemoButton": "Try a demo (no server needed)",
+      "authFailedTitle": "Authentication Failed",
+      "authFailedSubtitle": "{{name}} rejected your credentials. Check the username and password to reconnect.",
+      "checkCredentialsButton": "Check Credentials",
+      "noSessions": "No sessions yet"
+    },
+    "newSessionModal": {
+      "title": "New Session",
+      "currentProjectLabel": "Current Project",
+      "serverDefault": "Server default",
+      "modelLabel": "Model",
+      "recentProjectsLabel": "Recent Projects",
+      "serverProjectsLabel": "Server Projects",
+      "browseFoldersLabel": "Browse Folders…",
+      "browseFoldersHint": "Explore the server's filesystem",
+      "enterPathLabel": "Enter Path Manually",
+      "createInButton": "Create in {{dir}}",
+      "createSessionButton": "Create Session"
+    },
+    "renameModal": {
+      "title": "Rename Session"
+    }
+  },
+  "notifications": {
+    "categories": {
+      "permissions": {
+        "label": "Permission Requests",
+        "description": "When a tool needs approval to proceed"
+      },
+      "questions": {
+        "label": "Questions",
+        "description": "When the assistant needs your input"
+      },
+      "completed": {
+        "label": "Task Completed",
+        "description": "When a session finishes processing"
+      },
+      "errors": {
+        "label": "Errors",
+        "description": "When a session encounters a problem"
+      },
+      "connection": {
+        "label": "Connection",
+        "description": "When the app loses connection for an extended period"
+      }
+    }
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "subtitle": "The app hit an unexpected error. You can share a detailed report to help us fix it faster, or try again.",
+    "errorLabel": "Error",
+    "unknownError": "Unknown error",
+    "stackLabel": "Stack",
+    "componentLabel": "Component",
+    "shareButton": "Share Report",
+    "tryAgainButton": "Try Again"
+  },
+  "authGate": {
+    "title": "OpenCode Locked",
+    "subtitle": "Authenticate to access your sessions",
+    "unlockButton": "Unlock"
+  },
+  "chat": {
+    "commands": {
+      "new": {
+        "title": "New Session",
+        "description": "Start a new session"
+      },
+      "model": {
+        "title": "Switch Model",
+        "description": "Choose a different model"
+      },
+      "agent": {
+        "title": "Switch Agent",
+        "description": "Cycle to next agent"
+      },
+      "compact": {
+        "title": "Compact Session",
+        "description": "Summarize history to free context"
+      },
+      "undo": {
+        "title": "Undo",
+        "description": "Revert the last message"
+      },
+      "redo": {
+        "title": "Redo",
+        "description": "Restore reverted messages"
+      }
+    },
+    "permissionPrompt": {
+      "title": "Permission Required",
+      "deny": "Deny",
+      "always": "Always",
+      "allow": "Allow"
+    },
+    "questionPrompt": {
+      "headerFallback": "Question",
+      "answerPlaceholder": "Type your answer...",
+      "customAnswerLabel": "Type your own answer",
+      "dismiss": "Dismiss",
+      "next": "Next",
+      "submit": "Submit"
+    },
+    "statusIndicator": {
+      "retrying": "Retrying (attempt {{attempt}})...",
+      "working": "Working..."
+    },
+    "slashPopover": {
+      "customBadge": "cmd"
+    },
+    "modelPicker": {
+      "title": "Select Model",
+      "searchPlaceholder": "Search models...",
+      "serverDefault": "Server default",
+      "empty": "No connected providers yet"
+    },
+    "message": {
+      "copy": "Copy",
+      "copied": "Copied",
+      "revertHere": "Reset to this point"
+    },
+    "variantPicker": {
+      "title": "Reasoning Effort",
+      "autoLabel": "Auto",
+      "autoDescription": "Use model default reasoning",
+      "effort": {
+        "low": "Faster, less thorough reasoning",
+        "medium": "Balanced reasoning and speed",
+        "high": "Deep, thorough reasoning"
+      }
+    },
+    "directorySwitcher": {
+      "title": "Switch Project",
+      "serverDefaultLabel": "Server Default",
+      "browseLabel": "Browse…",
+      "recentProjectsLabel": "Recent Projects",
+      "usesServerDir": "Uses server's working directory"
+    },
+    "directoryBrowserSheet": {
+      "noActiveConnection": "No active connection",
+      "listFailed": "Failed to list directory",
+      "title": "Browse Folders",
+      "jumpPlaceholder": "Jump to path...",
+      "noSubfolders": "No subfolders here",
+      "enterPathHint": "Enter a path above to start browsing",
+      "useFolderButton": "Use {{folder}}",
+      "thisFolderFallback": "this folder"
+    },
+    "reasoningBlock": {
+      "label": "Thinking"
+    },
+    "toolCallCard": {
+      "fallbackTitle": "Tool",
+      "patternOnly": "Pattern: {{pattern}}",
+      "patternWithPath": "Pattern: {{pattern}} in {{path}}"
+    },
+    "sessionInfo": {
+      "noUsageData": "No usage data yet",
+      "loading": "Loading...",
+      "loadAllMessages": "Load all messages",
+      "jumpToBeginning": "Jump to beginning",
+      "pills": {
+        "in": "In",
+        "out": "Out",
+        "think": "Think",
+        "cacheRead": "Cache R",
+        "cacheWrite": "Cache W"
+      },
+      "meta": {
+        "created": "Created",
+        "updated": "Updated",
+        "messages": "Messages",
+        "changes": "Changes",
+        "shared": "Shared",
+        "yes": "Yes"
+      },
+      "time": {
+        "justNow": "just now",
+        "minutesAgo": "{{count}}m ago",
+        "hoursAgo": "{{count}}h ago",
+        "daysAgo": "{{count}}d ago"
+      }
+    }
+  },
+  "demo": {
+    "title": "Demo",
+    "banner": "Demo — sample conversation, no server connected",
+    "ctaTitle": "Like what you see?",
+    "ctaSubtitle": "This was a scripted demo. Connect your own opencode server to do this for real.",
+    "connectButton": "Connect your own server",
+    "setupGuideLink": "How to set up a server",
+    "hostedCtaLink": "No server? Join the OpenCode Connect waitlist — hosted, no setup"
+  },
+  "update": {
+    "available": "Update available",
+    "body": "Version {{version}} is out. You're on {{current}}.",
+    "action": "Get it",
+    "dismiss": "Not now",
+    "upToDate": "Up to date"
+  }
+}
