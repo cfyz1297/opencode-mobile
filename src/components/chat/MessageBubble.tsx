@@ -81,7 +81,7 @@ export const MessageBubble = memo(
             color={isUser ? (isDark ? "#ffffff" : "#0a0a0a") : "#8b5cf6"}
           />
           <Text style={[s.role, isUser && s.roleUser, isDark && s.textWhite]}>
-            {isUser ? t("chat.message.roleYou") : t("chat.message.roleAssistant")}
+            {isUser ? "You" : "Assistant"}
           </Text>
           {message.model && <Text style={[s.modelTag, isDark && s.modelTagDark]}>{message.model.modelID}</Text>}
           {!isUser && message.modelID && <Text style={[s.modelTag, isDark && s.modelTagDark]}>{message.modelID}</Text>}
