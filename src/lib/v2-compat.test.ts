@@ -184,6 +184,74 @@ describe("mapMessages", () => {
     assert.equal(one.parts[0].text, "Nothing to compact yet")
     assert.equal(one.parts[0].status, "failed")
   })
+
+  it("renders a v2 inline attachment from its base64 data string", () => {
+    const [one] = mapMessages(
+      [
+        {
+          id: "msg_img",
+          type: "user",
+          time: { created: 12 },
+          text: "what is this?",
+          files: [
+            {
+              data: "/9j/AA==",
+              mime: "image/jpeg",
+              source: { type: "inline" },
+              name: "image.jpg",
+            },
+          ],
+        },
+      ],
+      "ses",
+    )
+    const file = one.parts.find((p) => p.type === "file")
+    assert.equal(file?.url, "data:image/jpeg;base64,/9j/AA==")
+    assert.equal(file?.mime, "image/jpeg")
+    assert.equal(file?.filename, "image.jpg")
+  })
+
+  it("prefers inline data over the provenance uri", () => {
+    const [one] = mapMessages(
+      [
+        {
+          id: "msg_img2",
+          type: "user",
+          time: { created: 13 },
+          files: [
+            {
+              data: "aGVsbG8=",
+              mime: "image/png",
+              source: { type: "uri", uri: "file:///home/user/photo.png" },
+            },
+          ],
+        },
+      ],
+      "ses",
+    )
+    assert.equal(one.parts[0].url, "data:image/png;base64,aGVsbG8=")
+  })
+
+  it("does not emit an empty image uri that renders as a white box", () => {
+    const [one] = mapMessages(
+      [
+        {
+          id: "msg_img3",
+          type: "user",
+          time: { created: 14 },
+          files: [
+            {
+              mime: "image/jpeg",
+              source: { type: "uri", uri: "file:///home/user/photo.jpg" },
+              name: "photo.jpg",
+            },
+          ],
+        },
+      ],
+      "ses",
+    )
+    assert.equal(one.parts.filter((p) => p.type === "file").length, 0)
+  })
 })
 
 describe("catalog mappings", () => {
