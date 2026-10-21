@@ -5,9 +5,11 @@
 import { describe, it } from "node:test"
 import assert from "node:assert/strict"
 import {
+  buildFormAnswer,
   clampMessageLimit,
   joinPath,
   mapAgents,
+  mapForms,
   mapCommands,
   mapFileEntries,
   mapMessages,
@@ -433,5 +435,182 @@ describe("V2EventAdapter", () => {
     const a = adapter()
     assert.deepEqual(a.adapt({ type: "server.connected", data: {} }), [])
     assert.deepEqual(a.adapt({ type: "session.inbox.enqueued", data: {} }), [])
+  })
+})
+
+// --- BUG-004: model questions are V2 forms with metadata.kind "question" ----
+
+const questionForm = {
+  id: "frm_1",
+  sessionID: "ses_1",
+  title: "Questions",
+  metadata: { kind: "question", tool: { messageID: "msg_1", id: "call_1" } },
+  fields: [
+    {
+      key: "q0",
+      type: "string",
+      title: "Framework",
+      description: "Which framework?",
+      options: [
+        { value: "react", label: "React", description: "UI library" },
+        { value: "vue", label: "Vue" },
+      ],
+      custom: true,
+    },
+    {
+      key: "q1",
+      type: "multiselect",
+      title: "Extras",
+      description: "Pick extras",
+      options: [{ value: "ts", label: "TypeScript" }],
+      custom: true,
+    },
+  ],
+}
+
+describe("mapForms", () => {
+  it("maps a question form to the V1 question shape", () => {
+    const out = mapForms([questionForm])
+    assert.equal(out.length, 1)
+    assert.equal(out[0].id, "frm_1")
+    assert.equal(out[0].sessionID, "ses_1")
+    assert.deepEqual(out[0].questions, [
+      {
+        header: "Framework",
+        question: "Which framework?",
+        options: [
+          { label: "React", description: "UI library" },
+          { label: "Vue", description: "" },
+        ],
+        multiple: false,
+        custom: true,
+      },
+      {
+        header: "Extras",
+        question: "Pick extras",
+        options: [{ label: "TypeScript", description: "" }],
+        multiple: true,
+        custom: true,
+      },
+    ])
+    assert.deepEqual(out[0].tool, { messageID: "msg_1", callID: "call_1" })
+  })
+
+  it("ignores forms that are not question prompts", () => {
+    const other = { ...questionForm, id: "frm_2", metadata: { kind: "websearch.provider" } }
+    assert.deepEqual(mapForms([questionForm, other]).map((q) => q.id), ["frm_1"])
+  })
+
+  it("skips fields the question UI cannot render", () => {
+    const form = {
+      ...questionForm,
+      fields: [...questionForm.fields, { key: "ack", type: "external", title: "Ack" }],
+    }
+    assert.equal(mapForms([form])[0].questions.length, 2)
+  })
+
+  it("drops question forms with no renderable fields", () => {
+    const form = { ...questionForm, fields: [{ key: "ack", type: "external" }] }
+    assert.deepEqual(mapForms([form]), [])
+  })
+
+  it("tolerates malformed payloads", () => {
+    assert.deepEqual(mapForms(undefined), [])
+    assert.deepEqual(mapForms({ data: [questionForm] }), [])
+  })
+})
+
+describe("buildFormAnswer", () => {
+  const fields = [
+    {
+      key: "q0",
+      type: "string",
+      options: [
+        { value: "react", label: "React" },
+        { value: "vue", label: "Vue" },
+      ],
+      custom: true,
+    },
+    {
+      key: "q1",
+      type: "multiselect",
+      options: [
+        { value: "ts", label: "TypeScript" },
+        { value: "css", label: "CSS" },
+      ],
+      custom: true,
+    },
+    { key: "ack", type: "external", title: "Ack" },
+  ]
+
+  it("sends a scalar for single choice and an array for multiselect", () => {
+    assert.deepEqual(buildFormAnswer(fields, [["React"], ["TypeScript", "CSS"]]), {
+      q0: "react",
+      q1: ["ts", "css"],
+    })
+  })
+
+  it("passes custom answers through as raw text", () => {
+    assert.deepEqual(buildFormAnswer(fields, [["Svelte"], ["WASM"]]), {
+      q0: "Svelte",
+      q1: ["WASM"],
+    })
+  })
+
+  it("accepts option values as well as labels", () => {
+    assert.deepEqual(buildFormAnswer(fields, [["vue"], []]), { q0: "vue" })
+  })
+
+  it("omits unanswered questions", () => {
+    assert.deepEqual(buildFormAnswer(fields, [[], []]), {})
+    assert.deepEqual(buildFormAnswer(fields, [["React"], []]), { q0: "react" })
+  })
+
+  it("tolerates missing fields or answers", () => {
+    assert.deepEqual(buildFormAnswer(undefined, [["React"]]), { q0: "React" })
+    assert.deepEqual(buildFormAnswer(fields, []), {})
+  })
+})
+
+describe("V2EventAdapter forms", () => {
+  const adapter = () => new V2EventAdapter()
+
+  it("maps a question form.created to question.asked", () => {
+    const out = adapter().adapt({ type: "form.created", data: { form: questionForm } })
+    assert.equal(out.length, 1)
+    assert.equal(out[0].type, "question.asked")
+    assert.equal(out[0].properties.id, "frm_1")
+    assert.equal(out[0].properties.sessionID, "ses_1")
+    assert.equal((out[0].properties.questions as unknown[]).length, 2)
+  })
+
+  it("drops non-question forms", () => {
+    const out = adapter().adapt({
+      type: "form.created",
+      data: { form: { ...questionForm, metadata: { kind: "websearch.provider" } } },
+    })
+    assert.deepEqual(out, [])
+  })
+
+  it("maps form.replied to question.replied", () => {
+    const out = adapter().adapt({
+      type: "form.replied",
+      data: { id: "frm_1", sessionID: "ses_1", answer: { q0: "react" } },
+    })
+    assert.equal(out.length, 1)
+    assert.equal(out[0].type, "question.replied")
+    assert.equal(out[0].properties.requestID, "frm_1")
+    assert.equal(out[0].properties.sessionID, "ses_1")
+  })
+
+  it("maps form.cancelled to question.rejected", () => {
+    const out = adapter().adapt({
+      type: "form.cancelled",
+      data: { id: "frm_1", sessionID: "ses_1" },
+    })
+    assert.equal(out.length, 1)
+    assert.equal(out[0].type, "question.rejected")
+    assert.equal(out[0].properties.requestID, "frm_1")
+    assert.equal(out[0].properties.sessionID, "ses_1")
   })
 })
