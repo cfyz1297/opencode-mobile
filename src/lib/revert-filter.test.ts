@@ -66,3 +66,21 @@ test("buildMessageData: missing parts and undefined parts maps degrade to empty 
   const data = buildMessageData([msg("m1")], {}, undefined)
   assert.deepEqual(data[0].parts, [])
 })
+
+test("buildMessageData: cache keeps unchanged items referentially stable across streaming deltas", () => {
+  const messages = [msg("m1"), msg("m2")]
+  const baseParts = partsOf(["m1", "m2"])
+  const cache = new Map<string, { message: Message; parts: Part[] }>()
+
+  const first = buildMessageData(messages, baseParts, undefined, cache)
+  const firstM1 = first.find((item) => item.message.id === "m1")!
+  const firstM2 = first.find((item) => item.message.id === "m2")!
+
+  // A streaming delta replaces only m2's parts array, not the message list.
+  const streamedParts = { ...baseParts, m2: [...(baseParts.m2 ?? [])] }
+  const second = buildMessageData(messages, streamedParts, undefined, cache)
+
+  assert.equal(second.find((item) => item.message.id === "m1"), firstM1)
+  assert.notEqual(second.find((item) => item.message.id === "m2"), firstM2)
+  assert.equal(cache.get("m1")?.message, messages[0])
+})

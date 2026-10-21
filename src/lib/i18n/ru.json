@@ -367,9 +367,13 @@
       "headerFallback": "Вопрос",
       "answerPlaceholder": "Введите ответ...",
       "customAnswerLabel": "Ввести свой ответ",
+      "useCustomAnswer": "Использовать этот ответ",
       "dismiss": "Закрыть",
       "next": "Далее",
-      "submit": "Отправить"
+      "submit": "Отправить",
+      "sending": "Отправляю ответ...",
+      "sent": "Ответ отправлен",
+      "sendFailed": "Ответ не отправлен. Попробуйте ещё раз."
     },
     "statusIndicator": {
       "retrying": "Повтор (попытка {{attempt}})...",

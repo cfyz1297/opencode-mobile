@@ -16,7 +16,7 @@
 | 001 | HIGH | file.list двойной unwrap — браузер папок всегда пуст | src/lib/sdk.ts | FIXED |
 | 002 | HIGH | /command гибнет по 30с таймауту | src/lib/sdk.ts | FIXED |
 | 003 | HIGH | failed-ран показывается как успешный «Task completed» | src/lib/v2-compat.ts | FIXED |
-| 004 | HIGH | Question-flow мёртв под V2 ( вопросы не видны/не отвечаются ) | src/lib/sdk.ts + events.rs + v2-compat.ts | OPEN (требует контракта сервера V2) |
+| 004 | HIGH | Question-flow мёртв под V2 ( вопросы не видны/не отвечаются ) | src/lib/sdk.ts + events.rs + v2-compat.ts | FIXED (0.2.12) |
 | 005 | HIGH | tap по push при холодном старте потерян | src/lib/notifications.ts + app/_layout.tsx | FIXED |
 | 006 | HIGH | Quick Connect: https-URL получает :4096 | app/connection/add.tsx + src/lib/quick-connect-url.ts | FIXED |
 | 007 | MED | Test на экране правки даёт ложный 401 | app/connection/[id].tsx | FIXED |
@@ -44,10 +44,12 @@
 | 029 | LOW | notifications dedupe-карта растёт без обрезки | src/lib/notifications.ts | FIXED |
 | 030 | LOW | store-review: NaN при повреждённом счётчике | src/lib/store-review.ts | FIXED |
 | 031 | LOW | SessionInfo: строки могут вытесняться (flexShrink) | src/components/chat/SessionInfo.tsx | FIXED |
-| 032 | LOW | messageData пересобирается на каждый токен (плавность) | app/session/[id].tsx | OPEN (LOW — memo already applied, perf-only) |
+| 032 | LOW | messageData пересобирается на каждый токен (плавность) | app/session/[id].tsx + src/lib/revert-filter.ts | FIXED (0.2.13) |
 | 033 | LOW | textAccum не очищается при повторном started | src/lib/v2-compat.ts | FIXED |
+| 034 | MED | кастомный ответ исчезал без подтверждения отправки | src/components/chat/QuestionPrompt.tsx + app/session/[id].tsx | FIXED (0.2.13) |
+| 035 | HIGH | вопрос, созданный при разрыве SSE, не появлялся в чате | src/stores/events.ts + app/session/[id].tsx | FIXED (0.2.13) |
 
-SUSPECT: S-1 jump-to-top на inverted (Android), S-2 shape файлов в prompt-запросе, S-3 форма `session.sync/build` для V2 домена вопросов, S-4 «синхронизация чипа модели» переписывает вручную выбранный вариант.
+SUSPECT: S-1 jump-to-top на inverted (Android), S-2 shape файлов в prompt-запросе, S-4 «синхронизация чипа модели» переписывает вручную выбранный вариант. S-3 закрыт в 0.2.12 (контракт V2 подтверждён по исходникам сервера).
 
 ---
 
@@ -95,7 +97,7 @@ SUSPECT: S-1 jump-to-top на inverted (Android), S-2 shape файлов в prom
 - **Фикс:** в адаптере failed → генерировать дополнительно ошибку В1 (`session.error` со сводкой `data.error.message`), а interrupted — отличимый статус; events.ts тогда разметит `erroredSessions` и не позовёт review. Пиннинг есть: `src/lib/v2-compat.test.ts`, `it.skip("BUG-003…")`.
 
 ### BUG-004 — Question-flow мёртв под V2: промпт вопросов не показывается и ответ не доходит
-**Статус: FIXED** — в V2 вопросы модели идут не отдельными `question.*` событиями, а через Form-сервис: вопрос — это форма с `metadata.kind === "question"` (поля `q0…`, `type: "string"` для одиночного выбора или `"multiselect"`, `options[].value === options[].label`, `custom: true`). Добавлена трансляция форм в существующий QuestionPrompt и реальные вызовы form-эндпойнтов.
+**Статус: FIXED (0.2.12)** — в V2 вопросы модели идут не отдельными `question.*` событиями, а через Form-сервис: вопрос — это форма с `metadata.kind === "question"` (поля `q0…`, `type: "string"` для одиночного выбора или `"multiselect"`, `options[].value === options[].label`, `custom: true`). Добавлена трансляция форм в существующий QuestionPrompt и реальные вызовы form-эндпойнтов.
 - **Контракт V2:**
   - `GET /api/session/{sessionID}/form` → `{ data: Form.Info[] }` (только pending);
   - `GET /api/session/{sessionID}/form/{formID}` → `{ data: Form.Detail }` (поля + state);
@@ -107,7 +109,7 @@ SUSPECT: S-1 jump-to-top на inverted (Android), S-2 shape файлов в prom
   - `src/lib/sdk.ts`: `question.list(sessionID)` → `GET …/form`; `question.reply(sessionID, formID, answers)` сначала читает `GET …/form/{formID}` (типы полей и значения опций), затем POST reply; `question.reject(sessionID, formID)` → DELETE.
   - `src/stores/events.ts`, `app/session/[id].tsx`: вызовы обновлены (form-эндпойнты session-scoped).
 - **Тесты:** `src/lib/v2-compat.test.ts` — маппинг question-формы в V1-вопрос, отбрасывание не-question форм и невидимых полей, сборка ответа (single/multi/custom/empty), события `form.*`.
-- **Проверка:** `npm run typecheck` — чисто; полный прогон тестов — 335 pass, 0 fail.
+- **Проверка:** `npm run typecheck` — чисто; полный прогон тестов — 345 pass, 0 fail (0.2.13).
 
 ### BUG-005 — tap по push-уведомлению при холодном старте теряется
 **Статус: FIXED (0.2.10)** — в `notifications.ts` добавлен `getInitialResponse()` (`getLastNotificationResponseAsync`), в `_layout.tsx` он читается при монтировании и маршрутизирует, с дедупликацией против `onTap`-лисенера.
@@ -287,15 +289,42 @@ SUSPECT: S-1 jump-to-top на inverted (Android), S-2 shape файлов в prom
 - Примечание: числа (cost/ nevertheless токены) вовсе чистые — было проверено, NaN-режиссур не фиксируется.
 
 ### BUG-032 — messageData пересобирается на каждый входящий токен (плавность чата)
-- **Где:** `app/session/[id].tsx:211-221` (динамически в memo — после этогорифма `deps=[messages, parts, revertMessageID]`; parts ломается на каждый delta).
-- **Доказательство:** на каждый delta events → стан store обновляет `parts` → memo пересчитывает `[...терь all map reverse]` → создаётся новый массив items для ВСЕХ сообщений → FlatList diff на весь чат. Преждевременная оптимизация у MessageBubble мемом частично спасает, но data-пересборка всё равно на каждом токе.
-- **Фикс:** вытянуть parts-merge в неизменяемых сущностях (не пересобирать items, если сравнение слабое — item parts не менялись) или накапливать только streamинг-сообщение.
+**Статус: FIXED (0.2.13)**
+- **Где:** `app/session/[id].tsx` (memo `deps=[messages, parts, revertMessageID]`; parts меняется на каждый delta) + `src/lib/revert-filter.ts`.
+- **Доказательство:** на каждый delta events → store обновляет `parts` → memo пересчитывает весь список → создаётся новый массив items для ВСЕХ сообщений → FlatList diff на весь чат, memo у MessageBubble не помогает, потому что у каждого item новый объект и новый `parts`-массив (`[]` для сообщений без parts).
+- **Фикс:** `buildMessageData` принимает необязательный кэш `Map<messageID, item>`; item переиспользуется, если `message` и `parts` — те же ссылки. Экран держит кэш в `useRef`. Потоковый delta меняет item только у одного сообщения, остальные сохраняют идентичность → memo-компаратор MessageBubble пропускает их. Для сообщений без parts используется общий `EMPTY_PARTS`, иначе свежий `[]` каждый раз ломал бы сравнение.
+- **Тесты:** `src/lib/revert-filter.test.ts` — «cache keeps unchanged items referentially stable across streaming deltas».
 - Влияние: производительность чата на длинных ответах.
 
 ### BUG-033 — повторный started не чистит textAccum/reasoningAccum
 - **Где:** `src/lib/v2-compat.ts:484-519`.
 - **Доказательство:** `session.text.started` регистрирует новую ординату, но НЕ очищает старые аккумуляторы той же пары (messageID|ordinal) — если сервер шлёт повторный started для той же ординаты (replay/rollback), old текст останется сцеплен с новым. Поведение реального сервера не установлено — SAFE-фикс: при started перезаписывать accum пустотой.
 - **SUSPECT S(Server contract)**: подтвердить по логам V2-сервера, шлёт ли сервер repeat started.
+
+### BUG-034 — кастомный ответ исчезал без подтверждения отправки
+**Статус: FIXED (0.2.13)**
+- **Где:** `src/components/chat/QuestionPrompt.tsx` (`submitCustom`) + `app/session/[id].tsx` (`handleQuestionReply`).
+- **Доказательство (репорт):** ввести свой ответ, нажать кнопку отправки в строке кастомного ответа → текст исчезает, и нет никакого признака, что ответ ушёл. При ошибке сети/сервера это выглядело как успех.
+- **Причина:** `submitCustom` очищал `custom`/`showCustom` до ответа сервера, а `handleQuestionReply` оптимистично удалял промпт из store ещё до `await reply`. Пользователь терял и текст, и карточку, не видя ни «отправляется», ни «отправлено».
+- **Фикс:**
+  - текст остаётся видимым во время отправки и после неё; поле блокируется только на время запроса;
+  - статус `sending` → `sent` / `error` с иконкой и текстом; при ошибке retry доступен;
+  - промпт удаляется только после успешного ответа сервера (плюс fallback-таймер на случай потерянного `form.replied`);
+  - после успеха 2.5 с показывается баннер «Ответ отправлен» с отправленным текстом — он переживает удаление карточки;
+  - у кнопки в строке кастомного ответа теперь иконка «галочка» и accessibility-label «Использовать этот ответ» (это подтверждение выбора, а не молчаливая отправка).
+- **Тесты:** `src/lib/question-answers.test.ts` — `parseCustomAnswer` (trim/blank) и `applyQuestionAnswer` (замена только текущего вопроса, без мутации/алиасинга).
+
+### BUG-035 — вопрос, созданный при разрыве SSE, не появлялся в чате
+**Статус: FIXED (0.2.13)**
+- **Где:** `src/stores/events.ts` (`refreshPending`, reconnect) + `app/session/[id].tsx` (focus-only refresh).
+- **Доказательство (репорт):** на втором тестовом вопросе терминал показывает вопрос, а в приложении в чате его нет; после перезахода/фокуса иногда появляется.
+- **Причина:** поток событий V2 волатильный — события, отправленные пока приложение было в фоне или сокет переподключался, не переигрываются. Формы запрашивались только по `useFocusEffect`; реконнект и возврат из фона не делали resync. Вдобавок `refreshPending` **сливал** вопросы с локальным кэшем, поэтому устаревший/пропущенный набор не приходил в соответствие с сервером.
+- **Фикс:**
+  - `resyncCurrentSession()` на реконнекте SSE: заново читает `question.list` и сообщения текущей сессии;
+  - `AppState === "active"` на экране сессии: тот же refresh форм + сообщений;
+  - пока сессия busy, `refreshPending` опрашивается каждые 5 с (страховка от потерянного `form.created`);
+  - вопросы в `refreshPending` теперь **заменяются** серверным списком (сервер авторитетен), пермишены по-прежнему merge-by-ID, т.к. их ответы удаляются оптимистично.
+- **Тесты:** `src/lib/pending-questions.test.ts` — новый вопрос при пустом кэше, удаление отвеченного в терминале, очистка при пустом ответе сервера, возврат копии.
 
 ---
 
@@ -310,7 +339,7 @@ SUSPECT: S-1 jump-to-top на inverted (Android), S-2 shape файлов в prom
 - **Проверка:** отправить сообщение с вложением на реальный сервер V2 и сравнить body с ожиданиями openapi (`type/mime/url` vs `{uri,name}`); проверить, что аттачмент-предпросмотр исчезает на новом сообщении и в чат приходят картинки.
 
 ### S-3 — какое событие V2 шлёт для интерактивных вопросов
-- Нужна выборка по живому серверу (`/api/event` sniff при вопросе модели) для точного фикса BUG-004.
+**ЗАКРЫТ (0.2.12).** Контракт подтверждён по исходникам сервера (`packages/protocol/src/groups/session.ts` + `packages/schema/src/form.ts`): формы — session-scoped (`GET /api/session/{id}/form`, `GET …/form/{formID}`, `POST …/reply`, `DELETE …/form/{formID}`), события `form.created {form}`, `form.replied {id,sessionID,answer}`, `form.cancelled {id,sessionID}`. Вопрос модели — форма с `metadata.kind === "question"`; реализация в BUG-004.
 
 ### S-4 — «Синхронизация чипа модели» может переписывать только что выбранный вариант
 - `app/session/[id].tsx` (эффект на messages.length — читать latest assistant message, полученный из server-keep) — редкий переход (reconcile пред-password), у нему вопрос-SUSPECT (перезапись чипа если юзер только выбрал вариант до reconcile). Проверка на устройстве против прерывистого соединения.

@@ -9,12 +9,13 @@ import {
   useColorScheme,
   ActivityIndicator,
   Alert,
+  AppState,
 } from "react-native"
 import { useLocalSearchParams, Stack, useRouter, useFocusEffect } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useKeyboardHeight } from "../../src/lib/use-keyboard-height"
-import { buildMessageData } from "../../src/lib/revert-filter"
+import { buildMessageData, type MessageDataItem } from "../../src/lib/revert-filter"
 import { useTranslation } from "react-i18next"
 import * as ImagePicker from "expo-image-picker"
 import * as ImageManipulator from "expo-image-manipulator"
@@ -106,6 +107,12 @@ export default function SessionScreen() {
   const [input, setInput] = useState("")
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [showInfo, setShowInfo] = useState(false)
+  // A short-lived confirmation after a question reply. The prompt can be
+  // removed by the server's `question.replied` event before the user sees the
+  // "sent" state inside the card, so echo the submitted answer here as well.
+  const [questionSentText, setQuestionSentText] = useState<string | null>(null)
+  const questionSentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const questionRemoveTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
   const {
     currentSession,
@@ -153,6 +160,10 @@ export default function SessionScreen() {
   const sessionID = currentSession?.id
   const permissions = useEvents((s) => (sessionID ? s.permissions[sessionID] : undefined)) || []
   const questions = useEvents((s) => (sessionID ? s.questions[sessionID] : undefined)) || []
+  const sessionBusy = useEvents((s) => (sessionID ? s.sessionStatus[sessionID]?.type === "busy" : false))
+  // Poll while the run is active, including the optimistic window right after
+  // sending a message when the busy-status event may not have arrived yet.
+  const shouldPollPending = sessionBusy || isSending
 
   const shortDir = getShortDir(currentSession?.directory)
   const [showScrollButton, setShowScrollButton] = useState(false)
@@ -217,11 +228,19 @@ export default function SessionScreen() {
   // message sent concurrently with a revert isn't hidden.
   const revertMessageID = currentSession?.revert?.messageID
 
-  // Inverted FlatList: data is reversed (newest first) so newest renders at bottom
+  // Inverted FlatList: data is reversed (newest first) so newest renders at bottom.
+  // BUG-032: keep a per-message cache so a streaming delta for one message
+  // does not allocate new items (and defeat the bubble memo) for the whole chat.
+  const messageDataCache = useRef(new Map<string, MessageDataItem>())
   const messageData = useMemo(
-    () => buildMessageData(messages || [], parts || {}, revertMessageID),
+    () => buildMessageData(messages || [], parts || {}, revertMessageID, messageDataCache.current),
     [messages, parts, revertMessageID],
   )
+  // Drop cached items when switching sessions so the map cannot grow across
+  // every session visited in one app run.
+  useEffect(() => {
+    messageDataCache.current.clear()
+  }, [sessionID])
 
   // Tracks the latest composer text without pulling `input` into
   // handleMessageLongPress's deps — kept as a plain ref assignment (not
@@ -322,15 +341,61 @@ export default function SessionScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!id) return
+      let cancelled = false
       selectSession(id, directory).then(() => {
-        // Re-fetch pending permissions/questions from the server to recover from
-        // missed SSE events or failed optimistic removals
+        if (cancelled) return
+        // Resolve the client from the *selected* session's directory, not the
+        // optional route param: a session opened from a notification/favorite
+        // may not carry `directory`, and using the active client would query
+        // the wrong location for form/permission lists.
+        const current = useSessions.getState().currentSession
+        if (!current || current.id !== id) return
         const connState = useConnections.getState()
-        const c = directory ? (connState.clientForDirectory(directory) ?? connState.client) : connState.client
+        const c = current.directory
+          ? connState.clientForDirectory(current.directory) ?? connState.client
+          : connState.client
         if (c) refreshPending(c, id)
       })
+      return () => {
+        cancelled = true
+      }
     }, [id, directory]),
   )
+
+  // Foreground recovery: the OS pauses/kills the SSE connection while the app
+  // is in the background, and V2 does not replay missed events. Refresh both
+  // the transcript and pending prompts when the user comes back, otherwise a
+  // question asked in the meantime stays invisible until the screen is re-opened.
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next) => {
+      if (next !== "active" || !sessionID || !sessionClient) return
+      void refreshPending(sessionClient, sessionID)
+      void useSessions.getState().refreshMessages()
+    })
+    return () => sub.remove()
+  }, [sessionID, sessionClient])
+
+  // Watchdog for the same failure mode while connected: forms are ephemeral
+  // events, so a single dropped frame/packet can hide a question until the next
+  // manual refresh. While the viewed session is busy (a question blocks the
+  // run), poll the pending-form list every few seconds. The request is small
+  // and only runs for the session on screen.
+  useEffect(() => {
+    if (!shouldPollPending || !sessionID || !sessionClient) return
+    void refreshPending(sessionClient, sessionID)
+    const timer = setInterval(() => {
+      void refreshPending(sessionClient, sessionID)
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [shouldPollPending, sessionID, sessionClient])
+
+  useEffect(() => {
+    return () => {
+      if (questionSentTimer.current) clearTimeout(questionSentTimer.current)
+      for (const timer of questionRemoveTimers.current.values()) clearTimeout(timer)
+      questionRemoveTimers.current.clear()
+    }
+  }, [])
 
   // Sync model chip from latest assistant message
   useEffect(() => {
@@ -626,43 +691,62 @@ export default function SessionScreen() {
   }
 
   const handleQuestionReply = async (requestID: string, answers: string[][]) => {
-    if (!sessionClient || !sessionID) return
-    const snapshot = useEvents.getState().questions[sessionID] || []
-    useEvents.setState((state) => ({
-      questions: {
-        ...state.questions,
-        [sessionID]: snapshot.filter((q) => q.id !== requestID),
-      },
-    }))
+    if (!sessionClient || !sessionID) throw new Error("No active session")
+
+    // Do NOT remove the prompt optimistically. The card stays mounted so the
+    // user can see their typed custom answer and the "sending/sent" state; it
+    // is removed only after the server confirms the reply. On failure the
+    // prompt stays and QuestionPrompt re-enables retry.
     try {
       await sessionClient.question.reply(sessionID, requestID, answers)
     } catch (err) {
       console.error("Question reply failed:", err)
-      useEvents.setState((state) => ({
-        questions: { ...state.questions, [sessionID]: snapshot },
-      }))
       Alert.alert(t("session.alerts.replyFailedTitle"), t("session.alerts.replyFailedMessage"))
+      throw err
     }
+
+    // Echo the submitted answer outside the prompt too: the server's
+    // `question.replied` event often removes the card immediately, which is
+    // exactly when the user otherwise loses sight of what was sent.
+    const answerText = answers
+      .flat()
+      .map((answer) => answer.trim())
+      .filter(Boolean)
+      .join(" · ")
+    if (questionSentTimer.current) clearTimeout(questionSentTimer.current)
+    setQuestionSentText(answerText)
+    questionSentTimer.current = setTimeout(() => setQuestionSentText(null), 2500)
+
+    // Fallback removal if the volatile `question.replied` event never arrives.
+    const pendingRemoval = questionRemoveTimers.current.get(requestID)
+    if (pendingRemoval) clearTimeout(pendingRemoval)
+    const removal = setTimeout(() => {
+      questionRemoveTimers.current.delete(requestID)
+      useEvents.setState((state) => ({
+        questions: {
+          ...state.questions,
+          [sessionID]: (state.questions[sessionID] || []).filter((q) => q.id !== requestID),
+        },
+      }))
+    }, 1200)
+    questionRemoveTimers.current.set(requestID, removal)
   }
 
   const handleQuestionReject = async (requestID: string) => {
-    if (!sessionClient || !sessionID) return
-    const snapshot = useEvents.getState().questions[sessionID] || []
-    useEvents.setState((state) => ({
-      questions: {
-        ...state.questions,
-        [sessionID]: snapshot.filter((q) => q.id !== requestID),
-      },
-    }))
+    if (!sessionClient || !sessionID) throw new Error("No active session")
     try {
       await sessionClient.question.reject(sessionID, requestID)
     } catch (err) {
       console.error("Question reject failed:", err)
-      useEvents.setState((state) => ({
-        questions: { ...state.questions, [sessionID]: snapshot },
-      }))
       Alert.alert(t("session.alerts.rejectFailedTitle"), t("session.alerts.rejectFailedMessage"))
+      throw err
     }
+    useEvents.setState((state) => ({
+      questions: {
+        ...state.questions,
+        [sessionID]: (state.questions[sessionID] || []).filter((q) => q.id !== requestID),
+      },
+    }))
   }
 
   const handleModelSelect = useCallback(
@@ -836,6 +920,23 @@ export default function SessionScreen() {
             onReply={(reply) => handlePermissionReply(perm.id, reply)}
           />
         ))}
+
+        {/* Question reply confirmation — survives the prompt's removal */}
+        {questionSentText !== null && (
+          <View style={[s.questionSent, isDark && s.questionSentDark]}>
+            <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
+            <View style={s.questionSentBody}>
+              <Text style={[s.questionSentTitle, isDark && s.questionSentTitleDark]}>
+                {t("chat.questionPrompt.sent")}
+              </Text>
+              {questionSentText ? (
+                <Text style={[s.questionSentAnswer, isDark && s.metaDark]} numberOfLines={2}>
+                  {questionSentText}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+        )}
 
         {/* Questions */}
         {questions.map((q) => (
@@ -1037,6 +1138,25 @@ const s = StyleSheet.create({
   emptyHint: { fontSize: 13, color: "#bbbbbb", marginTop: 4 },
   metaDark: { color: "#666666" },
   textWhite: { color: "#ffffff" },
+
+  // Question reply confirmation (survives prompt removal)
+  questionSent: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    marginHorizontal: 12,
+    marginTop: 8,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    backgroundColor: "#ecfdf5",
+    borderColor: "#a7f3d0",
+  },
+  questionSentDark: { backgroundColor: "#052e16", borderColor: "#166534" },
+  questionSentBody: { flex: 1 },
+  questionSentTitle: { fontSize: 13, fontWeight: "600", color: "#166534" },
+  questionSentTitleDark: { color: "#86efac" },
+  questionSentAnswer: { fontSize: 12, color: "#374151", marginTop: 2 },
 
   // Toolbar
   toolbar: {

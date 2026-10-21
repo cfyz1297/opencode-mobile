@@ -7,6 +7,7 @@ import { statusFromPart } from "../lib/status-labels"
 import { recordSuccessfulSession } from "../lib/store-review"
 import { isAuthError } from "../lib/api-error"
 import { isSessionActuallyIdle } from "../lib/session-status-reconcile"
+import { reconcilePendingQuestions } from "../lib/pending-questions"
 import type { Client, Part, Session, Message } from "../lib/sdk"
 
 // Session status from the server
@@ -81,9 +82,9 @@ export async function refreshPending(client: Client, sessionID: string) {
       (q: Record<string, unknown>) => q.sessionID === sessionID,
     )
     useEvents.setState((state) => ({
-      // BUG-011: merge by ID instead of wholesale replace — permissions/questions
-      // already answered (optimistically removed) must not be resurrected by a
-      // server list that hasn't caught up yet.
+      // BUG-011: permissions keep the merge-by-ID behavior — a reply is still
+      // optimistically removed from the UI, so a server list that has not
+      // caught up yet must not resurrect it.
       permissions: {
         ...state.permissions,
         [sessionID]: [
@@ -91,12 +92,13 @@ export async function refreshPending(client: Client, sessionID: string) {
           ...sessionPerms,
         ],
       },
+      // Questions are the opposite: the list is server-authoritative. A form
+      // created during an SSE outage must appear, and a form answered from the
+      // terminal must disappear. Replies are no longer removed optimistically,
+      // so there is no local entry that could be incorrectly resurrected.
       questions: {
         ...state.questions,
-        [sessionID]: [
-          ...(state.questions[sessionID] || []).filter((q) => !sessionQuestions.some((sq) => sq.id === q.id)),
-          ...(sessionQuestions as any),
-        ],
+        [sessionID]: reconcilePendingQuestions(state.questions[sessionID] || [], sessionQuestions as any),
       },
     }))
   } catch (err) {
@@ -158,6 +160,25 @@ async function resyncBusySessions() {
       }
     }),
   )
+}
+
+// V2's event stream is volatile: it resumes from "now" and never replays
+// events emitted while the app was backgrounded or the socket was down. A
+// question (or permission) created in that gap would otherwise stay invisible
+// until the user manually re-opened the session. On reconnect, re-read both
+// the current transcript and the pending prompts.
+async function resyncCurrentSession() {
+  const sessions = useSessions.getState()
+  const current = sessions.currentSession
+  if (!current) return
+
+  const connState = useConnections.getState()
+  const client = current.directory
+    ? connState.clientForDirectory(current.directory) ?? connState.client
+    : connState.client
+  if (!client) return
+
+  await Promise.allSettled([refreshPending(client, current.id), sessions.refreshMessages()])
 }
 
 export const useEvents = create<EventsState>((set, get) => ({
@@ -240,6 +261,7 @@ export const useEvents = create<EventsState>((set, get) => ({
           if (isReconnect && !resyncedAfterReconnect) {
             resyncedAfterReconnect = true
             void resyncBusySessions()
+            void resyncCurrentSession()
           }
 
           const payload = (event as any).payload || event

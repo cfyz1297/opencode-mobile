@@ -367,9 +367,13 @@
       "headerFallback": "问题",
       "answerPlaceholder": "输入您的答案...",
       "customAnswerLabel": "输入自定义答案",
+      "useCustomAnswer": "使用此答案",
       "dismiss": "忽略",
       "next": "下一个",
-      "submit": "提交"
+      "submit": "提交",
+      "sending": "正在发送答案...",
+      "sent": "答案已发送",
+      "sendFailed": "答案未发送，请重试。"
     },
     "statusIndicator": {
       "retrying": "正在重试（第 {{attempt}} 次）...",

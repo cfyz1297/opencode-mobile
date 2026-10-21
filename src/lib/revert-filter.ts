@@ -23,21 +23,39 @@ export interface MessageDataItem {
   parts: Part[]
 }
 
+// Shared empty array for messages that have no parts yet, so the cache below
+// can recognise them as unchanged instead of comparing a fresh [] every delta.
+const EMPTY_PARTS: Part[] = []
+
 /**
  * Assemble the inverted FlatList data for the chat screen: filter messages
  * hidden by the pending revert, attach each message's parts, then reverse so
  * the newest message renders at the bottom of the inverted list.
+ *
+ * BUG-032: streaming deltas replace the `parts` record on every token. When a
+ * cache is supplied, unchanged messages keep the exact same item object (and
+ * parts array) so MessageBubble's memo comparator can skip them; only the
+ * message whose parts actually changed gets a new item.
  */
 export function buildMessageData(
   messages: Message[],
   parts: Record<string, Part[]>,
   revertMessageID: string | null | undefined,
+  cache?: Map<string, MessageDataItem>,
 ): MessageDataItem[] {
-  return (messages || [])
-    .filter((msg) => !isHiddenByRevert(msg.id, revertMessageID))
-    .map((msg) => ({
-      message: msg,
-      parts: (parts && parts[msg.id]) || [],
-    }))
+  const list = (messages || []).filter((msg) => !isHiddenByRevert(msg.id, revertMessageID))
+
+  return list
+    .map((msg) => {
+      const nextParts = (parts && parts[msg.id]) || EMPTY_PARTS
+      if (!cache) return { message: msg, parts: nextParts }
+
+      const cached = cache.get(msg.id)
+      if (cached && cached.message === msg && cached.parts === nextParts) return cached
+
+      const item = { message: msg, parts: nextParts }
+      cache.set(msg.id, item)
+      return item
+    })
     .reverse()
 }

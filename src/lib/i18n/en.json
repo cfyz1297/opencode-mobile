@@ -367,9 +367,13 @@
       "headerFallback": "Question",
       "answerPlaceholder": "Type your answer...",
       "customAnswerLabel": "Type your own answer",
+      "useCustomAnswer": "Use this answer",
       "dismiss": "Dismiss",
       "next": "Next",
-      "submit": "Submit"
+      "submit": "Submit",
+      "sending": "Sending answer...",
+      "sent": "Answer sent",
+      "sendFailed": "Answer not sent. Try again."
     },
     "statusIndicator": {
       "retrying": "Retrying (attempt {{attempt}})...",
