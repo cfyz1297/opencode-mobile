@@ -1,0 +1,5 @@
+v0.2.12 — Questions from the model work again on V2
+
+- Question prompts now appear in the chat and answers reach the server. Under V2 a model question arrives as a form, which the app previously ignored — the run could wait forever with nothing on screen.
+- Single-choice questions send one value, multi-select questions send a list, custom typed answers are accepted, and dismissing the prompt cancels it cleanly.
+- Pending questions are also recovered when you reopen a session, so a prompt that arrived while the app was backgrounded is not lost.
