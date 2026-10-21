@@ -1,0 +1,3 @@
+v0.2.13 — Question answers confirmed, missed questions recovered
+
+Typing a custom answer no longer makes it disappear: it stays visible while sending, with sent/error states and a confirmation banner. Questions asked while the app was backgrounded or disconnected now appear after reconnect or returning to the app. Long streaming replies are smoother too.

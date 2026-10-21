@@ -1,0 +1,6 @@
+v0.2.13 — Question answers are confirmed, missed questions recover
+
+- Typing a custom answer no longer makes it vanish: the text stays visible while the reply is sent, and a clear "Sending / Answer sent / Try again" state replaces the silent disappearance. A short confirmation banner echoes the submitted answer even after the prompt closes.
+- Questions asked while the app was backgrounded or the event stream was reconnecting now appear: pending forms and the transcript are refreshed on reconnect and when the app returns to the foreground. While a session is busy, pending forms are also polled every few seconds.
+- A question answered from the terminal no longer lingers in the app, because the pending-question list now follows the server instead of merging a stale local copy.
+- Long streaming replies are smoother: unchanged chat messages keep their identity instead of being rebuilt on every token.

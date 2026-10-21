@@ -1,3 +1,3 @@
-v0.2.12 — Questions from the model work again
+v0.2.13 — Question answers are confirmed
 
-When the model asks you to pick an option or type an answer, the prompt now appears in the chat and your reply reaches the server. Previously the app ignored V2 question forms, so the run could wait forever with nothing on screen. Single-choice, multi-select, custom answers and dismiss are supported.
+Typing a custom answer no longer makes it disappear: the text stays visible while the reply is sent, with clear sending, sent and retry states plus a confirmation banner. Questions asked while the app was backgrounded or reconnecting now appear after a refresh, and long streaming chats are smoother.
