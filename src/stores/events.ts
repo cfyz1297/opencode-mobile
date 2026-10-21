@@ -75,7 +75,7 @@ const PROLONGED_DISCONNECT_MS = 30_000
 // optimistic removals.
 export async function refreshPending(client: Client, sessionID: string) {
   try {
-    const [perms, questions] = await Promise.all([client.permission.list(), client.question.list()])
+    const [perms, questions] = await Promise.all([client.permission.list(), client.question.list(sessionID)])
     const sessionPerms = (perms || []).filter((p: Record<string, unknown>) => p.sessionID === sessionID)
     const sessionQuestions = ((questions || []) as Array<{ id: string; sessionID: string; questions: unknown[] }>).filter(
       (q: Record<string, unknown>) => q.sessionID === sessionID,

@@ -635,7 +635,7 @@ export default function SessionScreen() {
       },
     }))
     try {
-      await sessionClient.question.reply(requestID, answers)
+      await sessionClient.question.reply(sessionID, requestID, answers)
     } catch (err) {
       console.error("Question reply failed:", err)
       useEvents.setState((state) => ({
@@ -655,7 +655,7 @@ export default function SessionScreen() {
       },
     }))
     try {
-      await sessionClient.question.reject(requestID)
+      await sessionClient.question.reject(sessionID, requestID)
     } catch (err) {
       console.error("Question reject failed:", err)
       useEvents.setState((state) => ({

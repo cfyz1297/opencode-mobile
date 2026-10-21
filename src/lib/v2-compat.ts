@@ -453,6 +453,114 @@ export function joinPath(base: string, tail: string): string {
   return `${base.replace(/\/+$/, "")}/${tail}`
 }
 
+// --- Questions (V2 forms) -----------------------------------------------------
+//
+// V1 had a dedicated question REST surface and `question.asked` events. V2
+// replaced both with the Form service: the question tool opens a form whose
+// metadata.kind is "question". Fields are q0, q1, … with type "string" (single
+// choice) or "multiselect"; option.value === option.label for tool-generated
+// questions, and custom answers are allowed. Forms with any other metadata kind
+// (web search provider, credentials, MCP elicitation) are not questions and
+// must not reach the question UI.
+
+export interface V2FormOption {
+  value?: string
+  label?: string
+  description?: string
+}
+
+export interface V2FormField {
+  key?: string
+  type?: string
+  title?: string
+  description?: string
+  options?: V2FormOption[]
+  custom?: boolean
+}
+
+export interface V2FormInfo {
+  id?: string
+  sessionID?: string
+  metadata?: Record<string, unknown>
+  fields?: V2FormField[]
+}
+
+export type QuestionRequest = {
+  id: string
+  sessionID: string
+  questions: Array<{
+    question: string
+    header: string
+    options: Array<{ label: string; description: string }>
+    multiple?: boolean
+    custom?: boolean
+  }>
+  tool?: { messageID: string; callID: string }
+}
+
+function questionFields(form: V2FormInfo): V2FormField[] {
+  return (form.fields ?? []).filter((field) => field.type === "string" || field.type === "multiselect")
+}
+
+export function mapForm(raw: unknown): QuestionRequest | null {
+  const form = raw as V2FormInfo | null | undefined
+  if (!form || typeof form !== "object" || !form.id || !form.sessionID) return null
+  if (form.metadata?.kind !== "question") return null
+  const fields = questionFields(form)
+  if (!fields.length) return null
+  const tool = form.metadata.tool as { messageID?: string; id?: string } | undefined
+  return {
+    id: form.id,
+    sessionID: form.sessionID,
+    questions: fields.map((field) => ({
+      question: field.description ?? field.title ?? "",
+      header: field.title ?? "",
+      options: (field.options ?? []).map((option) => ({
+        label: option.label ?? option.value ?? "",
+        description: option.description ?? "",
+      })),
+      multiple: field.type === "multiselect",
+      custom: field.custom === true,
+    })),
+    tool: tool?.messageID ? { messageID: tool.messageID, callID: tool.id ?? "" } : undefined,
+  }
+}
+
+export function mapForms(raw: unknown): QuestionRequest[] {
+  const list = Array.isArray(raw) ? (raw as unknown[]) : []
+  return list
+    .map((item) => mapForm(item))
+    .filter((request): request is QuestionRequest => request !== null)
+}
+
+// The question UI works in displayed labels and string[][] answers (one entry
+// per question). Forms accept option values and distinguish scalar (string)
+// from array (multiselect) answers, so translate back before replying.
+export function buildFormAnswer(
+  raw: unknown,
+  answers: string[][] | undefined,
+): Record<string, string | string[]> {
+  const fields = (Array.isArray(raw) ? (raw as V2FormField[]) : []).filter(
+    (field) => field.type === "string" || field.type === "multiselect",
+  )
+  const count = Math.max(fields.length, answers?.length ?? 0)
+  const answer: Record<string, string | string[]> = {}
+  for (let index = 0; index < count; index++) {
+    const picked = (answers?.[index] ?? []).filter(
+      (value) => typeof value === "string" && value.trim().length > 0,
+    )
+    if (!picked.length) continue
+    const field = fields[index]
+    const key = field?.key ?? `q${index}`
+    const valueOf = (label: string) =>
+      field?.options?.find((option) => option.label === label || option.value === label)?.value ?? label
+    if (field?.type === "multiselect") answer[key] = picked.map(valueOf)
+    else if (field) answer[key] = valueOf(picked[0])
+    else answer[key] = picked.length > 1 ? picked : picked[0]
+  }
+  return answer
+}
+
 // --- Events -------------------------------------------------------------------
 //
 // The app stores dispatch on V1 event names/shapes. V2 renames most types and
@@ -654,8 +762,40 @@ export class V2EventAdapter {
       }
 
       case "permission.replied": {
-        // { sessionID, requestID, reply } — exactly the V1 shape already.
+        // { sessionID, requestID, reply } - exactly the V1 shape already.
         return [{ type: "permission.replied", properties: data }]
+      }
+
+      // BUG-004: V2 surfaces model questions as forms. Only forms tagged as
+      // question prompts map to the question UI; other forms are ignored.
+      case "form.created": {
+        const request = mapForm(data.form)
+        if (!request) return []
+        return [{ type: "question.asked", properties: { ...request } }]
+      }
+
+      case "form.replied": {
+        if (!data.sessionID || !data.id) return []
+        return [
+          {
+            type: "question.replied",
+            properties: {
+              sessionID: data.sessionID,
+              requestID: data.id,
+              answers: data.answer ?? {},
+            },
+          },
+        ]
+      }
+
+      case "form.cancelled": {
+        if (!data.sessionID || !data.id) return []
+        return [
+          {
+            type: "question.rejected",
+            properties: { sessionID: data.sessionID, requestID: data.id },
+          },
+        ]
       }
 
       default:

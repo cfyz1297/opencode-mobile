@@ -13,11 +13,13 @@ import { apiErrorFor } from "./api-error"
 import { normalizeSessions } from "./session-list"
 import type { FileRoot } from "./file-roots"
 import {
+  buildFormAnswer,
   clampMessageLimit,
   joinPath,
   mapAgents,
   mapCommands,
   mapFileEntries,
+  mapForms,
   mapMessages,
   mapPermissions,
   mapProjectFromLocation,
@@ -27,7 +29,7 @@ import {
   unwrapData,
   V2EventAdapter,
 } from "./v2-compat"
-import type { ProviderCatalog, V2MessageBody, V2SessionInfo } from "./v2-compat"
+import type { ProviderCatalog, V2FormField, V2FormInfo, V2MessageBody, V2SessionInfo } from "./v2-compat"
 export { ApiAuthError, isAuthError } from "./api-error"
 
 // Last applied model/agent/variant switch per session. A re-sent identical
@@ -694,14 +696,32 @@ export function createClient(config: ClientConfig) {
     },
 
     question: {
-      // V2 has no question flow; V2's forms are an incompatible replacement
-      // (different shape, different lifecycle) so for now lists stay empty
-      // and replies are tolerant no-ops.
-      list: () => Promise.resolve([] as Array<{ id: string; sessionID: string; questions: unknown[] }>),
+      // V2 has no dedicated question endpoints: model questions arrive as
+      // session forms tagged metadata.kind === "question" (see mapForm in
+      // v2-compat). Every form route is session-scoped, so callers pass the
+      // session id next to the form id.
+      list: async (sessionID: string) => {
+        const raw = unwrapData<V2FormInfo[]>(await request(config, `/api/session/${sessionID}/form`))
+        return mapForms(raw)
+      },
 
-      reply: (requestID: string, answers: string[][]) => Promise.resolve(false),
+      reply: async (sessionID: string, requestID: string, answers: string[][]) => {
+        // The reply itself only knows labels; field types (string vs
+        // multiselect) and option values live on the form detail.
+        const detail = unwrapData<{ fields?: V2FormField[] }>(
+          await request(config, `/api/session/${sessionID}/form/${requestID}`),
+        )
+        await request(config, `/api/session/${sessionID}/form/${requestID}/reply`, {
+          method: "POST",
+          body: JSON.stringify({ answer: buildFormAnswer(detail?.fields, answers) }),
+        })
+        return true
+      },
 
-      reject: (requestID: string) => Promise.resolve(false),
+      reject: async (sessionID: string, requestID: string) => {
+        await request(config, `/api/session/${sessionID}/form/${requestID}`, { method: "DELETE" })
+        return true
+      },
     },
 
     agent: {

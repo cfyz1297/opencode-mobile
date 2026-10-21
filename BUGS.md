@@ -95,18 +95,19 @@ SUSPECT: S-1 jump-to-top на inverted (Android), S-2 shape файлов в prom
 - **Фикс:** в адаптере failed → генерировать дополнительно ошибку В1 (`session.error` со сводкой `data.error.message`), а interrupted — отличимый статус; events.ts тогда разметит `erroredSessions` и не позовёт review. Пиннинг есть: `src/lib/v2-compat.test.ts`, `it.skip("BUG-003…")`.
 
 ### BUG-004 — Question-flow мёртв под V2: промпт вопросов не показывается и ответ не доходит
-- **Где:** `src/lib/sdk.ts:674-683` (заглушки), `src/lib/v2-compat.ts` (в адаптере нет маппинга `question.*` — grep пуст), `src/stores/events.ts:76-88, 405-439`, `src/components/chat/QuestionPrompt.tsx`.
-- **Симптом:** если V2-сервер запрашивает у юзера вопрос (формы/вопросы), приложение НЕ показывает QuestionPrompt (адаптер не транслирует question-события, `client.question.list()` всегда `[]`), а при ручном появлении (например, через session created-события) ответ НЕ отправляется:
-  ```ts
-  // V2 has no question flow; V2's forms are an incompatible replacement
-  list: () => Promise.resolve([] as ...),
-  reply: (requestID, answers) => Promise.resolve(false),
-  reject: (requestID) => Promise.resolve(false),
-  ```
-- **Ожидание:** вопросы поверх модели доходят и отвечаются; **Факт:** UI есть, путь квён-ентом мёртв.
-- **Сценарий:** модель вызывает AskUserQuestion/форму (нужна проверка S-3 какое событие V2 реально шлёт) → приложение молчит → ран зависает в ожидании ответа, юзер не видит вопроса.
-- **Фикс (2 варианта):** либо реализовать трансляцию question.* в V2EventAdapter + реальный POST reply/reject по контракту V2-API (нужно сверить с /openapi.json), либо честно скрыть QuestionPrompt UI под V2, чтобы не вводить в заблуждение.
-- **SUSPECT часть (S-3):** точное имя V2-события/фронтенд-эндпойнта — сверить `GET /openapi.json` живого сервера.
+**Статус: FIXED** — в V2 вопросы модели идут не отдельными `question.*` событиями, а через Form-сервис: вопрос — это форма с `metadata.kind === "question"` (поля `q0…`, `type: "string"` для одиночного выбора или `"multiselect"`, `options[].value === options[].label`, `custom: true`). Добавлена трансляция форм в существующий QuestionPrompt и реальные вызовы form-эндпойнтов.
+- **Контракт V2:**
+  - `GET /api/session/{sessionID}/form` → `{ data: Form.Info[] }` (только pending);
+  - `GET /api/session/{sessionID}/form/{formID}` → `{ data: Form.Detail }` (поля + state);
+  - `POST /api/session/{sessionID}/form/{formID}/reply` body `{ answer: Record<string, string | string[]> }` → 204;
+  - `DELETE /api/session/{sessionID}/form/{formID}` → 204 (dismiss);
+  - события `form.created { form }`, `form.replied { id, sessionID, answer }`, `form.cancelled { id, sessionID }`.
+- **Фикс:**
+  - `src/lib/v2-compat.ts`: `mapForm`/`mapForms` (только `metadata.kind === "question"` и только поля `string`/`multiselect`; остальные формы — websearch/credentials/MCP — отбрасываются), `buildFormAnswer` (скаляр для `string`, массив для `multiselect`, маппинг label → `option.value`, кастомный текст как есть, пустые ответы опускаются), события форм → `question.asked/replied/rejected`.
+  - `src/lib/sdk.ts`: `question.list(sessionID)` → `GET …/form`; `question.reply(sessionID, formID, answers)` сначала читает `GET …/form/{formID}` (типы полей и значения опций), затем POST reply; `question.reject(sessionID, formID)` → DELETE.
+  - `src/stores/events.ts`, `app/session/[id].tsx`: вызовы обновлены (form-эндпойнты session-scoped).
+- **Тесты:** `src/lib/v2-compat.test.ts` — маппинг question-формы в V1-вопрос, отбрасывание не-question форм и невидимых полей, сборка ответа (single/multi/custom/empty), события `form.*`.
+- **Проверка:** `npm run typecheck` — чисто; полный прогон тестов — 335 pass, 0 fail.
 
 ### BUG-005 — tap по push-уведомлению при холодном старте теряется
 **Статус: FIXED (0.2.10)** — в `notifications.ts` добавлен `getInitialResponse()` (`getLastNotificationResponseAsync`), в `_layout.tsx` он читается при монтировании и маршрутизирует, с дедупликацией против `onTap`-лисенера.
