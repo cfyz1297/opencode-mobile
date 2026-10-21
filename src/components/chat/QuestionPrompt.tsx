@@ -96,6 +96,11 @@ export function QuestionPrompt({ request, isDark, onReply, onReject }: Props) {
   const q = request.questions[current]
   if (!q) return null
 
+  const customApplied =
+    custom.trim().length > 0 &&
+    (answers[current] || []).length === 1 &&
+    answers[current][0] === custom.trim()
+
   const toggleOption = (label: string) => {
     if (busy) return
     setStatus("idle")
@@ -198,7 +203,7 @@ export function QuestionPrompt({ request, isDark, onReply, onReject }: Props) {
                 accessibilityLabel={t("chat.questionPrompt.useCustomAnswer")}
                 accessibilityState={{ disabled: busy }}
               >
-                {busy ? (
+                {busy || customApplied ? (
                   <Ionicons name="checkmark-circle" size={22} color="#22c55e" />
                 ) : (
                   <Ionicons name="checkmark" size={20} color="#8b5cf6" />
