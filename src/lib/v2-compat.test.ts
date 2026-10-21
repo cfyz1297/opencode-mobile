@@ -229,7 +229,7 @@ describe("mapMessages", () => {
       ],
       "ses",
     )
-    assert.equal(one.parts[0].url, "data:image/png;base64,aGVsbG8=")
+    assert.equal(one.parts.find((p) => p.type === "file")?.url, "data:image/png;base64,aGVsbG8=")
   })
 
   it("does not emit an empty image uri that renders as a white box", () => {

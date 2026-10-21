@@ -215,16 +215,18 @@ function userParts(m: V2MessageBody, sid: string): Part[] {
     const file = raw as {
       name?: string
       mime?: string
-      data?: { base64?: string }
-      source?: { path?: string }
+      // V2 stores the payload as a bare base64 string (Prompt.Base64).
+      // Keep the object form for older payloads captured during the port.
+      data?: string | { base64?: string }
+      source?: { type?: string; uri?: string; path?: string }
     }
-    const isImage = (file.mime ?? "").startsWith("image/")
-    // Prefer an inline base64 data URI (the app can render + resend those)
-    // and fall back to a server-side path reference when present.
-    const url = file.data?.base64
-      ? `data:${file.mime ?? "image/jpeg"};base64,${file.data.base64}`
-      : file.source?.path ?? ""
-    if (!isImage && !url) continue
+    const base64 = typeof file.data === "string" ? file.data : file.data?.base64
+    // V2's `source` is provenance only - its file:// URI points at the
+    // server's filesystem, not at anything the phone can load. Inline data is
+    // the only renderable source (and the only one that can be resent after
+    // revert); an empty URI would render as a white image box.
+    const url = base64 ? `data:${file.mime ?? "image/jpeg"};base64,${base64}` : ""
+    if (!url) continue
     parts.push({
       id: `${m.id}_f${i}`,
       sessionID: sid,
