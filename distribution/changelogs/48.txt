@@ -1,0 +1,5 @@
+v0.2.14 — Images stay visible after upload
+
+- Uploaded photos no longer turn into a blank white box once the message is saved on the server. The app now reads the V2 attachment payload correctly and renders the sent image in the chat.
+- Image attachments also survive revert-to-edit, because the restored prompt keeps the same renderable data.
+- No server changes are required; existing messages with images render correctly after updating.

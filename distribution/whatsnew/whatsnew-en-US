@@ -1,3 +1,3 @@
-v0.2.13 — Question answers are confirmed
+v0.2.14 — Images stay visible
 
-Typing a custom answer no longer makes it disappear: the text stays visible while the reply is sent, with clear sending, sent and retry states plus a confirmation banner. Questions asked while the app was backgrounded or reconnecting now appear after a refresh, and long streaming chats are smoother.
+Uploaded photos no longer become a blank white box after the server saves the message. Sent images render in the chat again, and they are restored correctly when you revert to edit a prompt.
