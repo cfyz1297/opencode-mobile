@@ -25,14 +25,16 @@ let reply: unknown = { healthy: true, version: "2.0.test" }
 let raw: string | undefined
 let switchStatus = 204
 let delay = 0
+let routes: Record<string, { status?: number; body: unknown }> = {}
 const server = createServer(async (req, res) => {
   let body = ""
   for await (const chunk of req) body += chunk
   calls.push({ path: req.url!, method: req.method!, headers: req.headers, body: body ? JSON.parse(body) : {} })
   if (delay) await new Promise((resolve) => setTimeout(resolve, delay))
-  const code = /\/(model|agent)$/.test(req.url!) ? switchStatus : status
+  const route = routes[req.url!]
+  const code = route?.status ?? (req.method === "POST" && /\/(model|agent)$/.test(req.url!) ? switchStatus : status)
   res.writeHead(code, { "Content-Type": req.url === "/api/event" ? "text/event-stream" : "application/json" })
-  res.end(code === 204 ? undefined : raw ?? JSON.stringify(reply))
+  res.end(code === 204 ? undefined : route ? JSON.stringify(route.body) : raw ?? JSON.stringify(reply))
 })
 let base: string
 before(async () => {
@@ -44,7 +46,7 @@ after(async () => {
   await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   hook.deregister()
 })
-beforeEach(() => { calls = []; status = 200; reply = { healthy: true, version: "2.0.test" }; raw = undefined; switchStatus = 204; delay = 0 })
+beforeEach(() => { calls = []; status = 200; reply = { healthy: true, version: "2.0.test" }; raw = undefined; switchStatus = 204; delay = 0; routes = {} })
 
 const prompt = { parts: [{ type: "text" as const, text: "hello" }], model: { providerID: "test", modelID: "model-1" }, variant: "high", agent: "build" }
 
@@ -226,4 +228,74 @@ test("SDK stream survives malformed JSON and maps the next event", async () => {
 test("SDK stream authentication failures retain their type", async () => {
   status = 403
   await assert.rejects(async () => { for await (const event of createClient({ baseUrl: base }).global.events()) void event }, isAuthError)
+})
+
+test("SDK project and path requests use the server location", async () => {
+  reply = { directory: "/project/sub", project: { id: "project", directory: "/project" } }
+  const client = createClient({ baseUrl: base })
+  assert.equal((await client.project.current())?.id, "project")
+  assert.deepEqual(await client.path.get(), { home: "/project", worktree: "/project", directory: "/project/sub", state: "", config: "" })
+})
+test("SDK catalog requests use V2 identifiers and reasoning variants", async () => {
+  routes = {
+    "/api/model": { body: { data: [{ id: "catalog-id", modelID: "upstream-id", providerID: "p", variants: [{ id: "high" }] }] } },
+    "/api/model/default": { body: { data: { id: "catalog-id", providerID: "p" } } },
+  }
+  const catalog = await createClient({ baseUrl: base }).provider.list()
+  assert.deepEqual(catalog.default, { p: "catalog-id" })
+  assert.ok(catalog.all[0].models["catalog-id"].variants?.high)
+})
+test("SDK catalog still loads when the server has no default-model endpoint", async () => {
+  routes = {
+    "/api/model": { body: { data: [{ id: "model", providerID: "p" }] } },
+    "/api/model/default": { status: 404, body: {} },
+  }
+  const catalog = await createClient({ baseUrl: base }).provider.list()
+  assert.deepEqual(catalog.connected, ["p"])
+  assert.deepEqual(catalog.default, {})
+})
+for (const [group, path] of [["project", "/api/project"], ["agent", "/api/agent"], ["command", "/api/command"], ["permission", "/api/permission/request"]] as const) {
+  test(`SDK ${group} collection handles an empty wrapped response`, async () => {
+    reply = { data: [] }
+    assert.deepEqual(await createClient({ baseUrl: base })[group].list(), [])
+    assert.equal(calls[0].path, path)
+  })
+}
+test("SDK question collection and config use their V2 routes", async () => {
+  reply = { data: [] }
+  const client = createClient({ baseUrl: base })
+  assert.deepEqual(await client.question.list("s"), [])
+  assert.deepEqual(await client.config.get(), { data: [] })
+  assert.deepEqual(calls.map((c) => c.path), ["/api/session/s/form", "/api/config"])
+})
+test("SDK diff loads a session-wide wrapped diff", async () => {
+  reply = { data: [{ file: "test.ts", before: "a", after: "b" }] }
+  assert.deepEqual(await createClient({ baseUrl: base }).session.diff("s", "ignored"), reply.data)
+  assert.equal(calls[0].path, "/api/session/s/diff")
+})
+test("SDK stream refetches full session details after rename", async () => {
+  raw = 'data: {"type":"session.renamed","data":{"sessionID":"s"}}\n\n'
+  routes = { "/api/session/s": { body: { data: { id: "s", title: "renamed" } } } }
+  const events = []
+  for await (const event of createClient({ baseUrl: base }).global.events()) events.push(event)
+  assert.equal(events[0].type, "session.updated")
+  assert.equal((events[0].properties.info as { title: string }).title, "renamed")
+})
+test("SDK event state belongs to each connection even when servers reuse message IDs", async () => {
+  raw = 'data: {"type":"session.step.started","data":{"sessionID":"shared","assistantMessageID":"shared-message"}}\n\n'
+  const first = []
+  for await (const event of createClient({ baseUrl: base }).global.events()) first.push(event)
+  const second = []
+  for await (const event of createClient({ baseUrl: base }).global.events()) second.push(event)
+  assert.equal(first[0].type, "message.updated")
+  assert.equal(second[0]?.type, "message.updated", "the second connection must create its own assistant message")
+})
+test("SDK keeps text accumulation across stream reconnects within the same client", async () => {
+  const client = createClient({ baseUrl: base })
+  raw = 'data: {"type":"session.text.delta","data":{"sessionID":"s","assistantMessageID":"reconnect","delta":"first "}}\n\n'
+  for await (const event of client.global.events()) void event
+  raw = 'data: {"type":"session.text.delta","data":{"sessionID":"s","assistantMessageID":"reconnect","delta":"second"}}\n\n'
+  const events = []
+  for await (const event of client.global.events()) events.push(event)
+  assert.equal((events[0].properties.part as { text: string }).text, "first second")
 })
