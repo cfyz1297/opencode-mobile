@@ -1,0 +1,1 @@
+The chat keeps following the answer while the assistant writes, even with many messages and tool calls. Scroll up to read history and it stops; send a message and it returns to the newest reply.
