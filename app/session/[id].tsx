@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useKeyboardHeight } from "../../src/lib/use-keyboard-height"
 import { buildMessageData, type MessageDataItem } from "../../src/lib/revert-filter"
+import { shouldFollowBottom } from "../../src/lib/scroll-follow"
 import { useTranslation } from "react-i18next"
 import * as ImagePicker from "expo-image-picker"
 import * as ImageManipulator from "expo-image-manipulator"
@@ -167,6 +168,9 @@ export default function SessionScreen() {
 
   const shortDir = getShortDir(currentSession?.directory)
   const [showScrollButton, setShowScrollButton] = useState(false)
+  // Whether new/streaming content should keep the transcript pinned to the
+  // newest message. False once the user scrolls up, true again at the bottom.
+  const followBottomRef = useRef(true)
 
   // SSE reconnect banner
   const reconnectAttempts = useEvents((s) => s.reconnectAttempts)
@@ -328,6 +332,7 @@ export default function SessionScreen() {
   )
 
   const scrollToBottom = useCallback((animated = true) => {
+    followBottomRef.current = true
     flatListRef.current?.scrollToOffset({ offset: 0, animated })
   }, [])
 
@@ -594,6 +599,9 @@ export default function SessionScreen() {
     const files = [...attachments]
     setInput("")
     setAttachments([])
+    // Sending is an explicit "jump to the answer" — even if the user had
+    // scrolled up to read history.
+    scrollToBottom(true)
 
     // Server slash commands (no attachments for commands)
     if (text.startsWith("/") && files.length === 0) {
@@ -634,6 +642,7 @@ export default function SessionScreen() {
   // In inverted mode, offset 0 = bottom. Show scroll button when scrolled away from bottom.
   const handleScroll = useCallback((event: any) => {
     const { contentOffset } = event.nativeEvent
+    followBottomRef.current = shouldFollowBottom(contentOffset.y)
     setShowScrollButton(contentOffset.y > 200)
   }, [])
 
@@ -878,10 +887,15 @@ export default function SessionScreen() {
               contentContainerStyle={s.messageList}
               onScroll={handleScroll}
               scrollEventThrottle={100}
+              // Follow streaming output and new messages while the user is at
+              // the bottom. maintainVisibleContentPosition is deliberately not
+              // set: on an inverted list it pins the previously visible row, so
+              // each new assistant message would push itself out of view.
+              onContentSizeChange={() => {
+                if (followBottomRef.current) flatListRef.current?.scrollToOffset({ offset: 0, animated: false })
+              }}
               onEndReached={handleLoadMore}
               onEndReachedThreshold={0.5}
-              // Prevent jump when older messages are prepended
-              maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
               ListFooterComponent={
                 loadingMore ? (
                   <View style={s.loadingMore}>
