@@ -435,6 +435,7 @@ export default function SessionScreen() {
           cycleAgent()
           return true
         case "compact":
+          setInput("")
           if (sessionClient && currentSession) {
             sessionClient.session.compact(currentSession.id).catch((err) => {
               console.error("Compact failed:", err)
