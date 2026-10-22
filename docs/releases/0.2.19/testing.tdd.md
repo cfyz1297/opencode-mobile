@@ -21,7 +21,9 @@ Source: user request to cover the mobile application with tests, fix discovered 
 | GREEN | Same target, after isolating the subprocess fixture environment | 47 pass, 0 fail | `1f23874` |
 | Additional RED | `node --test --test-reporter=spec src/lib/sdk.integration.test.ts` | 42 tests: 41 pass, 1 fail (second connection's assistant message suppressed) | `7143083` |
 | Additional GREEN | Same SDK target with the adapter scoped to each client | 42 pass, 0 fail; same-client reconnect accumulation also passes | `493be05` |
-| Final validation | `npm run test:coverage`, `npm run typecheck`, `npm run check:versions` | 414 pass; coverage gates pass; typecheck passes; 0.2.19 (53) metadata aligned | release preparation commit |
+| Directory-cache RED | `node --test --test-reporter=spec src/lib/sdk.integration.test.ts` | 54 tests: 50 pass, 4 fail for the missing scoped-client reuse helper; review found that cross-project sends otherwise create fresh clients each time | `a3ee658` |
+| Directory-cache GREEN | Same SDK target after wiring the scoped-client helper into `connections.ts` | 54 pass; separate directories/configurations stay isolated; same-directory repeated sends switch once | `2af4899` |
+| Final validation | `npm run test:coverage`, `npm run typecheck`, `npm run check:versions` | 418 pass; coverage gates pass; typecheck passes; 0.2.19 (53) metadata aligned | release preparation commit |
 
 Additional coverage-only tests exercise existing successful behavior without changing production logic. The suite contains no skipped tests. Tests and raw RED/GREEN evidence were executed before the corresponding production fixes.
 
