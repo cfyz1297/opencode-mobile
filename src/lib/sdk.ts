@@ -296,14 +296,13 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
   }
 }
 
-// Module-level V2 → V1 event adapter. Streaming state (delta accumulators)
-// must survive across events, and the app holds one event stream at a time.
-const eventAdapter = new V2EventAdapter()
-
 export function createClient(config: ClientConfig) {
   // Session IDs and switch choices belong to this connection. Sharing this
   // cache across clients can skip the first model switch on another server.
   const lastSwitch = new Map<string, string>()
+  // Retain deltas across reconnects of this client, but never carry messages
+  // or deduplication state into another server/directory connection.
+  const eventAdapter = new V2EventAdapter()
   // Normalize once: a trailing slash on baseUrl (e.g. pasted into Advanced
   // mode or the Edit screen) would otherwise survive into every
   // `${config.baseUrl}${path}` concatenation below as a double slash, which
