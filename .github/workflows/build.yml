@@ -29,10 +29,11 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Unit tests
-        run: npm test
+      - name: Unit and HTTP integration tests with coverage gates
+        run: npm run test:coverage
 
   build:
+    needs: test
     runs-on: ubuntu-latest
     env:
       EXPO_PUBLIC_CHATWOOT_INBOX_IDENTIFIER: ${{ secrets.EXPO_PUBLIC_CHATWOOT_INBOX_IDENTIFIER }}

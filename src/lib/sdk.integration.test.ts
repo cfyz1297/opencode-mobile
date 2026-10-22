@@ -299,3 +299,46 @@ test("SDK keeps text accumulation across stream reconnects within the same clien
   for await (const event of client.global.events()) events.push(event)
   assert.equal((events[0].properties.part as { text: string }).text, "first second")
 })
+
+test("SDK health uses conservative defaults for an empty info object", async () => {
+  reply = {}
+  assert.deepEqual(await createClient({ baseUrl: base }).global.health(), { healthy: true, version: "unknown" })
+})
+test("SDK roots returns supported server roots", async () => {
+  reply = [{ name: "home", path: "/home" }]
+  assert.deepEqual(await createClient({ baseUrl: base }).file.roots(), reply)
+})
+test("SDK path falls back to canonical project root", async () => {
+  reply = { directory: "/project/sub", project: { canonical: "/project" } }
+  assert.equal((await createClient({ baseUrl: base }).path.get()).home, "/project")
+})
+test("SDK a model choice with no reasoning variant leaves variant selection to the server", async () => {
+  status = 204
+  await createClient({ baseUrl: base }).session.prompt("no-variant", { parts: prompt.parts, model: prompt.model })
+  assert.deepEqual(calls[0].body, { model: { providerID: "test", id: "model-1" } })
+})
+test("SDK an agent-only choice never implicitly switches a model", async () => {
+  status = 204
+  await createClient({ baseUrl: base }).session.prompt("agent-only", { parts: prompt.parts, agent: "plan" })
+  assert.deepEqual(calls.map((c) => c.path), ["/api/session/agent-only/agent", "/api/session/agent-only/prompt"])
+})
+test("SDK a changed reasoning variant triggers a fresh explicit switch", async () => {
+  status = 204
+  const client = createClient({ baseUrl: base })
+  await client.session.prompt("variant-change", prompt)
+  await client.session.prompt("variant-change", { ...prompt, variant: "low" })
+  assert.deepEqual(calls.filter((c) => c.path.endsWith("/model")).map((c) => (c.body.model as { variant: string }).variant), ["high", "low"])
+})
+test("SDK unsupported archive metadata does not send a bad title patch", async () => {
+  reply = { data: { id: "s" } }
+  await createClient({ baseUrl: base }).session.update("s", { time: { archived: 1 } })
+  assert.deepEqual(calls.map((c) => c.method), ["GET"])
+})
+test("SDK stream continues after an unresolvable session rename", async () => {
+  raw = 'data: {"type":"session.renamed","data":{"sessionID":"missing"}}\n\ndata: {"type":"session.execution.succeeded","data":{"sessionID":"s"}}\n\n'
+  routes = { "/api/session/missing": { status: 404, body: {} } }
+  const events = []
+  for await (const event of createClient({ baseUrl: base }).global.events()) events.push(event)
+  assert.equal(events.length, 1)
+  assert.deepEqual(events[0].properties.status, { type: "idle" })
+})

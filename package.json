@@ -1,6 +1,6 @@
 {
   "name": "@opencode-ai/mobile",
-  "version": "0.2.18",
+  "version": "0.2.19",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "check:versions": "node scripts/check-version-parity.mjs",
     "test": "node scripts/run-tests.mjs",
-    "test:coverage": "node scripts/run-tests.mjs --experimental-test-coverage --test-coverage-exclude=tests/** --test-coverage-exclude=**/*.test.* --test-coverage-lines=80 --test-coverage-functions=80"
+    "test:coverage": "node scripts/run-tests.mjs --experimental-test-coverage --test-coverage-exclude=tests/** --test-coverage-exclude=**/*.test.* --test-coverage-lines=80 --test-coverage-branches=80 --test-coverage-functions=80"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

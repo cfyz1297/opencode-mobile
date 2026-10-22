@@ -50,7 +50,9 @@ npm run android            # dev-сборка на устройстве/эмул
 
 Релизный APK собирает GitHub Actions (`.github/workflows/build.yml`) на каждый push в `main` и на теги `v*`: сначала тесты, typecheck и проверка версий, потом `expo prebuild` + `gradlew assembleRelease`. Артефакт — `app-release`; GitHub-релиз с APK публикуется вручную.
 
-Тесты: `npm test` (356/356). Typecheck: `npm run typecheck`.
+Тесты (Node.js 24+): `npm test`. Покрытие: `npm run test:coverage` — порог 80% для строк, веток и функций проверяемых модулей. Typecheck: `npm run typecheck`.
+
+В версии 0.2.19 добавлены HTTP-интеграционные тесты настоящего SDK; `npm test` работает и в Windows. Подробности, найденные ошибки и границы покрытия: [TEST_REPORT.md](TEST_REPORT.md).
 
 ## Лицензия и заимствования
 
