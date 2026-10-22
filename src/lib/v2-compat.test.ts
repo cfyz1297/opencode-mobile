@@ -282,17 +282,31 @@ describe("catalog mappings", () => {
           status: "active",
         },
       ],
-      { providerID: "p1", modelID: "m1" },
+      { providerID: "p1", id: "x", modelID: "m1" },
     )
     assert.equal(catalog.all[0].id, "p1")
-    const model = catalog.all[0].models.m1
+    // The catalog id (`id`), not the upstream `modelID`, is what Model.Ref
+    // carries in sessions and what the switch endpoint accepts.
+    const model = catalog.all[0].models.x
+    assert.equal(model.id, "x")
     assert.equal(model.attachment, true)
     assert.equal(model.reasoning, true)
     assert.equal(model.tool_call, true)
     assert.deepEqual(model.limit, { context: 128000, output: 4096 })
     assert.deepEqual(model.variants, { low: { reasoningEffort: "low" } })
-    assert.deepEqual(catalog.default, { p1: "m1" })
+    assert.deepEqual(catalog.default, { p1: "x" })
     assert.deepEqual(catalog.connected, ["p1"])
+  })
+
+  it("skips models the location cannot use", () => {
+    const catalog = mapProviders(
+      [
+        { id: "on", providerID: "p1", name: "On", enabled: true },
+        { id: "off", providerID: "p1", name: "Off", enabled: false },
+      ],
+      null,
+    )
+    assert.deepEqual(Object.keys(catalog.all[0].models), ["on"])
   })
 })
 

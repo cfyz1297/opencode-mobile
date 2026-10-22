@@ -353,9 +353,18 @@ export function mapProviders(list: unknown, defaultModel: unknown): ProviderCata
   const models = Array.isArray(list) ? (list as Record<string, unknown>[]) : []
   const grouped = new Map<string, ProviderCatalog["all"][number]>()
   for (const m of models) {
+    // `id` is the catalog ID every other V2 surface names the model by
+    // (Model.Ref in sessions/messages and POST /session/{id}/model), while
+    // `modelID` is only the upstream API identifier. Keying the catalog by
+    // modelID made the switch POST an unknown id and hid the reasoning
+    // variants of the session's model (both reported as "model selection
+    // stopped working").
     const providerID = (m.providerID as string) ?? ""
-    const modelID = (m.modelID as string) ?? (m.id as string) ?? ""
+    const modelID = (m.id as string) ?? (m.modelID as string) ?? ""
     if (!providerID || !modelID) continue
+    // The registry lists models the location cannot use; picking one would
+    // fail the switch server-side.
+    if (m.enabled === false) continue
     let provider = grouped.get(providerID)
     if (!provider) {
       provider = { id: providerID, name: providerID, models: {} }
@@ -385,7 +394,7 @@ export function mapProviders(list: unknown, defaultModel: unknown): ProviderCata
 
   const defaults: Record<string, string> = {}
   const def = defaultModel as { providerID?: string; modelID?: string; id?: string } | null | undefined
-  if (def?.providerID) defaults[def.providerID] = def.modelID ?? def.id ?? ""
+  if (def?.providerID) defaults[def.providerID] = def.id ?? def.modelID ?? ""
 
   return {
     all: [...grouped.values()],
