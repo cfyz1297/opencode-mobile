@@ -33,6 +33,10 @@ APK собирается GitHub Actions из `main` этого репозито�
 
 В основу — [upstream README](https://github.com/dzianisv/opencode-mobile#readme) (демо-режим, мультисессии, биометрия, дифф-вьюер, approved tool calls).
 
+## Нативная Java-версия
+
+Отдельный клиент на чистом Java без Gradle (`aapt → ecj → d8 → apksigner`), тоже на V2 API: [docs/native-app.md](docs/native-app.md).
+
 ## Сборка из исходников
 
 ```bash
