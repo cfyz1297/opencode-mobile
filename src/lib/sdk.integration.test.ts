@@ -342,3 +342,44 @@ test("SDK stream continues after an unresolvable session rename", async () => {
   assert.equal(events.length, 1)
   assert.deepEqual(events[0].properties.status, { type: "idle" })
 })
+
+test("Directory clients reuse successful model switches across repeated sends", async () => {
+  const { directoryClient } = await import("./directory-client.ts")
+  status = 204
+  const config = { baseUrl: base }
+  const first = directoryClient(config, "/other-project")
+  const second = directoryClient(config, "/other-project")
+  assert.equal(first, second)
+  await first.session.prompt("same-directory", prompt)
+  await second.session.prompt("same-directory", prompt)
+  assert.equal(calls.filter((c) => c.path.endsWith("/model")).length, 1)
+})
+test("Directory clients keep different project directories isolated", async () => {
+  const { directoryClient } = await import("./directory-client.ts")
+  const config = { baseUrl: base }
+  const first = directoryClient(config, "/a")
+  const second = directoryClient(config, "/b")
+  assert.notEqual(first, second)
+  await first.global.health()
+  await second.global.health()
+  assert.deepEqual(calls.map((c) => c.headers["x-opencode-directory"]), ["/a", "/b"])
+})
+test("Directory clients start fresh after a connection configuration is replaced", async () => {
+  const { directoryClient } = await import("./directory-client.ts")
+  status = 204
+  const first = directoryClient({ baseUrl: base }, "/a")
+  const second = directoryClient({ baseUrl: base }, "/a")
+  assert.notEqual(first, second)
+  await first.session.prompt("replaced-connection", prompt)
+  await second.session.prompt("replaced-connection", prompt)
+  assert.equal(calls.filter((c) => c.path.endsWith("/model")).length, 2)
+})
+test("Directory-less clients are cached separately from project-scoped clients", async () => {
+  const { directoryClient } = await import("./directory-client.ts")
+  const config = { baseUrl: base }
+  const global = directoryClient(config)
+  assert.equal(global, directoryClient(config))
+  assert.notEqual(global, directoryClient(config, "/a"))
+  await global.global.health()
+  assert.equal(calls[0].headers["x-opencode-directory"], undefined)
+})
