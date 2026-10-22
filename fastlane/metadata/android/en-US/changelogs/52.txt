@@ -1,0 +1,1 @@
+Model switching works again, and the reasoning-effort chip is back: the app now uses the model id the server understands.

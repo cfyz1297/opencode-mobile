@@ -1,0 +1,7 @@
+v0.2.18 — Model selection and reasoning effort work again
+
+- The model catalog now uses the identifier the server uses for a model (`Model.Info.id`) instead of the upstream API name (`modelID`). Switching a model sent an unknown id, so the session kept the old model while the app showed the new one.
+- Because the session's model could not be matched to the catalog, the reasoning-effort (variant) chip disappeared; it is back.
+- Models the location cannot use (`enabled: false`) are no longer offered, since picking one fails the switch server-side.
+- Applies both to the in-session picker and to the model chosen in the new-session dialog.
+- No server change is required.
