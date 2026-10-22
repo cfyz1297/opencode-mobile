@@ -7,6 +7,7 @@ import { statusFromPart } from "../lib/status-labels"
 import { recordSuccessfulSession } from "../lib/store-review"
 import { isAuthError } from "../lib/api-error"
 import { isSessionActuallyIdle } from "../lib/session-status-reconcile"
+import { isStreamStalled } from "../lib/stream-watchdog"
 import { reconcilePendingQuestions } from "../lib/pending-questions"
 import type { Client, Part, Session, Message } from "../lib/sdk"
 
@@ -70,6 +71,13 @@ const erroredSessions = new Set<string>()
 const RECONNECT_DELAYS_MS = [1000, 2000, 4000, 8000, 15000] as const
 const STABLE_CONNECTION_MS = 10_000
 const PROLONGED_DISCONNECT_MS = 30_000
+// How often the watchdog compares the clock against the last stream byte.
+const STALL_CHECK_MS = 5_000
+
+// Last chunk received on the event stream, heartbeat comments included. A
+// healthy V2 connection writes something (usually `: heartbeat`) every ~15s,
+// so a longer silence during a run means the socket is dead, not quiet.
+let lastStreamActivityAt = 0
 
 // Re-fetch pending permissions and questions from the server for a session.
 // Called when entering a session to recover from missed SSE events or failed
@@ -120,13 +128,21 @@ export async function refreshPending(client: Client, sessionID: string) {
 // before writing, so a real session.status event that lands while the fetch
 // is in flight (e.g. the session went busy again) wins over this resync.
 async function resyncBusySessions() {
-  const busySessionIDs = Object.entries(useEvents.getState().sessionStatus)
-    .filter(([, status]) => status.type === "busy")
-    .map(([sessionID]) => sessionID)
-  if (busySessionIDs.length === 0) return
+  // Sessions the UI believes are running: SSE said busy, or the send tap set
+  // the optimistic flag and no status event has arrived since (exactly the
+  // state a dead event stream leaves behind).
+  const pendingSessionIDs = new Set(
+    Object.entries(useEvents.getState().sessionStatus)
+      .filter(([, status]) => status.type === "busy")
+      .map(([sessionID]) => sessionID),
+  )
+  for (const [sessionID, sending] of Object.entries(useSessions.getState().sending)) {
+    if (sending) pendingSessionIDs.add(sessionID)
+  }
+  if (pendingSessionIDs.size === 0) return
 
   await Promise.all(
-    busySessionIDs.map(async (sessionID) => {
+    [...pendingSessionIDs].map(async (sessionID) => {
       try {
         const sessionsState = useSessions.getState()
         const session =
@@ -144,8 +160,10 @@ async function resyncBusySessions() {
 
         // A fresh session.status event may have landed on the SSE stream
         // while this fetch was in flight — that's authoritative, don't
-        // stomp on it.
-        if (useEvents.getState().sessionStatus[sessionID]?.type !== "busy") return
+        // stomp on it. No status at all is the optimistic-only case: the
+        // transcript fetched above is then the only evidence we have.
+        const latestStatus = useEvents.getState().sessionStatus[sessionID]
+        if (latestStatus && latestStatus.type !== "busy") return
 
         useEvents.setState((state) => ({
           sessionStatus: { ...state.sessionStatus, [sessionID]: { type: "idle" } },
@@ -205,6 +223,9 @@ export const useEvents = create<EventsState>((set, get) => ({
     controller = new AbortController()
     const currentController = controller
     set({ connected: true, authError: false })
+    // Grace period: the watchdog measures silence from here until the first
+    // chunk lands.
+    lastStreamActivityAt = Date.now()
     console.log("[SSE] Connecting to event stream...")
 
     // Run in background
@@ -251,8 +272,30 @@ export const useEvents = create<EventsState>((set, get) => ({
         }, jitteredDelay)
       }
 
+      // A mobile socket can die without a FIN: `connected` stays true and
+      // reader.read() never returns, so no reconnect is ever scheduled and the
+      // optimistic "Working..." spinner hangs forever (the transcript only
+      // appears after reopening the session). The server heartbeats every
+      // ~15s, so silence during a run means the stream is dead - reconnect and
+      // pull the transcript/status over HTTP.
+      const stallWatchdog = setInterval(() => {
+        if (currentController.signal.aborted || !get().connected) return
+        const sessions = useSessions.getState()
+        const activeRun =
+          Object.values(get().sessionStatus).some((status) => status.type !== "idle") ||
+          Object.values(sessions.sending).some(Boolean)
+        if (!isStreamStalled({ activeRun, lastActivityAt: lastStreamActivityAt, now: Date.now() })) return
+
+        console.warn("[SSE] No stream activity during a run - resyncing and reconnecting")
+        void resyncBusySessions()
+        void resyncCurrentSession()
+        get().connect()
+      }, STALL_CHECK_MS)
+
       try {
-        for await (const event of client.global.events(currentController.signal)) {
+        for await (const event of client.global.events(currentController.signal, () => {
+          lastStreamActivityAt = Date.now()
+        })) {
           if (currentController.signal.aborted) break
 
           // The stream is genuinely live again (we're actually receiving
@@ -494,6 +537,7 @@ export const useEvents = create<EventsState>((set, get) => ({
         }
       } finally {
         clearTimeout(stableTimer)
+        clearInterval(stallWatchdog)
         if (currentController.signal.aborted) {
           console.log("[SSE] Disconnected (aborted)")
         }

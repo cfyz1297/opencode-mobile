@@ -350,12 +350,17 @@ export function createClient(config: ClientConfig) {
         return { healthy: info?.healthy ?? true, version: info?.version ?? "unknown" }
       },
       // SSE event stream - returns async iterator of V1-shaped events
-      // Pass an AbortSignal to cancel the connection
-      async *events(signal?: AbortSignal): AsyncGenerator<Event> {
+      // Pass an AbortSignal to cancel the connection. `onActivity` fires for
+      // every chunk, including `: heartbeat` comments the parser drops, so the
+      // caller can tell a dead socket from a quiet one (see stream-watchdog).
+      async *events(signal?: AbortSignal, onActivity?: () => void): AsyncGenerator<Event> {
         const url = `${config.baseUrl}/api/event`
-        const headers = createHeaders(config)
+        const headers = createHeaders(config) as Record<string, string>
         // Remove Content-Type for SSE (it's text/event-stream)
-        delete (headers as Record<string, string>)["Content-Type"]
+        delete headers["Content-Type"]
+        // Ask for the stream uncompressed: a buffering proxy/gzip layer would
+        // hold every event until the connection closes.
+        headers["Accept-Encoding"] = "identity"
 
         // Must use expo/fetch for ReadableStream support on native
         const response = await expoFetch(url, { headers, signal })
@@ -375,6 +380,7 @@ export function createClient(config: ClientConfig) {
               console.log("[SSE] stream ended")
               break
             }
+            onActivity?.()
 
             if (!receivedFirstByte) {
               receivedFirstByte = true
