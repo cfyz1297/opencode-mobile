@@ -65,8 +65,8 @@ export default function TunnelScreen() {
           {button(t('tunnel.copy', { number: i + 1 }), () => { void Clipboard.setStringAsync(command) })}
         </View>)}
         <Text style={{ color: fg }}>{t('tunnel.warning')}</Text>
-        {button(t('tunnel.back'), () => setStep(1))}
         {commands.length > 0 && button(t('tunnel.next'), () => setStep(3), 'tunnel-next')}
+        {button(t('tunnel.back'), () => setStep(1))}
       </>}
       {step === 3 && <>
         <Text style={{ color: fg }}>{t('tunnel.paste')}</Text>

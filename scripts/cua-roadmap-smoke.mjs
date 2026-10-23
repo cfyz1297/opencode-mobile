@@ -22,28 +22,19 @@ function tapBounds(xml, predicate) {
   adb('shell', 'input', 'tap', String(Math.floor((+x1 + +x2) / 2)), String(Math.floor((+y1 + +y2) / 2)))
   return true
 }
-async function clearTransientUi() {
+async function dismissVoiceAlert() {
   const xml = snapshot()
   // Alert dialogs steal the UIAutomator hierarchy — dismiss before asserting chat text.
-  if (xml.includes('Voice input failed') || xml.includes('Microphone permission')) {
-    if (tapBounds(xml, n => n.includes('text="OK"'))) await sleep(400)
-    return true
-  }
-  if (xml.includes('Select Model') || xml.includes('Search models') || xml.includes('Reasoning Effort')) {
-    const dimensions = adb('shell', 'wm', 'size')
-    const [, width, height] = dimensions.match(/Override size: (\d+)x(\d+)/) ?? dimensions.match(/Physical size: (\d+)x(\d+)/) ?? []
-    if (width && height) {
-      adb('shell', 'input', 'tap', String(Math.floor(+width * 0.75)), String(Math.floor(+height * 0.12)))
-      await sleep(400)
-      return true
-    }
-  }
-  return false
+  if (!(xml.includes('Voice input failed') || xml.includes('Microphone permission'))) return false
+  if (tapBounds(xml, n => n.includes('text="OK"'))) await sleep(400)
+  return true
 }
 async function waitFor(value, timeout = 45000) {
   const start = Date.now()
   while (Date.now() - start < timeout) {
-    if (await clearTransientUi()) continue
+    // Only auto-dismiss voice alerts here. Broad sheet-tapping in waitFor
+    // raced the tunnel wizard and could leave the app (launcher screenshot).
+    if (await dismissVoiceAlert()) continue
     const xml = snapshot()
     if (xml.includes(value)) return xml
     await sleep(500)
