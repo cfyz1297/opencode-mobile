@@ -24,7 +24,15 @@ async function waitFor(value, timeout = 45000) {
   writeFileSync(`${out}/failure.xml`, snapshot())
   throw new Error(`UI did not contain ${value}`)
 }
-async function tap(value) {
+async function tap(value, scroll = false) {
+  if (scroll) {
+    for (let i = 0; i < 5 && !snapshot().includes(`="${value}"`); i++) {
+      const [, width, height] = adb('shell', 'wm', 'size').match(/(?:Override|Physical) size: (\d+)x(\d+)/) ?? []
+      assert.ok(width && height)
+      adb('shell', 'input', 'swipe', String(Math.floor(+width / 2)), String(Math.floor(+height * 0.8)), String(Math.floor(+width / 2)), String(Math.floor(+height * 0.3)), '350')
+      await sleep(400)
+    }
+  }
   const xml = await waitFor(value)
   const node = xml.match(/<node\b[^>]*>/g)?.find(n => n.includes(`="${value}"`))
   assert.ok(node, `Exact visible node ${value}`)
@@ -48,6 +56,7 @@ function screenshot(name) {
 }
 const now = Date.now()
 const session = { id: 'roadmap-session', title: 'ROADMAP_SESSION', location: { directory: '/fixture' }, time: { created: now, updated: now } }
+const other = { ...session, id: 'tablet-session-two', title: 'TABLET_SESSION_TWO', location: { directory: '/other' } }
 const requests = []
 const server = createServer((req, res) => {
   const path = new URL(req.url, 'http://localhost').pathname
@@ -62,7 +71,9 @@ const server = createServer((req, res) => {
   let data
   if (path === '/api/info') data = { healthy: true, version: 'fixture-v2' }
   else if (path === '/api/location') data = { directory: '/fixture', project: { directory: '/fixture' } }
-  else if (path === '/api/session') data = { data: [session] }
+  else if (path === '/api/session') data = { data: [session, other] }
+  else if (path === '/api/session/tablet-session-two') data = { data: other }
+  else if (path === '/api/session/tablet-session-two/message') data = { data: [{ id: 'a2', type: 'assistant', time: { created: now, completed: now }, content: [{ type: 'text', text: 'TABLET_SECOND_ANSWER_44' }] }] }
   else if (path === '/api/session/roadmap-session') data = { data: session }
   else if (path === '/api/session/roadmap-session/message') data = { data: [
     { id: 'a1', type: 'assistant', time: { created: now + 1, completed: now + 2 }, content: [{ type: 'text', text: 'OFFLINE_ANSWER_42' }] },
@@ -84,7 +95,7 @@ try {
   await tap('tunnel-next')
   await waitFor('127.0.0.1')
   screenshot('tunnel-commands-phone')
-  await tap('tunnel-next')
+  await tap('tunnel-next', true)
   await type('tunnel-url', 'http://untrusted.example')
   const before = requests.length
   await tap('tunnel-connect')
@@ -111,10 +122,20 @@ try {
   adb('shell', 'wm', 'density', '160')
   await sleep(2000)
   await waitFor('tablet-session-sidebar')
+  await tap('tablet-session-tablet-session-two')
+  await waitFor('TABLET_SECOND_ANSWER_44')
+  await tap('tablet-session-roadmap-session')
+  await waitFor('OFFLINE_ANSWER_42')
   screenshot('session-tablet-landscape')
-  adb('shell', 'wm', 'size', '1200x1920')
+  const split = snapshot()
+  const sidebar = split.match(/<node\b[^>]*resource-id="tablet-session-sidebar"[^>]*>/)?.[0]
+  assert.ok(sidebar, 'Sidebar has a real native layout node')
+  const bounds = sidebar.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/)
+  assert.ok(bounds && +bounds[3] - +bounds[1] === 280, 'Sidebar is 280 dp at mdpi')
+  adb('shell', 'wm', 'size', '800x1280')
   await sleep(1500)
   await waitFor('OFFLINE_ANSWER_42')
+  assert.ok(!snapshot().includes('tablet-session-sidebar'), 'Portrait 800 dp returns to one content pane')
   screenshot('session-tablet-portrait')
   server.closeAllConnections()
   await new Promise(resolve => server.close(resolve))

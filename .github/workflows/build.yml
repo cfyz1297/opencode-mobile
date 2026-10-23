@@ -22,7 +22,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
 
       - name: Check release version metadata
         run: npm run check:versions
@@ -66,7 +66,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
 
       - name: Expo prebuild
         run: npx expo prebuild --platform android --no-install
@@ -94,6 +94,24 @@ jobs:
       - name: Build APK
         working-directory: android
         run: ./gradlew assembleRelease
+
+      - name: Verify package, version and update signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          AAPT=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)
+          SIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
+          "$AAPT" dump badging "$APK" | head -1 > /tmp/current-apk.txt
+          cat /tmp/current-apk.txt
+          grep -q "name='cc.agentlabs.opencode'" /tmp/current-apk.txt
+          grep -q "versionCode='54'" /tmp/current-apk.txt
+          grep -q "versionName='0.2.20'" /tmp/current-apk.txt
+          curl --fail --location --retry 2 -o /tmp/previous.apk https://github.com/cfyz1297/opencode-mobile/releases/latest/download/opencode-mobile-v2.apk
+          "$SIGNER" verify --print-certs /tmp/previous.apk | grep 'Signer #1 certificate SHA-256 digest:' > /tmp/previous-cert.txt
+          "$SIGNER" verify --print-certs "$APK" | grep 'Signer #1 certificate SHA-256 digest:' > /tmp/current-cert.txt
+          diff -u /tmp/previous-cert.txt /tmp/current-cert.txt
+          echo 'Package/version verified; signing certificate matches the published app.'
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v7
