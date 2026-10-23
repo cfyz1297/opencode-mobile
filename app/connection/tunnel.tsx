@@ -3,7 +3,7 @@ import { View, Text, TextInput, Pressable, ScrollView, Alert, ActivityIndicator,
 import { Stack, router } from 'expo-router'
 import * as Clipboard from 'expo-clipboard'
 import { useTranslation } from 'react-i18next'
-import { tunnelCommands, tunnelUrl, type TunnelProvider, type HostPlatform } from '../../src/lib/tunnel'
+import { tunnelCommands, tunnelUrl, createTunnelConnector, type TunnelProvider, type HostPlatform } from '../../src/lib/tunnel'
 import { useConnections } from '../../src/stores/connections'
 import { useKeyboardHeight } from '../../src/lib/use-keyboard-height'
 
@@ -16,6 +16,13 @@ export default function TunnelScreen() {
   const [username, setUsername] = useState('opencode'), [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false), [step, setStep] = useState(1)
   const guard = useRef(false)
+  const connector = useRef(createTunnelConnector({
+    test: (connection, password) => useConnections.getState().testConnection({ ...connection, id: '' }, 'onboarding', password),
+    add: (connection, password) => useConnections.getState().addConnection(connection, password),
+    activate: async id => {
+      if (useConnections.getState().activeConnection?.id !== id) await useConnections.getState().setActiveConnection(id)
+    },
+  })).current
   const fg = dark ? '#fff' : '#111'
   let commands: string[] = []
   try { commands = tunnelCommands(provider, port, platform) } catch { /* Invalid port is shown inline. */ }
@@ -23,17 +30,12 @@ export default function TunnelScreen() {
   async function connect() {
     if (guard.current) return
     try {
-      const target = tunnelUrl(url)
+      tunnelUrl(url)
       if (!password.trim()) throw new Error(t('tunnel.passwordRequired'))
       guard.current = true
       setBusy(true)
-      const store = useConnections.getState()
-      const connection = { name: `${provider === 'cloudflare' ? 'Cloudflare' : 'ngrok'} tunnel`, type: 'tunnel' as const, url: target, username: username.trim() || 'opencode' }
-      const result = await store.testConnection({ ...connection, id: '' }, 'onboarding', password)
-      if (!result.ok) throw new Error(t('tunnel.failed'))
-      await store.addConnection(connection, password)
-      const added = useConnections.getState().connections.at(-1)
-      if (added && !added.active) await store.setActiveConnection(added.id)
+      try { await connector({ url, username, password, provider }) }
+      catch { throw new Error(t('tunnel.failed')) }
       router.replace('/(tabs)/connections')
     } catch (error) {
       Alert.alert(t('common.error'), error instanceof Error ? error.message : t('tunnel.failed'))

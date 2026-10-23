@@ -9,8 +9,13 @@ import type { SavedSession } from '../src/lib/offline-history'
 export default function HistoryScreen() {
   const { t } = useTranslation(), dark = useColorScheme() === 'dark'
   const connections = useConnections(s => s.connections), active = useConnections(s => s.activeConnection?.id)
-  const [enabled, setEnabled] = useState(false), [sessions, setSessions] = useState<SavedSession[]>([])
-  const [selected, setSelected] = useState<SavedSession | null>(null), [busy, setBusy] = useState(true)
+  const [enabled, setEnabled] = useState(false)
+  const [saved, setSaved] = useState<{ connection: string | undefined; sessions: SavedSession[] }>({ connection: undefined, sessions: [] })
+  const [selection, setSelection] = useState<{ connection: string | undefined; session: SavedSession } | null>(null)
+  const [busy, setBusy] = useState(true)
+  const sessions = saved.connection === active ? saved.sessions : []
+  const selected = selection?.connection === active ? selection?.session : null
+  const setSelected = (session: SavedSession | null) => setSelection(session ? { connection: active, session } : null)
   const fg = dark ? '#fff' : '#111'
   const request = useRef(0)
   const currentConnection = useRef(active)
@@ -22,11 +27,16 @@ export default function HistoryScreen() {
       const [consent, saved] = await Promise.all([historyEnabled(), active ? offlineHistory.list(active) : Promise.resolve([])])
       if (sequence !== request.current || currentConnection.current !== active) return
       setEnabled(consent)
-      setSessions(saved)
+      setSaved({ connection: active, sessions: saved })
     } catch { if (sequence === request.current && currentConnection.current === active) Alert.alert(t('common.error'), t('history.failed')) }
     finally { if (sequence === request.current && currentConnection.current === active) setBusy(false) }
   }, [active, t])
-  useEffect(() => { setSelected(null); setSessions([]); void reload() }, [reload])
+  useEffect(() => {
+    setSelection(null)
+    setSaved({ connection: active, sessions: [] })
+    void reload()
+    return () => { request.current++ }
+  }, [reload])
   const clear = () => Alert.alert(t('history.clear'), t('history.confirm'), [
     { text: t('common.cancel'), style: 'cancel' },
     { text: t('common.delete'), style: 'destructive', onPress: () => {

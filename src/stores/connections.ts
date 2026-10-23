@@ -41,7 +41,7 @@ interface ConnectionsState {
 
   // Actions
   loadConnections: () => Promise<void>
-  addConnection: (connection: Omit<ServerConnection, "id">, password?: string) => Promise<void>
+  addConnection: (connection: Omit<ServerConnection, "id">, password?: string) => Promise<string>
   removeConnection: (id: string) => Promise<void>
   setActiveConnection: (id: string) => Promise<void>
   // `source` distinguishes the activation funnel (onboarding) from the edit
@@ -195,10 +195,12 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
     }
 
     set({ connections, activeConnection, client, clientBase: base, currentProject: project, serverHome })
+    return id
   },
 
   removeConnection: async (id) => {
     offlineHistory.block(id)
+    try {
     await offlineHistory.clear(id)
     const connections = get().connections.filter((c) => c.id !== id)
 
@@ -223,6 +225,10 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
       }
     } else {
       set({ connections })
+    }
+    } catch (error) {
+      offlineHistory.unblock(id)
+      throw error
     }
   },
 
@@ -280,7 +286,8 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
         auth: buildAuth(connection.username, resolvedPassword),
       })
 
-      await client.global.health(CONNECTION_TEST_TIMEOUT_MS)
+      const health = await client.global.health(CONNECTION_TEST_TIMEOUT_MS)
+      if (!health.healthy) return { ok: false, error: 'Server is not healthy' }
       return { ok: true }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)

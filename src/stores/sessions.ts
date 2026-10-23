@@ -456,6 +456,7 @@ export const useSessions = create<SessionsState>((set, get) => ({
       }))
       return { ok: true, ...extractPromptFromParts(get().parts[messageID]) }
     } catch (err) {
+      if (epoch !== connectionEpoch) return { ok: false, reason: 'error' }
       if (err instanceof ApiError) {
         // Older servers (pre session.revert) 404 on this route — degrade
         // gracefully instead of surfacing a generic error.
@@ -483,6 +484,7 @@ export const useSessions = create<SessionsState>((set, get) => ({
         currentSession: state.currentSession?.id === session.id ? updated : state.currentSession,
       }))
     } catch (err) {
+      if (epoch !== connectionEpoch) return
       console.error("Failed to unrevert session:", err)
       set({ error: "Failed to restore reverted messages" })
     }
