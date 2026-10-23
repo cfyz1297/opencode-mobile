@@ -6,6 +6,7 @@ import { createClient, type Client, type Project } from "../lib/sdk"
 import { buildAuth } from "../lib/auth"
 import { stripTrailingSlash } from "../lib/path-utils"
 import { offlineHistory } from '../lib/history-storage'
+import { directoryClient } from "../lib/directory-client"
 
 // Where a connection check was initiated from (kept from the former
 // analytics.ts — the sources show up in user-facing status/log messages).
@@ -359,7 +360,7 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
     // Reuse current client if directory matches
     const active = get().activeConnection
     if (active?.directory === directory) return get().client
-    return createClient({ baseUrl: base.baseUrl, directory, auth: base.auth })
+    return directoryClient(base, directory)
   },
 
   switchDirectory: async (directory) => {

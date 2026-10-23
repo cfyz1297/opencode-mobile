@@ -1,0 +1,3 @@
+v0.2.19 — Tested SDK and reliable connection isolation
+
+Failed model/agent switches stop sending and allow retry. Each connection has its own model and stream state. HTTP error statuses and authentication errors are preserved. SSE accepts CRLF and optional field spacing. Added SDK HTTP integration tests, portable test discovery and coverage gates before APK builds.

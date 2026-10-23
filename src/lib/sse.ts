@@ -20,9 +20,13 @@ export class SSEParser {
     this.buffer = lines.pop() ?? ""
 
     const out: string[] = []
-    for (const line of lines) {
-      if (line.startsWith("data: ")) {
-        const data = line.slice(6)
+    for (const raw of lines) {
+      const line = raw.endsWith("\r") ? raw.slice(0, -1) : raw
+      if (line.startsWith("data:")) {
+        // SSE permits no space after the colon, or one optional separator.
+        // Preserve any further whitespace in the payload itself.
+        const value = line.slice(5)
+        const data = value.startsWith(" ") ? value.slice(1) : value
         if (data && data !== "[DONE]") out.push(data)
       }
     }

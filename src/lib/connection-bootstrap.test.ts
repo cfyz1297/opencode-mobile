@@ -18,6 +18,7 @@ function harness() {
     'expo-secure-store': { getItemAsync: async (key: string) => values.get(key) ?? null },
     'expo-crypto': { randomUUID: () => 'a' },
     '../lib/sdk': { createClient: () => client },
+    '../lib/directory-client': { directoryClient: () => client },
     '../lib/auth': { buildAuth: () => undefined },
     '../lib/path-utils': { stripTrailingSlash: (s: string) => s },
     '../lib/history-storage': { offlineHistory: { block: () => undefined, clear: async () => undefined } },

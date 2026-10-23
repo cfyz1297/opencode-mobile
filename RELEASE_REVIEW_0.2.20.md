@@ -4,7 +4,7 @@
 
 Requested: implement the Cloudflare/ngrok wizard, tablet/iPad layout and offline session history in the cfyz1297 fork. Cloud server/profile connection work was explicitly excluded by the owner during this task.
 
-The owner declared 0.2.19 the baseline. The remote checkout at task start was `main` at `2acd558`; its metadata and latest published tag were 0.2.18. A remote fetch for 0.2.19 returned “couldn't find remote ref”. No fork changes were discarded, upstream version numbers were not adopted, and 0.2.19 is reserved: this release uses 0.2.20 (54).
+Baseline: the owner’s prepared 0.2.19 is PR #1 / `codex/test-coverage-release` at `99552aada4efa41c323c7f77c10d125964717857`. It was not yet in main and had no public tag. That complete branch is merged into this work, preserving its SDK error propagation, per-client streaming/model state, stable directory clients, CRLF SSE fixes, 62 additional tests and 80% coverage gates. This release is 0.2.20 (54), built on the actual 0.2.19 code.
 
 Studied upstream README and PR listing, including [PR 108](https://github.com/dzianisv/opencode-mobile/pull/108) (offline scripted demo, not offline history) and [PR 218](https://github.com/dzianisv/opencode-mobile/pull/218) (V2 compatibility). The upstream roadmap still describes Cloud as planned. These three features required local implementation, not blind merging of unrelated PRs.
 
@@ -25,6 +25,7 @@ Studied upstream README and PR listing, including [PR 108](https://github.com/dz
 - `3afa2c3`: runtime failures for native UTF-8 emoji boundaries, post-commit cleanup interruption and corrupt-manifest clear; missing capture gate also failed. All passed with code-point-safe chunks, fixed storage slots and serialized consent/capture.
 - `e4cdb47`: runtime failures for late list/create responses and delete scope after server switch; all passed after connection epoch guards and origin capture.
 - `b20c7ca`: tunnel coordinator contract tests, then GREEN with the real screen wired to the tested coordinator.
+- `7e2f169` / `a1c1a09`: RED/GREEN for rejecting Cloudflare Quick Tunnels and guiding named-tunnel setup, based on official SSE limitations.
 
 Commands actually run locally:
 
@@ -37,7 +38,7 @@ npx --no-install expo export --platform android --output-dir ../../output/mobile
 npx --no-install expo export --platform ios --output-dir ../../output/mobile-next-ios-bundle
 ```
 
-Results: 383 tests passed, none failed/skipped; typecheck and version parity passed. New pure feature modules: 98.98% lines, 92.68% branches, 88.89% functions. Android and iOS Hermes bundles exported successfully. Coverage refers to these pure modules, not native UI or the whole app.
+Results: 446 tests passed, none failed/skipped; typecheck and version parity passed. New pure feature modules: 98.98% lines, 92.86% branches, 88.89% functions. Android and iOS Hermes bundles exported successfully. New-feature coverage refers to these pure modules. The complete instrumented module suite passes the inherited 80% gates with 95.72% lines, 85.46% branches and 93.87% functions. This excludes unimported native UI and is not whole-app coverage.
 
 The build workflow tests the signed release APK on Android using `scripts/cua-roadmap-smoke.mjs`. This is deterministic computer-use via ADB/UIAutomator with exact seeded data, avoiding the upstream Azure-dependent vision workflow because the fork has no Azure secrets. Screenshots/XML/result are retained in `roadmap-smoke-evidence`. Package/version and certificate parity with the existing released APK are checked before publishing.
 
@@ -53,6 +54,8 @@ Independent code, test and security reviews reproduced and fixed these issues be
 6. History reload results could cross connection boundaries. Tag rendered data/selection by connection and guard asynchronous completion.
 
 Focused re-review of `2b0f659`: original findings resolved; no additional concrete new defect reported. This is a focused review of the changes, not a claim of a full application penetration test.
+
+Cloudflare compatibility: [Quick Tunnels do not support SSE](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/#limitations). The wizard uses named Cloudflare tunnels, rejects trycloudflare.com URLs, and documents dashboard routing to the local service. The Cloudflare token stays on the computer and is never entered into the phone. Account/domain setup and noninteractive access compatibility are explicit prerequisites.
 
 Controls: server bound to loopback in wizard commands; HTTPS public URL and nonempty password required; credentials/query secrets rejected in tunnel URLs; connection tested before persistence; password stored using existing SecureStore path; cache uses device-only/when-unlocked native storage; no tool outputs/attachments/reasoning in cache; no auto-replay of cached text into prompts or actions; bounded chunk count, payload size and retention; cached content rendered as plain text.
 

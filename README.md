@@ -62,7 +62,7 @@ npm run android            # dev-сборка на устройстве/эмул
 
 Релизный APK собирает GitHub Actions (`.github/workflows/build.yml`) на каждый push в `main` и на теги `v*`: сначала тесты, typecheck и проверка версий, потом `expo prebuild` + `gradlew assembleRelease`. Артефакт — `app-release`; GitHub-релиз с APK публикуется вручную.
 
-Тесты: `npm test`. Typecheck: `npm run typecheck`. Проверка новой логики с покрытием: `node --test --experimental-test-coverage src/lib/offline-history.test.ts src/lib/tunnel.test.ts src/lib/adaptive-layout.test.ts`.
+Тесты (Node.js 24+): `npm test`. Общее покрытие с порогом 80%: `npm run test:coverage`. Исправления SDK и HTTP-интеграционные тесты 0.2.19 сохранены; исходный отчёт: [TEST_REPORT.md](TEST_REPORT.md). Typecheck: `npm run typecheck`. Проверка новой логики с покрытием: `node --test --experimental-test-coverage src/lib/offline-history.test.ts src/lib/tunnel.test.ts src/lib/adaptive-layout.test.ts`.
 
 Сборка включает Android CUA smoke: релизный APK, команды мастера, отклонение HTTP до сетевого обращения, переходы между сессиями в двух панелях, смена размера окна, холодный перезапуск без сервера, чтение и очистка истории. Артефакт `roadmap-smoke-evidence` содержит снимки экрана и результат. Проверка и известные ограничения: [RELEASE_REVIEW_0.2.20.md](RELEASE_REVIEW_0.2.20.md).
 
