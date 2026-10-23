@@ -102,10 +102,10 @@ try {
   await waitFor('Use a public HTTPS URL')
   assert.equal(requests.length, before, 'Invalid URL must fail before any request')
   screenshot('tunnel-reject-http')
-  adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+  await tap('OK')
   await open('connection/add')
   await type('connect-ip-input', '127.0.0.1')
-  await tap('connect-submit-button')
+  await tap('connect-submit-button', true)
   // Android 13 notification prompt may overlay the session list.
   await sleep(2000)
   const prompt = snapshot()

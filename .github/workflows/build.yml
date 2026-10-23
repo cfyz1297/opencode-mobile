@@ -102,7 +102,8 @@ jobs:
           APK=android/app/build/outputs/apk/release/app-release.apk
           AAPT=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)
           SIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
-          "$AAPT" dump badging "$APK" | head -1 > /tmp/current-apk.txt
+          "$AAPT" dump badging "$APK" > /tmp/full-apk.txt
+          sed -n '1p' /tmp/full-apk.txt > /tmp/current-apk.txt
           cat /tmp/current-apk.txt
           grep -q "name='cc.agentlabs.opencode'" /tmp/current-apk.txt
           grep -q "versionCode='54'" /tmp/current-apk.txt
