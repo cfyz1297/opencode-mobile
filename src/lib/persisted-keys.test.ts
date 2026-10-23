@@ -22,7 +22,6 @@ import path from "node:path"
  * user config, consent or counters. Tool results and attachments are excluded.
  */
 const ALLOWED_PERSISTED_KEYS = new Map<string, string>([
-  ["HISTORY_ENABLED_KEY", "explicit consent to retain read-only encrypted history"],
   ["key", "history-storage.ts adapter only: bounded encrypted text cache, never model context"],
   ["SETTINGS_KEY", "user's app settings (theme, notification prefs)"],
   ["CONNECTIONS_KEY", "user-entered server connections"],

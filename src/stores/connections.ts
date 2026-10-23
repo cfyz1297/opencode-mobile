@@ -198,6 +198,7 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
   },
 
   removeConnection: async (id) => {
+    offlineHistory.block(id)
     await offlineHistory.clear(id)
     const connections = get().connections.filter((c) => c.id !== id)
 

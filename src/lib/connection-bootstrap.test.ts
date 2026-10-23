@@ -20,7 +20,7 @@ function harness() {
     '../lib/sdk': { createClient: () => client },
     '../lib/auth': { buildAuth: () => undefined },
     '../lib/path-utils': { stripTrailingSlash: (s: string) => s },
-    '../lib/history-storage': { offlineHistory: { clear: async () => undefined } },
+    '../lib/history-storage': { offlineHistory: { block: () => undefined, clear: async () => undefined } },
   }
   vm.runInNewContext(code, { exports, require: (name: string) => { assert.ok(name in deps, name); return deps[name] }, console })
   return { store: exports.useConnections, release, client }

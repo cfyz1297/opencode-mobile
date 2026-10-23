@@ -7,10 +7,9 @@ export const offlineHistory = createHistory({
   remove: key => SecureStore.deleteItemAsync(key),
 })
 
-const HISTORY_ENABLED_KEY = 'opencode_history_enabled'
 export async function historyEnabled(): Promise<boolean> {
-  return (await SecureStore.getItemAsync(HISTORY_ENABLED_KEY)) === 'true'
+  return offlineHistory.enabled()
 }
 export async function setHistoryEnabled(enabled: boolean): Promise<void> {
-  await SecureStore.setItemAsync(HISTORY_ENABLED_KEY, String(enabled))
+  await offlineHistory.setEnabled(enabled)
 }

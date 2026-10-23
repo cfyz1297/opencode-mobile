@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, ScrollView, Pressable, Switch, Alert, useColorScheme, ActivityIndicator } from 'react-native'
 import { Stack } from 'expo-router'
 import { useTranslation } from 'react-i18next'
@@ -12,13 +12,19 @@ export default function HistoryScreen() {
   const [enabled, setEnabled] = useState(false), [sessions, setSessions] = useState<SavedSession[]>([])
   const [selected, setSelected] = useState<SavedSession | null>(null), [busy, setBusy] = useState(true)
   const fg = dark ? '#fff' : '#111'
+  const request = useRef(0)
+  const currentConnection = useRef(active)
+  currentConnection.current = active
   const reload = useCallback(async () => {
+    const sequence = ++request.current
     setBusy(true)
     try {
-      setEnabled(await historyEnabled())
-      setSessions(active ? await offlineHistory.list(active) : [])
-    } catch { Alert.alert(t('common.error'), t('history.failed')) }
-    finally { setBusy(false) }
+      const [consent, saved] = await Promise.all([historyEnabled(), active ? offlineHistory.list(active) : Promise.resolve([])])
+      if (sequence !== request.current || currentConnection.current !== active) return
+      setEnabled(consent)
+      setSessions(saved)
+    } catch { if (sequence === request.current && currentConnection.current === active) Alert.alert(t('common.error'), t('history.failed')) }
+    finally { if (sequence === request.current && currentConnection.current === active) setBusy(false) }
   }, [active, t])
   useEffect(() => { setSelected(null); setSessions([]); void reload() }, [reload])
   const clear = () => Alert.alert(t('history.clear'), t('history.confirm'), [

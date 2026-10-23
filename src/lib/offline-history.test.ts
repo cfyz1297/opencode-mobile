@@ -58,10 +58,10 @@ test('concurrent saves are serialized and neither session is lost', async () => 
 test('process-death staging data is cleaned on cold launch and clear', async () => {
   const s = storage(), h = createHistory(s)
   await h.save('a', snapshot())
-  s.data.set('opencode_history_a_pending', JSON.stringify({ generation: 'crashed', count: 1 }))
-  s.data.set('opencode_history_a_crashed_0', 'private partial write')
+  s.data.set('opencode_history_a_pending', JSON.stringify({ generation: 'b', count: 1 }))
+  s.data.set('opencode_history_a_b_0', 'private partial write')
   assert.equal((await createHistory(s).list('a')).length, 1)
-  assert.ok(!s.data.has('opencode_history_a_crashed_0'))
+  assert.ok(!s.data.has('opencode_history_a_b_0'))
   await h.clear('a')
   assert.equal(s.data.size, 0)
 })

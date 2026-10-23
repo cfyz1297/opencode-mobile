@@ -13,7 +13,7 @@ import { useEvents } from "../src/stores/events"
 import { useCatalog } from "../src/stores/catalog"
 import { useSettings } from "../src/stores/settings"
 import { useSessions } from "../src/stores/sessions"
-import { offlineHistory, historyEnabled } from "../src/lib/history-storage"
+import { offlineHistory } from "../src/lib/history-storage"
 import { historySnapshot } from "../src/lib/offline-history"
 import { AuthGate } from "../src/components/AuthGate"
 import { ErrorBoundary } from "../src/components/ErrorBoundary"
@@ -43,8 +43,8 @@ function RootLayout() {
       const snapshot = historySnapshot(state.currentSession, state.messages, state.parts)
       timer = setTimeout(() => {
         void (async () => {
-          if (!(await historyEnabled()) || useConnections.getState().activeConnection?.id !== connection) return
-          await offlineHistory.save(connection, snapshot)
+          if (useConnections.getState().activeConnection?.id !== connection) return
+          await offlineHistory.capture(connection, snapshot)
         })().catch(() => console.warn('Offline history could not be saved'))
       }, 1000)
     })
