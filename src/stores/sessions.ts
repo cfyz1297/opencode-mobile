@@ -5,6 +5,7 @@ import { useSettings } from "./settings"
 import { extractPromptFromParts, type PromptFromParts } from "../lib/prompt-from-parts"
 import { mergeIncomingMessage, reconcileTemps } from "../lib/message-merge"
 import { isColdSessionLoad, isLiveEventForSession } from "../lib/session-load-reconcile"
+import { offlineHistory } from '../lib/history-storage'
 
 // Helper to convert API response to our internal format
 function parseMessages(response: MessageWithParts[]): { messages: Message[]; parts: Record<string, Part[]> } {
@@ -257,6 +258,8 @@ export const useSessions = create<SessionsState>((set, get) => ({
 
     try {
       await client.session.delete(sessionID)
+      const connection = useConnections.getState().activeConnection?.id
+      if (connection) await offlineHistory.remove(connection, sessionID)
       set((state) => ({
         sessions: state.sessions.filter((s) => s.id !== sessionID),
         currentSession: state.currentSession?.id === sessionID ? null : state.currentSession,
@@ -534,3 +537,13 @@ export const useSessions = create<SessionsState>((set, get) => ({
     }
   },
 }))
+
+// Invalidate every in-flight request before exposing another server's client.
+// Session IDs may overlap across servers; never merge or cache them together.
+useConnections.subscribe((state, previous) => {
+  if (state.activeConnection?.id === previous.activeConnection?.id) return
+  selectSeq++
+  loadOlderSeq++
+  refreshSeqCounter++
+  useSessions.setState({ sessions: [], currentSession: null, messages: [], parts: {}, sending: {}, isLoading: false, hasMore: false, loadingMore: false, error: null })
+})

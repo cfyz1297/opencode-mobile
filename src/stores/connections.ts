@@ -5,6 +5,7 @@ import type { ServerConnection, ConnectionType } from "../lib/types"
 import { createClient, type Client, type Project } from "../lib/sdk"
 import { buildAuth } from "../lib/auth"
 import { stripTrailingSlash } from "../lib/path-utils"
+import { offlineHistory } from '../lib/history-storage'
 
 // Where a connection check was initiated from (kept from the former
 // analytics.ts — the sources show up in user-facing status/log messages).
@@ -112,25 +113,12 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
       // Create client for active connection
       let client: Client | null = null
       let base: ClientBase | null = null
-      let project: Project | null = null
-      let home: string | null = null
       if (active) {
         const password = await SecureStore.getItemAsync(`${PASSWORDS_PREFIX}${active.id}`)
         const auth = buildAuth(active.username, password)
         const built = buildClient(active.url, active.directory, auth)
         client = built.client
         base = built.base
-        // Fetch current project info and server paths
-        try {
-          const [proj, paths] = await Promise.all([
-            client.project.current().catch(() => null),
-            client.path.get().catch(() => null),
-          ])
-          project = proj
-          home = paths?.home || null
-        } catch {
-          // Server might be offline
-        }
       }
 
       set({
@@ -138,11 +126,23 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
         activeConnection: active,
         client,
         clientBase: base,
-        currentProject: project,
-        serverHome: home,
+        currentProject: null,
+        serverHome: null,
         recentDirectories,
         isLoading: false,
       })
+      // Local navigation, including saved history, must work before a network
+      // request completes. Ignore metadata if the user has switched clients.
+      if (client) {
+        const hydratedClient = client
+        void Promise.all([
+          client.project.current().catch(() => null),
+          client.path.get().catch(() => null),
+        ]).then(([project, paths]) => {
+          if (get().client !== hydratedClient) return
+          set({ currentProject: project, serverHome: paths?.home || null })
+        })
+      }
     } catch (error) {
       set({ error: "Failed to load connections", isLoading: false })
     }
@@ -198,6 +198,7 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
   },
 
   removeConnection: async (id) => {
+    await offlineHistory.clear(id)
     const connections = get().connections.filter((c) => c.id !== id)
 
     // Remove stored password

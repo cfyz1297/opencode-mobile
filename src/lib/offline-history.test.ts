@@ -50,3 +50,35 @@ test('corruption is reported without returning partial transcripts', async () =>
 test('unsafe connection keys cannot escape storage namespace', async () => {
   await assert.rejects(createHistory(storage()).list('../a'))
 })
+test('concurrent saves are serialized and neither session is lost', async () => {
+  const s = storage(), h = createHistory(s)
+  await Promise.all([h.save('a', snapshot('one')), h.save('a', snapshot('two'))])
+  assert.deepEqual((await h.list('a')).map(x => x.id), ['two', 'one'])
+})
+test('process-death staging data is cleaned on cold launch and clear', async () => {
+  const s = storage(), h = createHistory(s)
+  await h.save('a', snapshot())
+  s.data.set('opencode_history_a_pending', JSON.stringify({ generation: 'crashed', count: 1 }))
+  s.data.set('opencode_history_a_crashed_0', 'private partial write')
+  assert.equal((await createHistory(s).list('a')).length, 1)
+  assert.ok(!s.data.has('opencode_history_a_crashed_0'))
+  await h.clear('a')
+  assert.equal(s.data.size, 0)
+})
+test('large transcripts are bounded without breaking JSON or UTF-8', async () => {
+  const s = storage(), h = createHistory(s)
+  const big = { ...snapshot(), messages: Array.from({ length: 40 }, (_, i) => ({ id: String(i), role: 'user' as const, text: '😀'.repeat(3000) })) }
+  await h.save('a', big)
+  const saved = await h.list('a')
+  assert.ok(saved[0].messages.length < 40)
+  assert.ok([...s.data.values()].every(v => Buffer.byteLength(v) <= 1800))
+})
+test('malicious stored manifests and payloads fail closed', async () => {
+  const s = storage(), h = createHistory(s)
+  s.data.set('opencode_history_a', '{"generation":"../secret","count":99999999}')
+  await assert.rejects(h.list('a'))
+  s.data.clear()
+  s.data.set('opencode_history_a', '{"generation":"x","count":1}')
+  s.data.set('opencode_history_a_x_0', '[{"id":"x","messages":[]}]')
+  await assert.rejects(h.list('a'))
+})

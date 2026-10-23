@@ -477,5 +477,39 @@
     "action": "Get it",
     "dismiss": "Not now",
     "upToDate": "Up to date"
+  },
+  "tunnel": {
+    "title": "Cloudflare / ngrok setup",
+    "step": "Step {{step}} of 3",
+    "intro": "Create a secure tunnel from this phone to the OpenCode server on your computer. Run the setup commands on that computer.",
+    "install": "Open official installation guide",
+    "next": "Continue",
+    "back": "Back",
+    "start": "Install OpenCode and the selected tunnel tool. In terminal 1, replace choose-a-long-password with your own strong password and start the server. In terminal 2, start the tunnel. Keep both terminals running.",
+    "port": "Local server port",
+    "invalidPort": "Use a port between 1 and 65535.",
+    "warning": "The tunnel exposes your server on the internet. Keep authentication enabled. Cloudflare quick tunnel URLs change after restart; ngrok requires an account and its own login. Stop the tunnel when finished.",
+    "copy": "Copy command {{number}}",
+    "paste": "Paste the HTTPS address printed by the tunnel. Enter the same OpenCode password you set on the computer. The app tests the connection before saving it.",
+    "url": "Tunnel HTTPS URL",
+    "username": "Server username",
+    "password": "Server password",
+    "connect": "Test and connect",
+    "failed": "Could not connect. Check the tunnel address, server password and that both terminals are running.",
+    "passwordRequired": "Set a password on the server and enter it here before using a public tunnel."
+  },
+  "history": {
+    "title": "Offline session history",
+    "privacy": "Optional encrypted copies of recently opened conversations, stored only on this device. Stores up to 20 sessions per connection and the last 40 text messages per session, within a size limit. Tool output, attachments and reasoning are excluded. Messages may contain sensitive text. Disable capture to stop future saves; clear history to remove existing copies.",
+    "enable": "Save conversations for offline reading",
+    "clear": "Clear all saved history and stop capture",
+    "confirm": "Delete offline copies for all connections on this device? Server sessions remain available.",
+    "failed": "Could not read or update offline history. Try again or clear saved history.",
+    "noConnection": "Choose a connection first",
+    "empty": "No saved conversations yet. Enable saving, then open a session online. Switch connections to view another server’s saved history.",
+    "savedAt": "Saved {{date}}",
+    "readOnly": "Saved copy · read only · may be incomplete or out of date",
+    "user": "You",
+    "assistant": "Assistant"
   }
 }
