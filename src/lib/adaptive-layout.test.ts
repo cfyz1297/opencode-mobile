@@ -13,11 +13,20 @@ test('phone, tablet portrait, split view and large desktop widths', () => {
 })
 
 test('Android handles large display size and density changes without recreating the chat activity', () => {
+  const required = ['orientation', 'screenSize', 'screenLayout', 'smallestScreenSize', 'density']
   const manifest = readFileSync(new URL('../../android/app/src/main/AndroidManifest.xml', import.meta.url), 'utf8')
   const activity = manifest.match(/<activity\b[^>]*android:name="\.MainActivity"[^>]*>/)?.[0] ?? ''
   const changes = new Set(activity.match(/android:configChanges="([^"]+)"/)?.[1].split('|'))
-  for (const change of ['orientation', 'screenSize', 'screenLayout', 'smallestScreenSize', 'density']) {
+  for (const change of required) {
     assert.ok(changes.has(change), `MainActivity must handle ${change}`)
   }
   assert.ok(!activity.includes('android:screenOrientation="portrait"'))
+
+  // expo prebuild regenerates the manifest in CI; the config plugin must keep these flags.
+  const appJson = JSON.parse(readFileSync(new URL('../../app.json', import.meta.url), 'utf8'))
+  assert.ok(appJson.expo.plugins.includes('./plugins/with-tablet-config-changes.js'))
+  const plugin = readFileSync(new URL('../../plugins/with-tablet-config-changes.js', import.meta.url), 'utf8')
+  for (const change of required) {
+    assert.ok(plugin.includes(`'${change}'`), `config plugin must require ${change}`)
+  }
 })
