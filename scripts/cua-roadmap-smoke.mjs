@@ -126,8 +126,15 @@ try {
   adb('shell', 'wm', 'size', '1920x1200')
   await sleep(2000)
   await waitFor('tablet-session-sidebar')
+  // Dismiss any sheet (e.g. Select Model) that can steal taps after a resize.
+  if (snapshot().includes('Select Model') || snapshot().includes('Search models')) {
+    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+    await sleep(500)
+  }
   await tap('tablet-session-tablet-session-two')
   await waitFor('TABLET_SECOND_ANSWER_44')
+  await waitFor('tablet-session-tablet-session-two')
+  assert.ok(snapshot().includes('content-desc="TABLET_SESSION_TWO, /other"') && snapshot().match(/resource-id="tablet-session-tablet-session-two"[^>]*selected="true"/), 'Second session is selected in the sidebar')
   await tap('tablet-session-roadmap-session')
   await waitFor('OFFLINE_ANSWER_42')
   screenshot('session-tablet-landscape')
