@@ -92,7 +92,7 @@ try {
   adb('shell', 'pm', 'clear', pkg)
   await open('connection/tunnel')
   await waitFor('Step 1 of 3')
-  await tap('tunnel-next')
+  await tap('tunnel-next', true)
   await waitFor('127.0.0.1')
   screenshot('tunnel-commands-phone')
   await tap('tunnel-next', true)

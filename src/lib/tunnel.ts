@@ -29,6 +29,7 @@ export function tunnelUrl(input: string): string {
   if (!/^https:\/\//i.test(raw) || /[\s\\?#]/.test(raw)) throw new Error('Use a public HTTPS URL without credentials, query or fragment')
   const url = new URL(raw)
   if (!url.hostname || url.username || url.password || url.hash || url.search) throw new Error('Invalid tunnel URL')
+  if (url.hostname.endsWith('.trycloudflare.com') || url.hostname === 'trycloudflare.com') throw new Error('Use a named Cloudflare tunnel or ngrok: quick tunnels do not support live updates')
   return url.toString().replace(/\/+$/, '')
 }
 
@@ -38,5 +39,5 @@ export function tunnelCommands(provider: TunnelProvider, input: string, platform
   const server = platform === 'windows'
     ? `$env:OPENCODE_SERVER_PASSWORD = 'choose-a-long-password'\nopencode serve --hostname 127.0.0.1 --port ${port}`
     : `OPENCODE_SERVER_PASSWORD='choose-a-long-password' opencode serve --hostname 127.0.0.1 --port ${port}`
-  return [server, provider === 'cloudflare' ? `cloudflared tunnel --url http://127.0.0.1:${port}` : `ngrok http ${port}`]
+  return [server, provider === 'cloudflare' ? 'cloudflared tunnel run --token YOUR_TUNNEL_TOKEN' : `ngrok http ${port}`]
 }

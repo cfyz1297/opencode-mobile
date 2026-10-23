@@ -51,11 +51,12 @@ export default function TunnelScreen() {
         {button(`${provider === 'ngrok' ? '✓ ' : ''}ngrok`, () => setProvider('ngrok'), 'tunnel-ngrok')}
         {button(platform === 'windows' ? '✓ Windows (PowerShell)' : 'Windows (PowerShell)', () => setPlatform('windows'))}
         {button(platform === 'unix' ? '✓ macOS / Linux' : 'macOS / Linux', () => setPlatform('unix'))}
-        {button(t('tunnel.install'), () => { void Linking.openURL(provider === 'cloudflare' ? 'https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/' : 'https://ngrok.com/docs/getting-started/').catch(() => Alert.alert(t('common.error'), t('tunnel.failed'))) })}
+        {button(t('tunnel.install'), () => { void Linking.openURL(provider === 'cloudflare' ? 'https://developers.cloudflare.com/tunnel/get-started/' : 'https://ngrok.com/docs/getting-started/').catch(() => Alert.alert(t('common.error'), t('tunnel.failed'))) })}
         {button(t('tunnel.next'), () => setStep(2), 'tunnel-next')}
       </>}
       {step === 2 && <>
         <Text style={{ color: fg }}>{t('tunnel.start')}</Text>
+        {provider === 'cloudflare' && <Text style={{ color: fg }}>{t('tunnel.cloudflare', { port })}</Text>}
         <Text style={{ color: fg }}>{t('tunnel.port')}</Text>
         <TextInput accessibilityLabel={t('tunnel.port')} value={port} onChangeText={setPort} keyboardType="number-pad" style={{ padding: 14, color: fg, borderWidth: 1, borderColor: '#888', borderRadius: 8 }} />
         {!commands.length && <Text style={{ color: '#ef4444' }}>{t('tunnel.invalidPort')}</Text>}
