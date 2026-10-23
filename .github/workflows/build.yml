@@ -1,7 +1,12 @@
 name: Build Android APK
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      reuse_apk_run_id:
+        description: 'Optional successful build run to reuse; application sources must match exactly'
+        required: false
+        default: ''
   push:
     branches: [main]
     tags: ["v*"]
@@ -40,6 +45,8 @@ jobs:
       EXPO_PUBLIC_CHATWOOT_INBOX_IDENTIFIER: ${{ secrets.EXPO_PUBLIC_CHATWOOT_INBOX_IDENTIFIER }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v6
         with:
@@ -55,6 +62,7 @@ jobs:
         uses: android-actions/setup-android@v4
 
       - name: Cache Gradle
+        if: inputs.reuse_apk_run_id == ''
         uses: actions/cache@v5
         with:
           path: |
@@ -66,12 +74,15 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Install dependencies
+        if: inputs.reuse_apk_run_id == ''
         run: npm ci --legacy-peer-deps
 
       - name: Expo prebuild
+        if: inputs.reuse_apk_run_id == ''
         run: npx expo prebuild --platform android --no-install
 
       - name: Setup signing
+        if: inputs.reuse_apk_run_id == ''
         # Fork: sign EVERY build (not just tag refs) with the persistent
         # keystore from repo secrets, so updates install over previous
         # versions. A debug keystore generated fresh per run changes signature
@@ -92,8 +103,33 @@ jobs:
           fi
 
       - name: Build APK
+        if: inputs.reuse_apk_run_id == ''
         working-directory: android
         run: ./gradlew assembleRelease
+
+      - name: Verify reused build has identical application sources
+        if: inputs.reuse_apk_run_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REUSE_RUN: ${{ inputs.reuse_apk_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$REUSE_RUN" =~ ^[0-9]+$ ]]
+          SOURCE_SHA=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$REUSE_RUN" --jq .head_sha)
+          [[ "$SOURCE_SHA" =~ ^[a-f0-9]{40}$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$REUSE_RUN/jobs" --jq '.jobs[] | select(.name == "build") | .conclusion' | grep -qx success
+          git diff --exit-code "$SOURCE_SHA" HEAD -- app src android assets package.json package-lock.json app.json metro.config.js tsconfig.json
+          echo "Reusing signed APK from $SOURCE_SHA: application sources are identical."
+
+      - name: Download verified existing APK
+        if: inputs.reuse_apk_run_id != ''
+        uses: actions/download-artifact@v7
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.reuse_apk_run_id }}
+          name: app-release
+          path: android/app/build/outputs/apk/release
 
       - name: Verify package, version and update signature
         shell: bash
