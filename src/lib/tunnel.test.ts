@@ -15,6 +15,12 @@ test('commands bind server to loopback and never interpolate an invalid port', (
   assert.match(tunnelCommands('ngrok', '4096', 'unix').join('\n'), /ngrok http 4096/)
   for (const port of ['0', '65536', '4096;whoami', '-1', '1.5']) assert.throws(() => tunnelCommands('ngrok', port, 'unix'))
 })
+test('Cloudflare setup uses named tunnel because quick tunnels do not support SSE', () => {
+  const commands = tunnelCommands('cloudflare', '4096', 'windows')
+  assert.match(commands[1], /tunnel run --token YOUR_TUNNEL_TOKEN/)
+  assert.ok(!commands[1].includes('--url'))
+  assert.throws(() => tunnelUrl('https://random.trycloudflare.com'), /named Cloudflare tunnel/)
+})
 function connectorHarness(overrides: Record<string, unknown> = {}) {
   const calls: unknown[][] = []
   const connector = createTunnelConnector({
