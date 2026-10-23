@@ -9,7 +9,7 @@
 import { fetch as expoFetch } from "expo/fetch"
 import { buildRequestHeaders } from "./headers"
 import { SSEParser } from "./sse"
-import { apiErrorFor } from "./api-error"
+import { apiErrorFor, isAuthStatus } from "./api-error"
 import { normalizeSessions } from "./session-list"
 import type { FileRoot } from "./file-roots"
 import {
@@ -31,10 +31,6 @@ import {
 } from "./v2-compat"
 import type { ProviderCatalog, V2FormField, V2FormInfo, V2MessageBody, V2SessionInfo } from "./v2-compat"
 export { ApiAuthError, isAuthError } from "./api-error"
-
-// Last applied model/agent/variant switch per session. A re-sent identical
-// switch resets the V2 session's reasoning variant, so prompt() skips repeats.
-const lastSwitch = new Map<string, string>()
 
 export interface ClientConfig {
   baseUrl: string
@@ -247,7 +243,8 @@ async function request<T>(
 
   if (!response.ok) {
     const error = await response.text()
-    throw apiErrorFor(response.status, `API Error: ${response.status} - ${error}`)
+    if (isAuthStatus(response.status)) throw apiErrorFor(response.status, `API Error: ${response.status} - ${error}`)
+    throw new ApiError(response.status, error)
   }
 
   // V2 returns bare 204s for mutations (e.g. DELETE /api/session/{id}) —
@@ -299,11 +296,13 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
   }
 }
 
-// Module-level V2 → V1 event adapter. Streaming state (delta accumulators)
-// must survive across events, and the app holds one event stream at a time.
-const eventAdapter = new V2EventAdapter()
-
 export function createClient(config: ClientConfig) {
+  // Session IDs and switch choices belong to this connection. Sharing this
+  // cache across clients can skip the first model switch on another server.
+  const lastSwitch = new Map<string, string>()
+  // Retain deltas across reconnects of this client, but never carry messages
+  // or deduplication state into another server/directory connection.
+  const eventAdapter = new V2EventAdapter()
   // Normalize once: a trailing slash on baseUrl (e.g. pasted into Advanced
   // mode or the Edit screen) would otherwise survive into every
   // `${config.baseUrl}${path}` concatenation below as a double slash, which
@@ -568,13 +567,13 @@ export function createClient(config: ClientConfig) {
                   ...(params.variant ? { variant: params.variant } : {}),
                 },
               }),
-            }).catch(() => undefined) // tolerate switches failing server-side
+            })
           }
           if (params.agent) {
             await request(config, `/api/session/${sessionID}/agent`, {
               method: "POST",
               body: JSON.stringify({ agent: params.agent }),
-            }).catch(() => undefined)
+            })
           }
         }
 
@@ -604,7 +603,7 @@ export function createClient(config: ClientConfig) {
         }, 0)
         if (!response.ok) {
           const error = await response.text()
-          throw new Error(`Failed to send message: ${response.status} - ${error}`)
+          throw apiErrorFor(response.status, `Failed to send message: ${response.status} - ${error}`)
         }
         // BUG-021: only record the switch as done when the POST actually
         // succeeded — a failed switch must be retried on the next prompt.
@@ -637,7 +636,7 @@ export function createClient(config: ClientConfig) {
 
         if (!response.ok) {
           const error = await response.text()
-          throw new Error(`Failed to run command: ${response.status} - ${error}`)
+          throw apiErrorFor(response.status, `Failed to run command: ${response.status} - ${error}`)
         }
       },
 

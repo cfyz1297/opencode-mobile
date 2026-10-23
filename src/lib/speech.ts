@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react"
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from "expo-speech-recognition"
+import { shouldSurfaceSpeechError } from "./speech-errors"
 
 interface SpeechState {
   listening: boolean
@@ -18,6 +19,7 @@ export function useSpeech(onResult: (text: string) => void): SpeechState & Speec
   const [transcript, setTranscript] = useState("")
   const [error, setError] = useState<string | null>(null)
   const pending = useRef("")
+  const userStarted = useRef(false)
 
   useSpeechRecognitionEvent("start", () => {
     setListening(true)
@@ -28,6 +30,7 @@ export function useSpeech(onResult: (text: string) => void): SpeechState & Speec
 
   useSpeechRecognitionEvent("end", () => {
     setListening(false)
+    userStarted.current = false
     // Deliver final transcript
     if (pending.current.trim()) {
       onResult(pending.current.trim())
@@ -43,18 +46,18 @@ export function useSpeech(onResult: (text: string) => void): SpeechState & Speec
   })
 
   useSpeechRecognitionEvent("error", (event) => {
-    // "no-speech" is not really an error — user just didn't say anything
-    if (event.error === "no-speech") {
-      setListening(false)
-      return
-    }
-    setError(event.message || event.error)
+    const started = userStarted.current
+    userStarted.current = false
     setListening(false)
+    if (!shouldSurfaceSpeechError({ errorCode: event.error, userStarted: started })) return
+    setError(event.message || event.error)
   })
 
   const start = useCallback(async () => {
+    userStarted.current = true
     const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync()
     if (!result.granted) {
+      userStarted.current = false
       setError("Microphone permission denied")
       return
     }
@@ -64,6 +67,7 @@ export function useSpeech(onResult: (text: string) => void): SpeechState & Speec
     try {
       await ExpoSpeechRecognitionModule.start({ lang: `${locale}-US`, interimResults: true, continuous: true })
     } catch (err: any) {
+      userStarted.current = false
       setError(err?.message || "Failed to start speech recognition")
     }
   }, [])
@@ -74,6 +78,7 @@ export function useSpeech(onResult: (text: string) => void): SpeechState & Speec
 
   const cancel = useCallback(() => {
     pending.current = ""
+    userStarted.current = false
     ExpoSpeechRecognitionModule.abort()
     setListening(false)
     setTranscript("")
@@ -83,6 +88,7 @@ export function useSpeech(onResult: (text: string) => void): SpeechState & Speec
   // the mic stays hot in the background. abort() is a no-op when not listening.
   useEffect(() => {
     return () => {
+      userStarted.current = false
       ExpoSpeechRecognitionModule.abort()
     }
   }, [])

@@ -7,11 +7,9 @@ import path from "node:path"
  * Tripwire for the "poisoned persistent memory" class of bug (a scanner
  * flagged us for it; see the triage in the security notes).
  *
- * The app is a thin client: sessions, messages and tool output live on the
- * opencode server and are held in memory by the zustand stores. Nothing that
- * a model or a tool produced is ever written to on-device storage, so there
- * is no persistent store an injected instruction could sit in and be replayed
- * from on the next launch.
+ * The app keeps config and an opt-in, encrypted, text-only offline cache.
+ * Cached text is displayed by the read-only history route; it must never be
+ * used as prompt context, replayed as actions or interpreted as instructions.
  *
  * That property is worth keeping, and it is invisible in review: it only
  * breaks the day someone adds a well-meaning "cache the last conversation" or
@@ -20,11 +18,11 @@ import path from "node:path"
  * to this list and say what it holds, which is the moment to ask whether the
  * value is user/config data or model output.
  *
- * Rule: keys listed here must hold user-entered config, consent flags or
- * counters. Never message text, session titles, tool results or any other
- * model-derived content.
+ * History persistence is limited to its reviewed adapter. Other keys contain
+ * user config, consent or counters. Tool results and attachments are excluded.
  */
 const ALLOWED_PERSISTED_KEYS = new Map<string, string>([
+  ["key", "history-storage.ts adapter only: bounded encrypted text cache, never model context"],
   ["SETTINGS_KEY", "user's app settings (theme, notification prefs)"],
   ["CONNECTIONS_KEY", "user-entered server connections"],
   ["`${PASSWORDS_PREFIX}${id}`", "user-entered server password, per connection"],
@@ -54,7 +52,7 @@ test("every on-device write uses a reviewed key, never model-generated content",
     const code = fs.readFileSync(file, "utf8")
     for (const match of code.matchAll(/SecureStore\.setItemAsync\(\s*([^,]+?)\s*,/g)) {
       const key = match[1].trim()
-      if (!ALLOWED_PERSISTED_KEYS.has(key)) {
+      if (!ALLOWED_PERSISTED_KEYS.has(key) || (key === 'key' && path.basename(file) !== 'history-storage.ts')) {
         unknown.push(`${path.relative(SRC, file)}: ${key}`)
       }
     }
