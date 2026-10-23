@@ -27,7 +27,8 @@ async function waitFor(value, timeout = 45000) {
 async function tap(value, scroll = false) {
   if (scroll) {
     for (let i = 0; i < 5 && !snapshot().includes(`="${value}"`); i++) {
-      const [, width, height] = adb('shell', 'wm', 'size').match(/(?:Override|Physical) size: (\d+)x(\d+)/) ?? []
+      const dimensions = adb('shell', 'wm', 'size')
+      const [, width, height] = dimensions.match(/Override size: (\d+)x(\d+)/) ?? dimensions.match(/Physical size: (\d+)x(\d+)/) ?? []
       assert.ok(width && height)
       adb('shell', 'input', 'swipe', String(Math.floor(+width / 2)), String(Math.floor(+height * 0.8)), String(Math.floor(+width / 2)), String(Math.floor(+height * 0.3)), '350')
       await sleep(400)
@@ -89,6 +90,10 @@ const server = createServer((req, res) => {
 await new Promise(resolve => server.listen(4096, '127.0.0.1', resolve))
 try {
   adb('reverse', 'tcp:4096', 'tcp:4096')
+  // Keep density fixed throughout the journey: changing density recreates the
+  // Android activity, whereas screenSize is handled by the application.
+  adb('shell', 'wm', 'density', '160')
+  adb('shell', 'wm', 'size', '400x800')
   adb('shell', 'pm', 'clear', pkg)
   await open('connection/tunnel')
   await waitFor('Step 1 of 3')
@@ -119,7 +124,6 @@ try {
   await sleep(2500)
   screenshot('session-phone')
   adb('shell', 'wm', 'size', '1920x1200')
-  adb('shell', 'wm', 'density', '160')
   await sleep(2000)
   await waitFor('tablet-session-sidebar')
   await tap('tablet-session-tablet-session-two')
@@ -162,3 +166,4 @@ try {
   adb('shell', 'wm', 'size', 'reset')
   adb('shell', 'wm', 'density', 'reset')
 }
+
