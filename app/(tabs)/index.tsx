@@ -562,9 +562,6 @@ export default function SessionsScreen() {
       )}
 
       <UpdateBanner isDark={isDark} />
-      <TouchableOpacity accessibilityRole="button" testID="open-offline-history" onPress={() => router.push('/history')} style={{ padding: 14, backgroundColor: isDark ? '#222' : '#eee' }}>
-        <Text style={{ color: isDark ? '#fff' : '#111' }}>{t('history.title')}</Text>
-      </TouchableOpacity>
 
       <FlatList
         data={rows}

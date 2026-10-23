@@ -61,25 +61,3 @@ test("data payload preserves internal colons and spaces (only the 'data: ' prefi
   const p = new SSEParser()
   assert.deepEqual(p.push('data: {"url":"http://x:1"}\n'), ['{"url":"http://x:1"}'])
 })
-
-test("SSE accepts data fields without an optional space", () => {
-  assert.deepEqual(new SSEParser().push('data:{"x":1}\n\n'), ['{"x":1}'])
-})
-
-test("SSE strips CRLF terminators from payloads", () => {
-  assert.deepEqual(new SSEParser().push('data: {"x":1}\r\n\r\n'), ['{"x":1}'])
-})
-
-test("SSE filters CRLF sentinels and empty payloads", () => {
-  assert.deepEqual(new SSEParser().push("data: [DONE]\r\ndata:\r\ndata: \r\n"), [])
-})
-
-test("SSE preserves data whitespace beyond the single optional separator", () => {
-  assert.deepEqual(new SSEParser().push("data:  indented \r\n"), [" indented "])
-})
-
-test("SSE reassembles CRLF split between network chunks", () => {
-  const parser = new SSEParser()
-  assert.deepEqual(parser.push("data: value\r"), [])
-  assert.deepEqual(parser.push("\n\r\n"), ["value"])
-})

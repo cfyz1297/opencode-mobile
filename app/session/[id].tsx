@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   Alert,
   AppState,
-  useWindowDimensions,
 } from "react-native"
 import { useLocalSearchParams, Stack, useRouter, useFocusEffect } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
@@ -42,8 +41,6 @@ import { useConnections } from "../../src/stores/connections"
 import { useAuth } from "../../src/stores/auth"
 import { useCatalog } from "../../src/stores/catalog"
 import { useSpeech } from "../../src/lib/speech"
-import { adaptiveLayout } from '../../src/lib/adaptive-layout'
-import { TabletSessions } from '../../src/components/TabletSessions'
 
 // --- Builtin slash commands ---
 const BUILTIN_COMMANDS: SlashCommand[] = [
@@ -104,19 +101,10 @@ export default function SessionScreen() {
   const isDark = colorScheme === "dark"
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
-  const window = useWindowDimensions()
-  const layout = adaptiveLayout(window.width)
 
   const flatListRef = useRef<FlatList>(null)
   const modelSheetRef = useRef<BottomSheet>(null)
   const variantSheetRef = useRef<BottomSheet>(null)
-
-  // Emulator/tablet size changes can leave the model sheet expanded over the
-  // session sidebar; close pickers whenever the window geometry changes.
-  useEffect(() => {
-    modelSheetRef.current?.close()
-    variantSheetRef.current?.close()
-  }, [window.width, window.height])
   const [input, setInput] = useState("")
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [showInfo, setShowInfo] = useState(false)
@@ -816,12 +804,9 @@ export default function SessionScreen() {
         }}
       />
 
-      <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center' }}>
-      {layout.split && <TabletSessions width={layout.sidebar} selected={id} />}
       <View
         style={[
           s.container,
-          { maxWidth: layout.content },
           isDark && s.containerDark,
           // Exact avoidance: the window never resizes under edge-to-edge, so
           // raw keyboard height as bottom padding puts the composer exactly
@@ -1111,7 +1096,6 @@ export default function SessionScreen() {
         isDark={isDark}
         onSelect={setVariant}
       />
-      </View>
     </>
   )
 }

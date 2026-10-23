@@ -1,2 +1,0 @@
-v0.2.20
-Cloudflare/ngrok tunnel setup, adaptive tablet layout and encrypted opt-in offline session history. Cloud hosting work excluded by request.

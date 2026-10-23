@@ -2,8 +2,8 @@
   "expo": {
     "name": "OpenCode",
     "slug": "opencode-mobile",
-    "version": "0.2.20",
-    "orientation": "default",
+    "version": "0.2.18",
+    "orientation": "portrait",
     "scheme": "opencode",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
@@ -35,7 +35,7 @@
     },
     "android": {
       "package": "cc.agentlabs.opencode",
-      "versionCode": 54,
+      "versionCode": 52,
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -47,7 +47,6 @@
       "output": "static"
     },
     "plugins": [
-      "./plugins/with-tablet-config-changes.js",
       "expo-router",
       "expo-secure-store",
       "expo-local-authentication",

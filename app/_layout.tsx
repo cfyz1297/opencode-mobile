@@ -12,9 +12,6 @@ import { useConnections } from "../src/stores/connections"
 import { useEvents } from "../src/stores/events"
 import { useCatalog } from "../src/stores/catalog"
 import { useSettings } from "../src/stores/settings"
-import { useSessions } from "../src/stores/sessions"
-import { offlineHistory } from "../src/lib/history-storage"
-import { historySnapshot } from "../src/lib/offline-history"
 import { AuthGate } from "../src/components/AuthGate"
 import { ErrorBoundary } from "../src/components/ErrorBoundary"
 import * as notifications from "../src/lib/notifications"
@@ -31,25 +28,6 @@ function RootLayout() {
   const { loadConnections, isLoading: connectionsLoading, client } = useConnections()
   const sseStarted = useRef(false)
   const notifPermissionRequested = useRef(false)
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined
-    const unsubscribe = useSessions.subscribe((state, previous) => {
-      if (state.messages === previous.messages && state.parts === previous.parts && state.currentSession === previous.currentSession) return
-      if (timer) clearTimeout(timer)
-      if (!state.currentSession) return
-      const connection = useConnections.getState().activeConnection?.id
-      if (!connection) return
-      const snapshot = historySnapshot(state.currentSession, state.messages, state.parts)
-      timer = setTimeout(() => {
-        void (async () => {
-          if (useConnections.getState().activeConnection?.id !== connection) return
-          await offlineHistory.capture(connection, snapshot)
-        })().catch(() => console.warn('Offline history could not be saved'))
-      }, 1000)
-    })
-    return () => { unsubscribe(); if (timer) clearTimeout(timer) }
-  }, [])
 
   useEffect(() => {
     initAuth()

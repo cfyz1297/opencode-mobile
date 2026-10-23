@@ -477,40 +477,5 @@
     "action": "去获取",
     "dismiss": "暂不",
     "upToDate": "已是最新"
-  },
-  "tunnel": {
-    "title": "设置 Cloudflare / ngrok",
-    "step": "第 {{step}} 步，共 3 步",
-    "intro": "通过安全隧道连接电脑上的 OpenCode 服务器。请在电脑上运行设置命令。",
-    "install": "打开官方安装指南",
-    "next": "继续",
-    "back": "返回",
-    "start": "安装 OpenCode 和隧道工具。在第一个终端中，将 choose-a-long-password 替换为强密码并启动服务器。在第二个终端中启动隧道。保持两个终端运行。",
-    "port": "本地服务器端口",
-    "invalidPort": "请输入 1 至 65535 之间的端口。",
-    "warning": "公共隧道会将服务器暴露到互联网。请保持 OpenCode 密码验证。ngrok 需要账户并单独登录。本应用无法完成 Cloudflare 浏览器或邮件验证。完成后请关闭隧道。",
-    "copy": "复制命令 {{number}}",
-    "paste": "粘贴隧道输出的 HTTPS 地址，并输入电脑上设置的 OpenCode 密码。保存前将测试连接。",
-    "url": "隧道 HTTPS 地址",
-    "username": "服务器用户名",
-    "password": "服务器密码",
-    "connect": "测试并连接",
-    "failed": "连接失败。请检查地址、密码以及两个终端是否在运行。",
-    "passwordRequired": "使用公共隧道前，请在服务器设置密码并在此处输入。",
-    "cloudflare": "Cloudflare 需要账户、域名和命名隧道。在控制面板创建 Tunnel，然后为公共域名添加 Published application route，将 Service URL 设置为 http://127.0.0.1:{{port}}。用控制面板提供的令牌替换第二条命令中的 YOUR_TUNNEL_TOKEN。令牌仅保留在电脑上；手机只需要公共域名和 OpenCode 密码。临时 trycloudflare.com 隧道不支持实时事件流。"
-  },
-  "history": {
-    "title": "离线会话历史",
-    "privacy": "可选的加密会话副本仅保存在本设备。每个连接最多保存 20 个会话，每个会话最多 40 条最近文本消息，并限制总大小。不保存工具输出、附件和推理。文本可能包含敏感信息。关闭后停止新保存，清除历史可删除已有副本。",
-    "enable": "保存会话以供离线阅读",
-    "clear": "清除所有历史并停止保存",
-    "confirm": "删除本设备所有连接的离线副本？服务器会话不受影响。",
-    "failed": "无法读取或更新离线历史。请重试或清除已保存历史。",
-    "noConnection": "请先选择连接",
-    "empty": "尚无保存的会话。启用保存后在线打开会话。切换连接可查看其他服务器的历史。",
-    "savedAt": "保存于 {{date}}",
-    "readOnly": "保存副本 · 只读 · 可能不完整或已过时",
-    "user": "你",
-    "assistant": "助手"
   }
 }

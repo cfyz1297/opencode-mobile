@@ -1,2 +1,7 @@
-v0.2.20
-Guided Cloudflare named-tunnel and ngrok setup with HTTPS/password checks. Tablet navigation and a session sidebar on wide screens. Optional encrypted offline copies of recent conversation text, with a read-only viewer and clear-history control. Includes the 0.2.19 reliability fixes for models, agents and server connections.
+v0.2.18 — Выбор модели и усилие рассуждений снова работают
+
+Каталог моделей теперь использует тот же идентификатор, которым сервер называет модель (`id`), а не имя модели у провайдера (`modelID`). Из-за этой путаницы переключение модели отправляло неизвестный серверу id: сессия оставалась на прежней модели, а в приложении показывалась выбранная. По той же причине сессионная модель не находилась в каталоге, и пропадал переключатель усилия рассуждений — теперь он на месте.
+
+Модели, недоступные в текущей папке (`enabled: false`), больше не предлагаются: выбор такой модели сервер отклонял.
+
+Работает и в чате, и в окне новой сессии. Сервер обновлять не нужно.

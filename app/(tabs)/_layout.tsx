@@ -1,6 +1,5 @@
 import { Tabs } from "expo-router"
-import { useColorScheme, useWindowDimensions } from "react-native"
-import { adaptiveLayout } from '../../src/lib/adaptive-layout'
+import { useColorScheme } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 
@@ -8,13 +7,10 @@ export default function TabLayout() {
   const colorScheme = useColorScheme()
   const isDark = colorScheme === "dark"
   const { t } = useTranslation()
-  const layout = adaptiveLayout(useWindowDimensions().width)
 
   return (
     <Tabs
       screenOptions={{
-        tabBarPosition: layout.tablet ? 'left' : 'bottom',
-        tabBarLabelPosition: layout.tablet ? 'beside-icon' : 'below-icon',
         tabBarActiveTintColor: isDark ? "#ffffff" : "#0a0a0a",
         tabBarInactiveTintColor: isDark ? "#666666" : "#999999",
         tabBarStyle: {
