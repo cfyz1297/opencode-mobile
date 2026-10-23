@@ -14,9 +14,36 @@ function snapshot() {
   adb('shell', 'uiautomator', 'dump', '/sdcard/window.xml')
   return adb('shell', 'cat', '/sdcard/window.xml')
 }
+function tapBounds(xml, predicate) {
+  const node = xml.match(/<node\b[^>]*>/g)?.find(predicate)
+  if (!node) return false
+  const [, x1, y1, x2, y2] = node.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/) ?? []
+  if (!x1) return false
+  adb('shell', 'input', 'tap', String(Math.floor((+x1 + +x2) / 2)), String(Math.floor((+y1 + +y2) / 2)))
+  return true
+}
+async function clearTransientUi() {
+  const xml = snapshot()
+  // Alert dialogs steal the UIAutomator hierarchy — dismiss before asserting chat text.
+  if (xml.includes('Voice input failed') || xml.includes('Microphone permission')) {
+    if (tapBounds(xml, n => n.includes('text="OK"'))) await sleep(400)
+    return true
+  }
+  if (xml.includes('Select Model') || xml.includes('Search models') || xml.includes('Reasoning Effort')) {
+    const dimensions = adb('shell', 'wm', 'size')
+    const [, width, height] = dimensions.match(/Override size: (\d+)x(\d+)/) ?? dimensions.match(/Physical size: (\d+)x(\d+)/) ?? []
+    if (width && height) {
+      adb('shell', 'input', 'tap', String(Math.floor(+width * 0.75)), String(Math.floor(+height * 0.12)))
+      await sleep(400)
+      return true
+    }
+  }
+  return false
+}
 async function waitFor(value, timeout = 45000) {
   const start = Date.now()
   while (Date.now() - start < timeout) {
+    if (await clearTransientUi()) continue
     const xml = snapshot()
     if (xml.includes(value)) return xml
     await sleep(500)
@@ -100,7 +127,7 @@ const server = createServer((req, res) => {
   ] }
   else if (path === '/api/agent') data = { data: [{ id: 'build', name: 'Build', mode: 'primary' }] }
   else if (path === '/api/model/default') data = {}
-  else if (['/api/model', '/api/command', '/api/project', '/api/permission/request', '/api/form', '/api/session/roadmap-session/form', '/api/session/roadmap-session/permission', '/api/session/roadmap-session/diff'].includes(path)) data = { data: [] }
+  else if (['/api/model', '/api/command', '/api/project', '/api/permission/request', '/api/form', '/api/session/roadmap-session/form', '/api/session/roadmap-session/permission', '/api/session/roadmap-session/diff', '/api/session/tablet-session-two/form', '/api/session/tablet-session-two/permission', '/api/session/tablet-session-two/diff'].includes(path)) data = { data: [] }
   else { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end('{}'); return }
   res.writeHead(200, { 'Content-Type': 'application/json' })
   res.end(JSON.stringify(data))
