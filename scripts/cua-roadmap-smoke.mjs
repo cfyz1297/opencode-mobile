@@ -53,7 +53,10 @@ async function tap(value, scroll = false) {
     }
   }
   const xml = await waitFor(value)
-  const node = xml.match(/<node\b[^>]*>/g)?.find(n => n.includes(`="${value}"`))
+  const nodes = xml.match(/<node\b[^>]*>/g) ?? []
+  // Prefer testID/resource-id; Android Alert destructive actions often upper-case the label.
+  const node = nodes.find(n => n.includes(`="${value}"`))
+    ?? nodes.find(n => n.includes('clickable="true"') && new RegExp(`text="${value}"`, 'i').test(n))
   assert.ok(node, `Exact visible node ${value}`)
   const [, x1, y1, x2, y2] = node.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/) ?? []
   assert.ok(x1, `Bounds of ${value}`)
