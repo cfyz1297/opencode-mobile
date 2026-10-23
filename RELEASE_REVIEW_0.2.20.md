@@ -73,4 +73,8 @@ In particular, `expo-router` / React Navigation → query-string → decode-uri-
 
 ## Release-channel evidence
 
-Pending: final-head signed APK build, Android CUA smoke, certificate comparison, merged commit and published release URL. Do not treat a pending run or exported JS bundle as a published application release.
+Signed APK build, certificate comparison and Android CUA smoke passed on CI (roadmap smoke green on head `2f0740f` / reuse of signed APK from `0e01825`). Owner has **not** manually verified the new tunnel wizard, tablet layout or offline history on a personal device yet — treat user acceptance as still open after publish.
+
+## Owner acceptance
+
+New 0.2.20 surfaces are **not user-verified**. Automated tests and emulator CUA are necessary but not sufficient for claiming everyday readiness.
