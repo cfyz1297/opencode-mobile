@@ -145,12 +145,18 @@ jobs:
           grep -q "versionCode='54'" /tmp/current-apk.txt
           grep -q "versionName='0.2.20'" /tmp/current-apk.txt
           curl --fail --location --retry 2 -o /tmp/previous.apk https://github.com/cfyz1297/opencode-mobile/releases/latest/download/opencode-mobile-v2.apk
-          "$SIGNER" verify --print-certs /tmp/previous.apk | grep 'Signer #1 certificate SHA-256 digest:' > /tmp/previous-cert.txt
-          "$SIGNER" verify --print-certs "$APK" | grep 'Signer #1 certificate SHA-256 digest:' > /tmp/current-cert.txt
+          "$SIGNER" verify --print-certs /tmp/previous.apk > /tmp/previous-signers.txt
+          "$SIGNER" verify --print-certs "$APK" > /tmp/current-signers.txt
+          cat /tmp/previous-signers.txt /tmp/current-signers.txt
+          sed -n 's/^.*certificate SHA-256 digest: //p' /tmp/previous-signers.txt | sort -u > /tmp/previous-cert.txt
+          sed -n 's/^.*certificate SHA-256 digest: //p' /tmp/current-signers.txt | sort -u > /tmp/current-cert.txt
+          test -s /tmp/previous-cert.txt
+          test -s /tmp/current-cert.txt
           diff -u /tmp/previous-cert.txt /tmp/current-cert.txt
           echo 'Package/version verified; signing certificate matches the published app.'
 
       - name: Upload APK artifact
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: app-release
