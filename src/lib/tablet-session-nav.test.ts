@@ -1,24 +1,20 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { tabletSessionNavMode, tabletSessionRoute } from './tablet-session-nav.ts'
+import { tabletSessionHref } from './tablet-session-nav.ts'
 
-test('tablet session route keeps id and optional directory params', () => {
-  assert.deepEqual(tabletSessionRoute({ id: 'tablet-session-two', directory: '/other' }), {
-    pathname: '/session/[id]',
-    params: { id: 'tablet-session-two', directory: '/other' },
-  })
-  assert.deepEqual(tabletSessionRoute({ id: 'alone' }), {
-    pathname: '/session/[id]',
-    params: { id: 'alone' },
-  })
+test('tablet session href embeds the session id in the path', () => {
+  assert.equal(
+    tabletSessionHref({ id: 'tablet-session-two', directory: '/other' }),
+    '/session/tablet-session-two?directory=%2Fother',
+  )
+  assert.equal(tabletSessionHref({ id: 'alone' }), '/session/alone')
 })
 
-test('switching chats on an open session screen must use setParams, not same-path replace', () => {
-  assert.equal(tabletSessionNavMode('roadmap-session', 'tablet-session-two'), 'setParams')
-  assert.equal(tabletSessionNavMode(undefined, 'roadmap-session'), 'push')
+test('TabletSessions switches via concrete /session/:id href, not same-path replace', () => {
   const source = readFileSync(new URL('../components/TabletSessions.tsx', import.meta.url), 'utf8')
-  assert.ok(source.includes('tabletSessionNavMode'), 'TabletSessions must choose setParams vs push')
-  assert.ok(source.includes('setParams'), 'TabletSessions must call setParams for in-place switches')
-  assert.ok(!/router\.replace\(\s*\{\s*pathname:\s*['"]\/session\/\[id\]['"]/.test(source), 'same-path replace is a no-op')
+  assert.ok(source.includes('tabletSessionHref'), 'TabletSessions must build a concrete href')
+  assert.ok(source.includes('router.replace(tabletSessionHref'), 'TabletSessions must replace with that href')
+  assert.ok(!/router\.replace\(\s*\{\s*pathname:\s*['"]\/session\/\[id\]['"]/.test(source), 'object same-path replace is a no-op')
+  assert.ok(!source.includes('router.setParams'), 'setParams does not change the [id] segment reliably')
 })

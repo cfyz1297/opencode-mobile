@@ -2,19 +2,16 @@ import { ScrollView, Text, Pressable, useColorScheme } from 'react-native'
 import { router } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { useSessions } from '../stores/sessions'
-import { tabletSessionNavMode, tabletSessionRoute } from '../lib/tablet-session-nav'
+import { tabletSessionHref } from '../lib/tablet-session-nav'
 
 export function TabletSessions({ width, selected }: { width: number; selected: string }) {
   const { t } = useTranslation()
   const dark = useColorScheme() === 'dark'
   const sessions = useSessions(s => s.sessions)
   const openSession = (session: { id: string; directory?: string }) => {
-    const route = tabletSessionRoute(session)
-    if (tabletSessionNavMode(selected, session.id) === 'setParams') {
-      router.setParams(route.params)
-      return
-    }
-    router.push(route)
+    if (session.id === selected) return
+    void useSessions.getState().selectSession(session.id, session.directory)
+    router.replace(tabletSessionHref(session))
   }
   return <ScrollView testID="tablet-session-sidebar" style={{ width, flexGrow: 0, borderRightWidth: 1, borderRightColor: dark ? '#333' : '#ddd', backgroundColor: dark ? '#111' : '#f5f5f5' }}>
     <Pressable accessibilityRole="button" onPress={() => router.replace('/')} style={{ padding: 20 }}>
