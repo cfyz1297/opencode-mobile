@@ -104,11 +104,19 @@ export default function SessionScreen() {
   const isDark = colorScheme === "dark"
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
-  const layout = adaptiveLayout(useWindowDimensions().width)
+  const window = useWindowDimensions()
+  const layout = adaptiveLayout(window.width)
 
   const flatListRef = useRef<FlatList>(null)
   const modelSheetRef = useRef<BottomSheet>(null)
   const variantSheetRef = useRef<BottomSheet>(null)
+
+  // Emulator/tablet size changes can leave the model sheet expanded over the
+  // session sidebar; close pickers whenever the window geometry changes.
+  useEffect(() => {
+    modelSheetRef.current?.close()
+    variantSheetRef.current?.close()
+  }, [window.width, window.height])
   const [input, setInput] = useState("")
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [showInfo, setShowInfo] = useState(false)

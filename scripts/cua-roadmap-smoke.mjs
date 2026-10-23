@@ -51,6 +51,24 @@ async function open(path) {
   adb('shell', 'am', 'start', '-W', '-a', 'android.intent.action.VIEW', '-d', `opencode://${path}`, pkg)
   await sleep(1000)
 }
+async function dismissBlockingSheets() {
+  for (let i = 0; i < 3 && (snapshot().includes('Select Model') || snapshot().includes('Search models')); i++) {
+    // Tap the upper chat/backdrop area — Back alone can leave the session stack.
+    const dimensions = adb('shell', 'wm', 'size')
+    const [, width, height] = dimensions.match(/Override size: (\d+)x(\d+)/) ?? dimensions.match(/Physical size: (\d+)x(\d+)/) ?? []
+    assert.ok(width && height)
+    adb('shell', 'input', 'tap', String(Math.floor(+width * 0.75)), String(Math.floor(+height * 0.18)))
+    await sleep(500)
+  }
+  if (snapshot().includes('Select Model') || snapshot().includes('Search models')) {
+    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+    await sleep(400)
+  }
+  if (!snapshot().includes('chat-message-input')) {
+    await open('session/roadmap-session')
+    await waitFor('OFFLINE_ANSWER_42')
+  }
+}
 function screenshot(name) {
   writeFileSync(`${out}/${name}.png`, execFileSync('adb', ['exec-out', 'screencap', '-p']))
   writeFileSync(`${out}/${name}.xml`, snapshot())
@@ -129,10 +147,14 @@ try {
   await open('session/roadmap-session')
   await waitFor('OFFLINE_ANSWER_42')
   await waitFor('tablet-session-sidebar')
+  await dismissBlockingSheets()
+  await waitFor('tablet-session-sidebar')
   await waitFor('tablet-session-tablet-session-two')
+  assert.ok(!snapshot().includes('Select Model'), 'Model sheet must not cover the tablet sidebar')
   await tap('tablet-session-tablet-session-two')
   await waitFor('TABLET_SECOND_ANSWER_44')
   await waitFor('TABLET_SESSION_TWO')
+  await dismissBlockingSheets()
   await tap('tablet-session-roadmap-session')
   await waitFor('OFFLINE_ANSWER_42')
   screenshot('session-tablet-landscape')
