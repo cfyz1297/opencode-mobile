@@ -477,7 +477,10 @@
     "connectedTitle": "Connected providers",
     "connectedEmpty": "No providers with models yet. Connect a provider on the server, then pull to refresh.",
     "popularTitle": "Popular providers",
-    "popularEmpty": "All listed popular providers are already connected.",
+    "popularEmpty": "No matching providers. Try another search or add a custom provider above.",
+    "customTitle": "Custom provider",
+    "customCta": "+ Other",
+    "searchPlaceholder": "Search providers...",
     "noServer": "Connect an OpenCode server first to see providers.",
     "modelsAvailable_one": "{{count}} model available",
     "modelsAvailable_few": "{{count}} models available",
@@ -486,11 +489,50 @@
     "connectCta": "+ Connect",
     "connectTitle": "Connect {{name}}",
     "connectBody": "Open OpenCode on the server (Termux or desktop), run the provider connect / auth flow for this provider, then pull to refresh here. This app never stores API keys.",
+    "connectBodyNamed": "On the OpenCode server (Termux or desktop) run /connect, select \"{{name}}\" (id: {{id}}), finish auth, then pull to refresh here. This app never stores API keys.",
     "badge": {
       "account": "Account",
       "apiKey": "API Key"
     },
+    "custom": {
+      "title": "Custom provider",
+      "rowName": "Other (Custom)",
+      "lead": "Same as desktop /connect → Other: define an OpenAI-compatible provider, then apply the config on the server.",
+      "noSecretsNote": "Do not paste API keys here. Keys are entered only in Termux via /connect or environment variables.",
+      "fields": {
+        "id": "Provider ID",
+        "name": "Display name",
+        "baseURL": "Base URL",
+        "modelID": "Model ID",
+        "modelName": "Model display name (optional)"
+      },
+      "errors": {
+        "required": "Required",
+        "invalid": "Invalid value",
+        "reserved": "This ID is reserved — pick another"
+      },
+      "invalidForm": "Fix the highlighted fields first.",
+      "generate": "Generate Termux steps",
+      "configTitle": "opencode.json fragment",
+      "stepsTitle": "Steps on the server",
+      "copyConfig": "Copy config",
+      "copySteps": "Copy steps",
+      "copiedConfig": "Config copied. Merge it into opencode.json on the server.",
+      "copiedSteps": "Steps copied."
+    },
     "popular": {
+      "generic": {
+        "description": "Connect {{name}} with /connect on your OpenCode server"
+      },
+      "opencode": {
+        "description": "OpenCode Zen — tested models from the OpenCode team"
+      },
+      "opencodeGo": {
+        "description": "OpenCode Go subscription for coding models"
+      },
+      "opencodeConsole": {
+        "description": "OpenCode Console workspace providers"
+      },
       "anthropic": {
         "description": "Direct access to Claude models via API key"
       },
@@ -505,6 +547,9 @@
       },
       "google": {
         "description": "Gemini models via Google AI"
+      },
+      "other": {
+        "description": "Any OpenAI-compatible endpoint (desktop Other)"
       }
     }
   },

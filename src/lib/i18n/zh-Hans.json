@@ -477,7 +477,10 @@
     "connectedTitle": "已连接的服务商",
     "connectedEmpty": "还没有带模型的服务商。请先在服务器上连接，然后下拉刷新。",
     "popularTitle": "热门服务商",
-    "popularEmpty": "列出的热门服务商均已连接。",
+    "popularEmpty": "没有匹配项。请换关键词搜索，或在上方添加自定义服务商。",
+    "customTitle": "自定义服务商",
+    "customCta": "+ Other",
+    "searchPlaceholder": "搜索服务商...",
     "noServer": "请先连接 OpenCode 服务器以查看服务商。",
     "modelsAvailable_one": "{{count}} 个可用模型",
     "modelsAvailable_few": "{{count}} 个可用模型",
@@ -486,11 +489,50 @@
     "connectCta": "+ 连接",
     "connectTitle": "连接 {{name}}",
     "connectBody": "在服务器（Termux 或桌面）上打开 OpenCode，完成该服务商的连接 / 认证，然后在此下拉刷新。本应用不会存储 API 密钥。",
+    "connectBodyNamed": "在 OpenCode 服务器（Termux 或桌面）运行 /connect，选择“{{name}}”（id: {{id}}），完成认证后在此下拉刷新。本应用不会存储 API 密钥。",
     "badge": {
       "account": "账户",
       "apiKey": "API 密钥"
     },
+    "custom": {
+      "title": "自定义服务商",
+      "rowName": "Other（自定义）",
+      "lead": "与桌面 /connect → Other 相同：定义 OpenAI 兼容服务商，然后在服务器上应用配置。",
+      "noSecretsNote": "请勿在此粘贴 API 密钥。密钥仅通过 Termux 的 /connect 或环境变量输入。",
+      "fields": {
+        "id": "服务商 ID",
+        "name": "显示名称",
+        "baseURL": "Base URL",
+        "modelID": "模型 ID",
+        "modelName": "模型显示名（可选）"
+      },
+      "errors": {
+        "required": "必填",
+        "invalid": "无效",
+        "reserved": "该 ID 已保留，请换一个"
+      },
+      "invalidForm": "请先修正标出的字段。",
+      "generate": "生成 Termux 步骤",
+      "configTitle": "opencode.json 片段",
+      "stepsTitle": "服务器步骤",
+      "copyConfig": "复制配置",
+      "copySteps": "复制步骤",
+      "copiedConfig": "配置已复制。请合并到服务器上的 opencode.json。",
+      "copiedSteps": "步骤已复制。"
+    },
     "popular": {
+      "generic": {
+        "description": "在 OpenCode 服务器上通过 /connect 连接 {{name}}"
+      },
+      "opencode": {
+        "description": "OpenCode Zen — OpenCode 团队验证过的模型"
+      },
+      "opencodeGo": {
+        "description": "OpenCode Go 编程模型订阅"
+      },
+      "opencodeConsole": {
+        "description": "OpenCode Console 工作区服务商"
+      },
       "anthropic": {
         "description": "通过 API 密钥直接访问 Claude 模型"
       },
@@ -505,6 +547,9 @@
       },
       "google": {
         "description": "通过 Google AI 使用 Gemini 模型"
+      },
+      "other": {
+        "description": "任意 OpenAI 兼容端点（桌面 Other）"
       }
     }
   },

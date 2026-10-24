@@ -8,13 +8,18 @@ import {
   useColorScheme,
   RefreshControl,
   Alert,
+  TextInput,
 } from "react-native"
-import { Stack } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
+import { Stack, router } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { useCatalog } from "../../src/stores/catalog"
 import { useConnections } from "../../src/stores/connections"
-import { buildProvidersScreenModel, type ConnectionBadge } from "../../src/lib/providers-ui"
+import {
+  buildProvidersScreenModel,
+  CUSTOM_PROVIDER_ROUTE,
+  type ConnectionBadge,
+  type PopularProviderRow,
+} from "../../src/lib/providers-ui"
 
 export default function ProvidersScreen() {
   const colorScheme = useColorScheme()
@@ -24,8 +29,9 @@ export default function ProvidersScreen() {
   const load = useCatalog((s) => s.load)
   const client = useConnections((s) => s.client)
   const [refreshing, setRefreshing] = useState(false)
+  const [query, setQuery] = useState("")
 
-  const screen = useMemo(() => buildProvidersScreenModel(providers), [providers])
+  const screen = useMemo(() => buildProvidersScreenModel(providers, query), [providers, query])
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
@@ -37,10 +43,14 @@ export default function ProvidersScreen() {
   }, [load])
 
   const showConnectHelp = useCallback(
-    (name: string) => {
+    (row: PopularProviderRow) => {
+      if (row.isCustom) {
+        router.push(CUSTOM_PROVIDER_ROUTE)
+        return
+      }
       Alert.alert(
-        t("providers.connectTitle", { name }),
-        t("providers.connectBody"),
+        t("providers.connectTitle", { name: row.name }),
+        t("providers.connectBodyNamed", { name: row.name, id: row.id }),
         [{ text: t("common.ok") }],
       )
     },
@@ -53,13 +63,24 @@ export default function ProvidersScreen() {
     [t],
   )
 
+  const popularDesc = useCallback(
+    (row: PopularProviderRow) =>
+      row.descriptionKey === "providers.popular.generic.description"
+        ? t(row.descriptionKey, { name: row.name })
+        : t(row.descriptionKey),
+    [t],
+  )
+
   return (
     <>
       <Stack.Screen options={{ title: t("providers.title") }} />
       <ScrollView
         style={[styles.container, isDark && styles.containerDark]}
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#fff" : "#0a0a0a"} />}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#fff" : "#0a0a0a"} />
+        }
         testID="providers-screen"
       >
         <Text style={[styles.subtitle, isDark && styles.metaDark]}>{t("providers.subtitle")}</Text>
@@ -103,7 +124,38 @@ export default function ProvidersScreen() {
           </View>
         )}
 
-        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>{t("providers.popularTitle")}</Text>
+        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>{t("providers.customTitle")}</Text>
+        <View style={[styles.card, isDark && styles.cardDark]}>
+          <View style={[styles.popularRow, isDark && styles.connectedRowDark, styles.rowLast]}>
+            <View style={styles.popularText}>
+              <Text style={[styles.providerName, isDark && styles.textDark]}>{t("providers.custom.rowName")}</Text>
+              <Text style={[styles.popularDesc, isDark && styles.metaDark]}>{t(screen.custom.descriptionKey)}</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.connectBtn, isDark && styles.connectBtnDark]}
+              onPress={() => showConnectHelp(screen.custom)}
+              testID="provider-connect-other"
+            >
+              <Text style={[styles.connectBtnText, isDark && styles.connectBtnTextDark]}>
+                {t("providers.customCta")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
+          {t("providers.popularTitle")} ({screen.popular.length})
+        </Text>
+        <TextInput
+          style={[styles.search, isDark && styles.searchDark]}
+          placeholder={t("providers.searchPlaceholder")}
+          placeholderTextColor={isDark ? "#666666" : "#999999"}
+          value={query}
+          onChangeText={setQuery}
+          autoCorrect={false}
+          autoCapitalize="none"
+          testID="providers-search"
+        />
         {screen.popular.length === 0 ? (
           <View style={[styles.emptyCard, isDark && styles.emptyCardDark]}>
             <Text style={[styles.emptyText, isDark && styles.metaDark]}>{t("providers.popularEmpty")}</Text>
@@ -122,11 +174,11 @@ export default function ProvidersScreen() {
               >
                 <View style={styles.popularText}>
                   <Text style={[styles.providerName, isDark && styles.textDark]}>{row.name}</Text>
-                  <Text style={[styles.popularDesc, isDark && styles.metaDark]}>{t(row.descriptionKey)}</Text>
+                  <Text style={[styles.popularDesc, isDark && styles.metaDark]}>{popularDesc(row)}</Text>
                 </View>
                 <TouchableOpacity
                   style={[styles.connectBtn, isDark && styles.connectBtnDark]}
-                  onPress={() => showConnectHelp(row.name)}
+                  onPress={() => showConnectHelp(row)}
                   testID={`provider-connect-${row.id}`}
                 >
                   <Text style={[styles.connectBtnText, isDark && styles.connectBtnTextDark]}>
@@ -137,7 +189,6 @@ export default function ProvidersScreen() {
             ))}
           </View>
         )}
-
       </ScrollView>
     </>
   )
@@ -158,6 +209,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   sectionTitleDark: { color: "#999999" },
+  search: {
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: "#0a0a0a",
+    marginBottom: 10,
+  },
+  searchDark: { backgroundColor: "#2a2a2a", color: "#ffffff" },
   card: {
     backgroundColor: "#f5f5f5",
     borderRadius: 12,

@@ -18,9 +18,29 @@ test("Settings screen navigates to Providers route", () => {
   assert.match(src, /settings\.providers\.row\.label/)
 })
 
-test("Providers screen is registered in the root Stack", () => {
+test("Providers screens are registered in the root Stack", () => {
   const src = readFileSync(join(root, "app/_layout.tsx"), "utf8")
   assert.match(src, /providers\/index/)
+  assert.match(src, /providers\/custom/)
+})
+
+test("Providers screen lists OpenCode, search, and Other custom entry", () => {
+  const src = readFileSync(join(root, "app/providers/index.tsx"), "utf8")
+  assert.match(src, /providers-search/)
+  assert.match(src, /provider-connect-other/)
+  assert.match(src, /CUSTOM_PROVIDER_ROUTE/)
+  const catalog = readFileSync(join(root, "src/lib/providers-ui.ts"), "utf8")
+  assert.match(catalog, /id: "opencode"/)
+  assert.match(catalog, /id: "opencode-go"/)
+})
+
+test("Custom provider screen never asks to store API keys", () => {
+  const src = readFileSync(join(root, "app/providers/custom.tsx"), "utf8")
+  assert.match(src, /noSecretsNote/)
+  assert.match(src, /buildCustomProviderPlan/)
+  assert.doesNotMatch(src, /SecureStore/)
+  assert.doesNotMatch(src, /AsyncStorage/)
+  assert.doesNotMatch(src, /apiKey|API key input/i)
 })
 
 test("session ModelPicker wires onManageModels to Providers", () => {

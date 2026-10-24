@@ -220,6 +220,13 @@ function RootLayout() {
                   presentation: "card",
                 }}
               />
+              <Stack.Screen
+                name="providers/custom"
+                options={{
+                  title: t("providers.custom.title"),
+                  presentation: "card",
+                }}
+              />
             </Stack>
               <StatusBar style={isDark ? "light" : "dark"} />
             </AuthGate>

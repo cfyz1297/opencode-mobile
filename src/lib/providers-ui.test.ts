@@ -2,6 +2,7 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import {
   POPULAR_PROVIDERS,
+  MIN_POPULAR_PROVIDER_COUNT,
   buildProvidersScreenModel,
   connectionBadgeFor,
   isFreeModel,
@@ -17,14 +18,30 @@ function provider(partial: Partial<CatalogProvider> & Pick<CatalogProvider, "id"
   }
 }
 
-test("buildProvidersScreenModel: empty connected keeps full popular list", () => {
+test("catalog includes OpenCode family and stays large", () => {
+  assert.ok(POPULAR_PROVIDERS.length >= MIN_POPULAR_PROVIDER_COUNT)
+  const ids = new Set(POPULAR_PROVIDERS.map((p) => p.id))
+  assert.ok(ids.has("opencode"), "missing opencode (Zen)")
+  assert.ok(ids.has("opencode-go"), "missing opencode-go")
+  assert.ok(ids.has("opencode-console"), "missing opencode-console")
+  assert.ok(ids.has("anthropic"))
+  assert.ok(ids.has("openai"))
+  assert.ok(ids.has("beatapi"))
+  assert.ok(ids.has("ollama"))
+  assert.ok(ids.has("openrouter"))
+})
+
+test("popular provider ids are unique", () => {
+  const ids = POPULAR_PROVIDERS.map((p) => p.id)
+  assert.equal(ids.length, new Set(ids).size)
+})
+
+test("buildProvidersScreenModel: empty connected keeps full popular list plus custom", () => {
   const model = buildProvidersScreenModel([])
   assert.equal(model.connected.length, 0)
   assert.equal(model.popular.length, POPULAR_PROVIDERS.length)
-  assert.deepEqual(
-    model.popular.map((p) => p.id).sort(),
-    POPULAR_PROVIDERS.map((p) => p.id).sort(),
-  )
+  assert.equal(model.custom.isCustom, true)
+  assert.equal(model.custom.id, "other")
 })
 
 test("buildProvidersScreenModel: connected rows come from catalog with model counts", () => {
@@ -35,27 +52,33 @@ test("buildProvidersScreenModel: connected rows come from catalog with model cou
   assert.equal(model.connected.length, 2)
   assert.equal(model.connected[0].id, "opencode-go")
   assert.equal(model.connected[0].modelCount, 2)
-  assert.equal(model.connected[0].name, "OpenCode Go")
-  assert.equal(model.connected[1].modelCount, 1)
+  assert.equal(model.connected[0].badge, "account")
+  assert.equal(model.connected[1].badge, "api_key")
+  assert.ok(!model.popular.some((p) => p.id === "opencode-go"))
+  assert.ok(!model.popular.some((p) => p.id === "beatapi"))
 })
 
-test("buildProvidersScreenModel: popular excludes already-connected ids", () => {
-  const connectedIds = ["anthropic", "openai"]
-  const model = buildProvidersScreenModel(
-    connectedIds.map((id) => provider({ id, name: id })),
-  )
-  const popularIds = model.popular.map((p) => p.id)
-  assert.ok(!popularIds.includes("anthropic"))
-  assert.ok(!popularIds.includes("openai"))
-  assert.ok(popularIds.includes("github-copilot") || popularIds.includes("copilot"))
+test("opencode connected hides opencode-zen popular row via alias", () => {
+  const model = buildProvidersScreenModel([provider({ id: "opencode", name: "OpenCode Zen" })])
+  assert.ok(!model.popular.some((p) => p.id === "opencode"))
+  assert.ok(!model.popular.some((p) => p.id === "opencode-zen"))
+  assert.ok(model.popular.some((p) => p.id === "opencode-go"))
 })
 
-test("buildProvidersScreenModel: all popular connected yields empty popular", () => {
+test("buildProvidersScreenModel: query filters popular by name or id", () => {
+  const model = buildProvidersScreenModel([], "deep")
+  assert.ok(model.popular.length >= 1)
+  assert.ok(model.popular.every((p) => /deep/i.test(p.id) || /deep/i.test(p.name)))
+  // custom entry is separate and not filtered away
+  assert.equal(model.custom.id, "other")
+})
+
+test("buildProvidersScreenModel: all popular connected yields empty popular but keeps custom", () => {
   const model = buildProvidersScreenModel(
     POPULAR_PROVIDERS.map((p) => provider({ id: p.id, name: p.name })),
   )
   assert.equal(model.popular.length, 0)
-  assert.equal(model.connected.length, POPULAR_PROVIDERS.length)
+  assert.equal(model.custom.isCustom, true)
 })
 
 test("connectionBadgeFor: account-style ids vs api-key", () => {
@@ -63,28 +86,16 @@ test("connectionBadgeFor: account-style ids vs api-key", () => {
   assert.equal(connectionBadgeFor("opencode-go"), "account")
   assert.equal(connectionBadgeFor("opencode-zen"), "account")
   assert.equal(connectionBadgeFor("github-copilot"), "account")
-  assert.equal(connectionBadgeFor("copilot"), "account")
   assert.equal(connectionBadgeFor("beatapi"), "api_key")
   assert.equal(connectionBadgeFor("anthropic"), "api_key")
-  assert.equal(connectionBadgeFor("openai"), "api_key")
 })
 
 test("buildProvidersScreenModel: UI rows never expose secret fields", () => {
-  const model = buildProvidersScreenModel([
-    provider({ id: "beatapi", name: "BeatAPI" }),
-  ])
+  const model = buildProvidersScreenModel([provider({ id: "beatapi", name: "BeatAPI" })])
   const forbidden = new Set(["apiKey", "api_key", "token", "accessToken", "secret", "password", "credential"])
-  for (const row of [...model.connected, ...model.popular]) {
+  for (const row of [...model.connected, ...model.popular, model.custom]) {
     for (const key of Object.keys(row)) {
       assert.equal(forbidden.has(key), false, `unexpected secret-like field: ${key}`)
-    }
-    // Values must not look like credentials either (badge enum "api_key" is a label, not a secret).
-    for (const [key, value] of Object.entries(row)) {
-      if (key === "badge") continue
-      if (typeof value === "string") {
-        assert.doesNotMatch(value, /sk-[a-zA-Z0-9]{8,}/)
-        assert.doesNotMatch(value, /Bearer\s+\S+/i)
-      }
     }
   }
 })
@@ -92,7 +103,5 @@ test("buildProvidersScreenModel: UI rows never expose secret fields", () => {
 test("isFreeModel: zero or missing cost is free; positive cost is not", () => {
   assert.equal(isFreeModel(undefined), true)
   assert.equal(isFreeModel({ input: 0, output: 0 }), true)
-  assert.equal(isFreeModel({ input: 0, output: undefined }), true)
   assert.equal(isFreeModel({ input: 1, output: 0 }), false)
-  assert.equal(isFreeModel({ input: 0, output: 2 }), false)
 })

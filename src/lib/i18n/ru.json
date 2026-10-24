@@ -477,7 +477,10 @@
     "connectedTitle": "Подключённые провайдеры",
     "connectedEmpty": "Пока нет провайдеров с моделями. Подключите провайдера на сервере и потяните вниз для обновления.",
     "popularTitle": "Популярные провайдеры",
-    "popularEmpty": "Все перечисленные популярные провайдеры уже подключены.",
+    "popularEmpty": "Нет совпадений. Измените поиск или добавьте кастомного провайдера выше.",
+    "customTitle": "Кастомный провайдер",
+    "customCta": "+ Other",
+    "searchPlaceholder": "Поиск провайдеров...",
     "noServer": "Сначала подключите сервер OpenCode, чтобы увидеть провайдеров.",
     "modelsAvailable_one": "{{count}} модель",
     "modelsAvailable_few": "{{count}} модели",
@@ -486,11 +489,50 @@
     "connectCta": "+ Подключить",
     "connectTitle": "Подключить {{name}}",
     "connectBody": "Откройте OpenCode на сервере (Termux или ПК), выполните подключение / auth для этого провайдера, затем обновите список здесь. Приложение не хранит API-ключи.",
+    "connectBodyNamed": "На сервере OpenCode (Termux или ПК) выполните /connect, выберите «{{name}}» (id: {{id}}), завершите auth, затем обновите список здесь. Приложение не хранит API-ключи.",
     "badge": {
       "account": "Account",
       "apiKey": "Ключ API"
     },
+    "custom": {
+      "title": "Кастомный провайдер",
+      "rowName": "Other (свой)",
+      "lead": "Как на десктопе /connect → Other: опишите OpenAI-compatible провайдера и примените конфиг на сервере.",
+      "noSecretsNote": "Не вставляйте API-ключи сюда. Ключи вводятся только в Termux через /connect или переменные окружения.",
+      "fields": {
+        "id": "ID провайдера",
+        "name": "Отображаемое имя",
+        "baseURL": "Base URL",
+        "modelID": "ID модели",
+        "modelName": "Имя модели (необязательно)"
+      },
+      "errors": {
+        "required": "Обязательное поле",
+        "invalid": "Некорректное значение",
+        "reserved": "Этот ID занят — выберите другой"
+      },
+      "invalidForm": "Сначала исправьте отмеченные поля.",
+      "generate": "Сгенерировать шаги для Termux",
+      "configTitle": "Фрагмент opencode.json",
+      "stepsTitle": "Шаги на сервере",
+      "copyConfig": "Копировать конфиг",
+      "copySteps": "Копировать шаги",
+      "copiedConfig": "Конфиг скопирован. Вставьте его в opencode.json на сервере.",
+      "copiedSteps": "Шаги скопированы."
+    },
     "popular": {
+      "generic": {
+        "description": "Подключите {{name}} через /connect на сервере OpenCode"
+      },
+      "opencode": {
+        "description": "OpenCode Zen — проверенные модели команды OpenCode"
+      },
+      "opencodeGo": {
+        "description": "Подписка OpenCode Go для моделей кодирования"
+      },
+      "opencodeConsole": {
+        "description": "Провайдеры рабочего пространства OpenCode Console"
+      },
       "anthropic": {
         "description": "Прямой доступ к моделям Claude по API-ключу"
       },
@@ -505,6 +547,9 @@
       },
       "google": {
         "description": "Модели Gemini через Google AI"
+      },
+      "other": {
+        "description": "Любой OpenAI-compatible endpoint (как Other на ПК)"
       }
     }
   },
