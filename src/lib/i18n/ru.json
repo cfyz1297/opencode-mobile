@@ -13,7 +13,14 @@
       "security": "Безопасность",
       "notifications": "Уведомления",
       "privacy": "Конфиденциальность",
+      "providers": "Провайдеры",
       "about": "О приложении"
+    },
+    "providers": {
+      "row": {
+        "label": "Провайдеры",
+        "description": "Подключённые ИИ-провайдеры на вашем сервере"
+      }
     },
     "security": {
       "biometricOpen": {
@@ -386,7 +393,9 @@
       "title": "Выбор модели",
       "searchPlaceholder": "Поиск моделей...",
       "serverDefault": "По умолчанию сервера",
-      "empty": "Нет подключённых провайдеров"
+      "empty": "Нет подключённых провайдеров",
+      "manageModels": "Управление моделями",
+      "freeBadge": "Бесплатно"
     },
     "message": {
       "copy": "Скопировать",
@@ -459,6 +468,43 @@
         "minutesAgo": "{{count}} мин назад",
         "hoursAgo": "{{count}} ч назад",
         "daysAgo": "{{count}} д назад"
+      }
+    }
+  },
+  "providers": {
+    "title": "Провайдеры",
+    "subtitle": "Настройки провайдеров отражают то, что уже подключено на сервере OpenCode (например Termux). API-ключи остаются на сервере.",
+    "connectedTitle": "Подключённые провайдеры",
+    "connectedEmpty": "Пока нет провайдеров с моделями. Подключите провайдера на сервере и потяните вниз для обновления.",
+    "popularTitle": "Популярные провайдеры",
+    "popularEmpty": "Все перечисленные популярные провайдеры уже подключены.",
+    "noServer": "Сначала подключите сервер OpenCode, чтобы увидеть провайдеров.",
+    "modelsAvailable_one": "{{count}} модель",
+    "modelsAvailable_few": "{{count}} модели",
+    "modelsAvailable_many": "{{count}} моделей",
+    "modelsAvailable_other": "{{count}} моделей",
+    "connectCta": "+ Подключить",
+    "connectTitle": "Подключить {{name}}",
+    "connectBody": "Откройте OpenCode на сервере (Termux или ПК), выполните подключение / auth для этого провайдера, затем обновите список здесь. Приложение не хранит API-ключи.",
+    "badge": {
+      "account": "Account",
+      "apiKey": "Ключ API"
+    },
+    "popular": {
+      "anthropic": {
+        "description": "Прямой доступ к моделям Claude по API-ключу"
+      },
+      "openai": {
+        "description": "Модели GPT для быстрых задач общего ИИ"
+      },
+      "githubCopilot": {
+        "description": "ИИ-модели для помощи в кодировании через GitHub Copilot"
+      },
+      "beatapi": {
+        "description": "Модели BeatAPI (OpenAI-compatible)"
+      },
+      "google": {
+        "description": "Модели Gemini через Google AI"
       }
     }
   },

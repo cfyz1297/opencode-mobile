@@ -1,19 +1,19 @@
-import { useCallback, useMemo } from "react"
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal } from "react-native"
+import { useCallback, useMemo, useState } from "react"
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, TextInput } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
+import { buildModelPickerSections } from "../../lib/model-picker-filter"
 
 // A model chooser rendered as a plain RN Modal. The New Session modal on the
 // sessions screen is itself a native RN Modal, and RN Modals layer above every
 // bottom-sheet portal in the React root (see the DirectoryBrowserSheet comment
 // in app/(tabs)/index.tsx) — so the sessions screen cannot open the chat
 // screen's BottomSheet-based ModelPicker from inside it. This twin covers that
-// case: no search field (keeps the panel keyboard-free inside the nested
-// modal), one checkmark row per model.
+// case with the same search + grouping as the session picker.
 interface Provider {
   id: string
   name: string
-  models: Array<{ id: string; name: string }>
+  models: Array<{ id: string; name: string; free?: boolean }>
 }
 
 interface Props {
@@ -29,40 +29,49 @@ interface Props {
 
 export function ModelPickerModal({ visible, providers, selected, isDark, onClose, onSelect, onClear }: Props) {
   const { t } = useTranslation()
+  const [search, setSearch] = useState("")
 
-  const groups = useMemo(() => {
-    const list = Array.isArray(providers) ? providers : []
-    return list
-      .filter((p) => (p.models || []).length > 0)
-      .map((p) => ({
-        id: p.id,
-        name: p.name || p.id,
-        models: (p.models || []).map((m) => ({
-          id: m.id,
-          name: m.name || m.id,
-        })),
-      }))
-  }, [providers])
+  const sections = useMemo(
+    () => buildModelPickerSections({ providers, query: search, selected }),
+    [providers, search, selected],
+  )
 
   const handleSelect = useCallback(
     (providerID: string, modelID: string) => {
       onSelect(providerID, modelID)
+      setSearch("")
     },
     [onSelect],
   )
 
+  const handleClose = useCallback(() => {
+    setSearch("")
+    onClose()
+  }, [onClose])
+
   const hasSelection = !!(selected?.providerID && selected?.modelID)
 
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType="fade" transparent onRequestClose={handleClose}>
       <View style={styles.overlay}>
         <View style={[styles.panel, isDark && styles.panelDark]}>
           <View style={styles.header}>
             <Text style={[styles.title, isDark && styles.textWhite]}>{t("chat.modelPicker.title")}</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Ionicons name="close" size={22} color={isDark ? "#ffffff" : "#0a0a0a"} />
             </TouchableOpacity>
           </View>
+
+          <TextInput
+            style={[styles.search, isDark && styles.searchDark]}
+            placeholder={t("chat.modelPicker.searchPlaceholder")}
+            placeholderTextColor={isDark ? "#666666" : "#999999"}
+            value={search}
+            onChangeText={setSearch}
+            autoCorrect={false}
+            autoCapitalize="none"
+            testID="model-picker-modal-search"
+          />
 
           <ScrollView style={styles.list} keyboardShouldPersistTaps="handled">
             {hasSelection && (
@@ -73,26 +82,35 @@ export function ModelPickerModal({ visible, providers, selected, isDark, onClose
                 </Text>
               </TouchableOpacity>
             )}
-            {groups.map((group) => (
-              <View key={group.id}>
+            {sections.map((section) => (
+              <View key={section.title}>
                 <View style={[styles.sectionHeader, isDark && styles.sectionHeaderDark]}>
-                  <Text style={[styles.sectionTitle, isDark && styles.metaDark]}>{group.name}</Text>
+                  <Text style={[styles.sectionTitle, isDark && styles.metaDark]}>{section.title}</Text>
                 </View>
-                {group.models.map((model) => {
-                  const active = selected?.providerID === group.id && selected?.modelID === model.id
+                {section.data.map((model) => {
+                  const active = selected?.providerID === model.providerID && selected?.modelID === model.modelID
                   return (
                     <TouchableOpacity
-                      key={model.id}
+                      key={`${model.providerID}/${model.modelID}`}
                       style={[styles.row, isDark && styles.rowDark, active && (isDark ? styles.rowSelectedDark : styles.rowSelected)]}
-                      onPress={() => handleSelect(group.id, model.id)}
-                      testID={`model-option-${group.id}-${model.id}`}
+                      onPress={() => handleSelect(model.providerID, model.modelID)}
+                      testID={`model-option-${model.providerID}-${model.modelID}`}
                     >
                       <View style={styles.rowText}>
-                        <Text style={[styles.rowName, isDark && styles.textWhite]} numberOfLines={1}>
-                          {model.name}
-                        </Text>
+                        <View style={styles.nameRow}>
+                          <Text style={[styles.rowName, isDark && styles.textWhite]} numberOfLines={1}>
+                            {model.modelName}
+                          </Text>
+                          {model.free ? (
+                            <View style={[styles.freeBadge, isDark && styles.freeBadgeDark]}>
+                              <Text style={[styles.freeBadgeText, isDark && styles.freeBadgeTextDark]}>
+                                {t("chat.modelPicker.freeBadge")}
+                              </Text>
+                            </View>
+                          ) : null}
+                        </View>
                         <Text style={[styles.rowProvider, isDark && styles.metaDark]} numberOfLines={1}>
-                          {group.name}
+                          {model.providerName}
                         </Text>
                       </View>
                       {active && <Ionicons name="checkmark-circle" size={20} color="#8b5cf6" />}
@@ -101,7 +119,7 @@ export function ModelPickerModal({ visible, providers, selected, isDark, onClose
                 })}
               </View>
             ))}
-            {groups.length === 0 && (
+            {sections.length === 0 && (
               <Text style={[styles.empty, isDark && styles.metaDark]}>{t("chat.modelPicker.empty")}</Text>
             )}
           </ScrollView>
@@ -118,25 +136,36 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     maxHeight: "75%",
     paddingTop: 14,
-    overflow: "hidden",
   },
-  panelDark: { backgroundColor: "#171717" },
+  panelDark: { backgroundColor: "#1a1a1a" },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 10,
   },
   title: { fontSize: 17, fontWeight: "700", color: "#0a0a0a" },
   textWhite: { color: "#ffffff" },
-  list: { flexGrow: 0 },
+  textDim: { color: "#888888" },
+  search: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: "#0a0a0a",
+  },
+  searchDark: { backgroundColor: "#2a2a2a", color: "#ffffff" },
+  list: { paddingBottom: 8 },
   sectionHeader: {
     backgroundColor: "#f5f5f5",
     paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
-  sectionHeaderDark: { backgroundColor: "#0d0d0d" },
+  sectionHeaderDark: { backgroundColor: "#111111" },
   sectionTitle: {
     fontSize: 12,
     fontWeight: "700",
@@ -149,17 +178,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 11,
+    paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#e5e5e5",
   },
   rowDark: { borderBottomColor: "#2a2a2a" },
   rowSelected: { backgroundColor: "#f5f3ff" },
   rowSelectedDark: { backgroundColor: "#1f1a2e" },
-  rowText: { flex: 1, paddingRight: 8 },
-  rowName: { fontSize: 15, fontWeight: "500", color: "#0a0a0a" },
-  rowNameMuted: { fontSize: 15, color: "#444444", flex: 1 },
-  textDim: { color: "#999999" },
+  rowText: { flex: 1 },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  rowName: { fontSize: 15, fontWeight: "500", color: "#0a0a0a", flexShrink: 1 },
+  rowNameMuted: { fontSize: 15, fontWeight: "500", color: "#666666" },
   rowProvider: { fontSize: 12, color: "#999999", marginTop: 1 },
+  freeBadge: {
+    backgroundColor: "#e8e8e8",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  freeBadgeDark: { backgroundColor: "#2a2a2a" },
+  freeBadgeText: { fontSize: 11, fontWeight: "600", color: "#555555" },
+  freeBadgeTextDark: { color: "#bbbbbb" },
   empty: { padding: 24, textAlign: "center", fontSize: 14, color: "#999999" },
 })
