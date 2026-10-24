@@ -2,12 +2,14 @@ import { create } from "zustand"
 import { useConnections } from "./connections"
 import type { Agent, Command } from "../lib/sdk"
 import { chooseModelSelection } from "../lib/model-selection"
+import { isFreeModel } from "../lib/providers-ui"
 
 export interface ProviderModel {
   id: string
   name: string
   reasoning: boolean
   attachment: boolean
+  free?: boolean
   limit?: { context: number; output: number }
   variants?: Record<string, { reasoningEffort?: string }>
 }
@@ -88,6 +90,7 @@ export const useCatalog = create<CatalogState>((set, get) => ({
                 name: m.name || m.id,
                 reasoning: m.reasoning ?? false,
                 attachment: m.attachment ?? false,
+                free: isFreeModel(m.cost),
                 limit: m.limit,
                 variants: m.variants,
               })),

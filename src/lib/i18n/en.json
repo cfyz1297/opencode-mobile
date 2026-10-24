@@ -13,7 +13,14 @@
       "security": "Security",
       "notifications": "Notifications",
       "privacy": "Privacy",
+      "providers": "Providers",
       "about": "About"
+    },
+    "providers": {
+      "row": {
+        "label": "Providers",
+        "description": "Connected AI providers on your server"
+      }
     },
     "security": {
       "biometricOpen": {
@@ -386,7 +393,9 @@
       "title": "Select Model",
       "searchPlaceholder": "Search models...",
       "serverDefault": "Server default",
-      "empty": "No connected providers yet"
+      "empty": "No connected providers yet",
+      "manageModels": "Manage models",
+      "freeBadge": "Free"
     },
     "message": {
       "copy": "Copy",
@@ -459,6 +468,43 @@
         "minutesAgo": "{{count}}m ago",
         "hoursAgo": "{{count}}h ago",
         "daysAgo": "{{count}}d ago"
+      }
+    }
+  },
+  "providers": {
+    "title": "Providers",
+    "subtitle": "Provider settings mirror what is already connected on your OpenCode server (for example Termux). API keys stay on the server.",
+    "connectedTitle": "Connected providers",
+    "connectedEmpty": "No providers with models yet. Connect a provider on the server, then pull to refresh.",
+    "popularTitle": "Popular providers",
+    "popularEmpty": "All listed popular providers are already connected.",
+    "noServer": "Connect an OpenCode server first to see providers.",
+    "modelsAvailable_one": "{{count}} model available",
+    "modelsAvailable_few": "{{count}} models available",
+    "modelsAvailable_many": "{{count}} models available",
+    "modelsAvailable_other": "{{count}} models available",
+    "connectCta": "+ Connect",
+    "connectTitle": "Connect {{name}}",
+    "connectBody": "Open OpenCode on the server (Termux or desktop), run the provider connect / auth flow for this provider, then pull to refresh here. This app never stores API keys.",
+    "badge": {
+      "account": "Account",
+      "apiKey": "API Key"
+    },
+    "popular": {
+      "anthropic": {
+        "description": "Direct access to Claude models via API key"
+      },
+      "openai": {
+        "description": "GPT models for fast general AI tasks"
+      },
+      "githubCopilot": {
+        "description": "AI coding models through GitHub Copilot"
+      },
+      "beatapi": {
+        "description": "OpenAI-compatible BeatAPI models"
+      },
+      "google": {
+        "description": "Gemini models via Google AI"
       }
     }
   },

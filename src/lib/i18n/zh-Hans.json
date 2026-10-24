@@ -13,7 +13,14 @@
       "security": "安全",
       "notifications": "通知",
       "privacy": "隐私",
+      "providers": "服务商",
       "about": "关于"
+    },
+    "providers": {
+      "row": {
+        "label": "服务商",
+        "description": "服务器上已连接的 AI 服务商"
+      }
     },
     "security": {
       "biometricOpen": {
@@ -386,7 +393,9 @@
       "title": "选择模型",
       "searchPlaceholder": "搜索模型...",
       "serverDefault": "服务器默认模型",
-      "empty": "尚未连接任何服务商"
+      "empty": "尚未连接任何服务商",
+      "manageModels": "管理模型",
+      "freeBadge": "免费"
     },
     "message": {
       "copy": "复制",
@@ -459,6 +468,43 @@
         "minutesAgo": "{{count}} 分钟前",
         "hoursAgo": "{{count}} 小时前",
         "daysAgo": "{{count}} 天前"
+      }
+    }
+  },
+  "providers": {
+    "title": "服务商",
+    "subtitle": "此处显示已在 OpenCode 服务器（例如 Termux）上连接的服务商。API 密钥只保存在服务器上。",
+    "connectedTitle": "已连接的服务商",
+    "connectedEmpty": "还没有带模型的服务商。请先在服务器上连接，然后下拉刷新。",
+    "popularTitle": "热门服务商",
+    "popularEmpty": "列出的热门服务商均已连接。",
+    "noServer": "请先连接 OpenCode 服务器以查看服务商。",
+    "modelsAvailable_one": "{{count}} 个可用模型",
+    "modelsAvailable_few": "{{count}} 个可用模型",
+    "modelsAvailable_many": "{{count}} 个可用模型",
+    "modelsAvailable_other": "{{count}} 个可用模型",
+    "connectCta": "+ 连接",
+    "connectTitle": "连接 {{name}}",
+    "connectBody": "在服务器（Termux 或桌面）上打开 OpenCode，完成该服务商的连接 / 认证，然后在此下拉刷新。本应用不会存储 API 密钥。",
+    "badge": {
+      "account": "账户",
+      "apiKey": "API 密钥"
+    },
+    "popular": {
+      "anthropic": {
+        "description": "通过 API 密钥直接访问 Claude 模型"
+      },
+      "openai": {
+        "description": "适用于通用 AI 任务的 GPT 模型"
+      },
+      "githubCopilot": {
+        "description": "通过 GitHub Copilot 使用编程辅助模型"
+      },
+      "beatapi": {
+        "description": "BeatAPI（OpenAI 兼容）模型"
+      },
+      "google": {
+        "description": "通过 Google AI 使用 Gemini 模型"
       }
     }
   },

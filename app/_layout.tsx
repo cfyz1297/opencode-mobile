@@ -213,6 +213,13 @@ function RootLayout() {
                   presentation: "modal",
                 }}
               />
+              <Stack.Screen
+                name="providers/index"
+                options={{
+                  title: t("providers.title"),
+                  presentation: "card",
+                }}
+              />
             </Stack>
               <StatusBar style={isDark ? "light" : "dark"} />
             </AuthGate>
