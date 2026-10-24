@@ -303,6 +303,9 @@ export default function AddConnectionScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
+        <TouchableOpacity accessibilityRole="button" testID="open-tunnel-wizard" onPress={() => router.push('/connection/tunnel')} style={{ padding: 16, marginBottom: 16, borderRadius: 12, backgroundColor: isDark ? '#26344d' : '#dbeafe' }}>
+          <Text style={{ color: isDark ? '#fff' : '#111', fontWeight: '700' }}>{t('tunnel.title')}</Text>
+        </TouchableOpacity>
         <View style={styles.quickHeader}>
           <Ionicons name="wifi" size={48} color={isDark ? "#ffffff" : "#0a0a0a"} />
           <Text style={[styles.quickTitle, isDark && styles.textDark]}>{t("connection.add.quick.title")}</Text>

@@ -12,6 +12,7 @@ import {
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
+import { router } from 'expo-router'
 import { useAuth } from "../../src/stores/auth"
 import { useSettings } from "../../src/stores/settings"
 import {
@@ -137,6 +138,7 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={styles.content}>
+      <SettingRow icon="archive-outline" label={t('history.title')} description={t('history.readOnly')} isDark={isDark} onPress={() => router.push('/history')} />
       <SettingSection title={t("settings.sections.security")} isDark={isDark}>
         <SettingRow
           icon="finger-print"

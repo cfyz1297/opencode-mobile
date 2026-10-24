@@ -5,6 +5,7 @@ import { useSettings } from "./settings"
 import { extractPromptFromParts, type PromptFromParts } from "../lib/prompt-from-parts"
 import { mergeIncomingMessage, reconcileTemps } from "../lib/message-merge"
 import { isColdSessionLoad, isLiveEventForSession } from "../lib/session-load-reconcile"
+import { offlineHistory } from '../lib/history-storage'
 
 // Helper to convert API response to our internal format
 function parseMessages(response: MessageWithParts[]): { messages: Message[]; parts: Record<string, Part[]> } {
@@ -76,6 +77,7 @@ export const abortedSessions = new Set<string>()
 let selectSeq = 0
 let loadOlderSeq = 0
 let refreshSeqCounter = 0
+let connectionEpoch = 0
 
 // Get the right client for a session's directory
 function clientFor(directory?: string): Client | null {
@@ -98,6 +100,7 @@ export const useSessions = create<SessionsState>((set, get) => ({
   error: null,
 
   loadSessions: async () => {
+    const epoch = connectionEpoch
     const connState = useConnections.getState()
     // Use a directory-less client so the server returns sessions from ALL projects,
     // not just the one matching the active connection's directory header.
@@ -112,12 +115,14 @@ export const useSessions = create<SessionsState>((set, get) => ({
       // A directory-less list includes sessions across projects. Each row carries
       // its own directory into the session route so subsequent operations stay scoped.
       const sessions = await client.session.list({ roots: true, limit: 50 })
+      if (epoch !== connectionEpoch) return
       // BUG-010: merge by ID instead of wholesale replace — a session.created SSE
       // event that landed mid-flight must not be clobbered by a stale list fetch.
       const existingById = new Map(get().sessions.map((s) => [s.id, s]))
       sessions.forEach((s) => existingById.set(s.id, s))
       set({ sessions: [...existingById.values()], isLoading: false })
     } catch (error) {
+      if (epoch !== connectionEpoch) return
       set({ error: "Failed to load sessions", isLoading: false })
     }
   },
@@ -222,6 +227,7 @@ export const useSessions = create<SessionsState>((set, get) => ({
   },
 
   createSession: async (title) => {
+    const epoch = connectionEpoch
     const connState = useConnections.getState()
     const client = connState.client
     if (!client) {
@@ -231,6 +237,7 @@ export const useSessions = create<SessionsState>((set, get) => ({
 
     try {
       const created = await client.session.create({ title })
+      if (epoch !== connectionEpoch) return null
       // Don't optimistically add to sessions list — let loadSessions() handle it
       // to avoid duplicate key errors from race conditions
       set({
@@ -242,12 +249,15 @@ export const useSessions = create<SessionsState>((set, get) => ({
       })
       return created
     } catch (error) {
+      if (epoch !== connectionEpoch) return null
       set({ error: "Failed to create session" })
       return null
     }
   },
 
   deleteSession: async (sessionID) => {
+    const epoch = connectionEpoch
+    const connection = useConnections.getState().activeConnection?.id
     const session = get().sessions.find((s) => s.id === sessionID)
     const client = clientFor(session?.directory)
     if (!client) {
@@ -257,6 +267,8 @@ export const useSessions = create<SessionsState>((set, get) => ({
 
     try {
       await client.session.delete(sessionID)
+      if (connection) await offlineHistory.remove(connection, sessionID)
+      if (epoch !== connectionEpoch) return
       set((state) => ({
         sessions: state.sessions.filter((s) => s.id !== sessionID),
         currentSession: state.currentSession?.id === sessionID ? null : state.currentSession,
@@ -264,11 +276,13 @@ export const useSessions = create<SessionsState>((set, get) => ({
         parts: state.currentSession?.id === sessionID ? {} : state.parts,
       }))
     } catch (error) {
+      if (epoch !== connectionEpoch) return
       set({ error: "Failed to delete session" })
     }
   },
 
   sendMessage: async (text, model, agent, files, variant) => {
+    const epoch = connectionEpoch
     const client = clientFor(get().currentSession?.directory)
     const session = get().currentSession
     if (!client || !session) {
@@ -337,6 +351,7 @@ export const useSessions = create<SessionsState>((set, get) => ({
       // streamed response) so a failure here can propagate to the caller — SSE
       // events still update messages/parts/status in real-time on success.
       await client.session.prompt(session.id, { parts: promptParts, model, agent, variant })
+      if (epoch !== connectionEpoch) return
 
       // V2 has no user-message SSE event: without a follow-up fetch the
       // optimistic temp message is the only copy of what was just sent and
@@ -347,11 +362,12 @@ export const useSessions = create<SessionsState>((set, get) => ({
       const scheduleReconcile = (delayMs: number) =>
         setTimeout(() => {
           const state = get()
-          if (state.currentSession?.id === session.id) void state.refreshMessages()
+          if (epoch === connectionEpoch && state.currentSession?.id === session.id) void state.refreshMessages()
         }, delayMs)
       scheduleReconcile(1_200)
       scheduleReconcile(4_000)
     } catch (err) {
+      if (epoch !== connectionEpoch) throw err
       console.error("[sendMessage] error:", err)
       const stillCurrent = get().currentSession?.id === session.id
       set((state) => ({
@@ -374,17 +390,20 @@ export const useSessions = create<SessionsState>((set, get) => ({
   },
 
   abortSession: async () => {
+    const epoch = connectionEpoch
     const client = clientFor(get().currentSession?.directory)
     const session = get().currentSession
     if (!client || !session) return
 
     try {
       await client.session.abort(session.id)
+      if (epoch !== connectionEpoch) return
       // Mark only after the abort request succeeded — if it failed, the run
       // continues and any eventual completion is a genuine response.
       abortedSessions.add(session.id)
       set((state) => ({ sending: { ...state.sending, [session.id]: false } }))
     } catch {
+      if (epoch !== connectionEpoch) return
       set({ error: "Failed to abort session" })
     }
   },
@@ -412,6 +431,7 @@ export const useSessions = create<SessionsState>((set, get) => ({
         parts: { ...merged.parts },
       })
     } catch (error) {
+      if (refreshSeq !== refreshSeqCounter) return
       set({ error: "Failed to refresh messages" })
     }
   },
@@ -423,17 +443,20 @@ export const useSessions = create<SessionsState>((set, get) => ({
   // anything itself. Returns the reverted message's text/files so the
   // caller can prefill the composer.
   revertToMessage: async (messageID) => {
+    const epoch = connectionEpoch
     const client = clientFor(get().currentSession?.directory)
     const session = get().currentSession
     if (!client || !session) return { ok: false, reason: "error" }
 
     try {
       const updated = await client.session.revert(session.id, messageID)
+      if (epoch !== connectionEpoch) return { ok: false, reason: 'error' }
       set((state) => ({
         currentSession: state.currentSession?.id === session.id ? updated : state.currentSession,
       }))
       return { ok: true, ...extractPromptFromParts(get().parts[messageID]) }
     } catch (err) {
+      if (epoch !== connectionEpoch) return { ok: false, reason: 'error' }
       if (err instanceof ApiError) {
         // Older servers (pre session.revert) 404 on this route — degrade
         // gracefully instead of surfacing a generic error.
@@ -449,16 +472,19 @@ export const useSessions = create<SessionsState>((set, get) => ({
   },
 
   unrevertSession: async () => {
+    const epoch = connectionEpoch
     const client = clientFor(get().currentSession?.directory)
     const session = get().currentSession
     if (!client || !session) return
 
     try {
       const updated = await client.session.unrevert(session.id)
+      if (epoch !== connectionEpoch) return
       set((state) => ({
         currentSession: state.currentSession?.id === session.id ? updated : state.currentSession,
       }))
     } catch (err) {
+      if (epoch !== connectionEpoch) return
       console.error("Failed to unrevert session:", err)
       set({ error: "Failed to restore reverted messages" })
     }
@@ -534,3 +560,14 @@ export const useSessions = create<SessionsState>((set, get) => ({
     }
   },
 }))
+
+// Invalidate every in-flight request before exposing another server's client.
+// Session IDs may overlap across servers; never merge or cache them together.
+useConnections.subscribe((state, previous) => {
+  if (state.activeConnection?.id === previous.activeConnection?.id && state.activeConnection?.url === previous.activeConnection?.url) return
+  connectionEpoch++
+  selectSeq++
+  loadOlderSeq++
+  refreshSeqCounter++
+  useSessions.setState({ sessions: [], currentSession: null, messages: [], parts: {}, sending: {}, isLoading: false, hasMore: false, loadingMore: false, error: null })
+})

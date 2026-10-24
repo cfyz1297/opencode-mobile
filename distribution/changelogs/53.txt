@@ -1,0 +1,8 @@
+v0.2.19 — Tested SDK and reliable connection isolation
+
+- Failed model or agent switches now stop sending instead of silently using a different selection; retry remains possible.
+- Model-switch and streamed-message state are isolated per SDK client; reconnecting the same client preserves streamed text.
+- Scoped clients are reused within a connection so repeated cross-project sends do not repeat successful model switches.
+- HTTP errors retain their status, restoring filesystem-root fallback on older servers; prompt and command authentication errors retain their type.
+- SSE accepts optional data-field spacing and CRLF frames.
+- Cross-platform test discovery refuses zero-test success. Added production-SDK HTTP integration coverage and CI coverage gates before APK builds.
