@@ -1,5 +1,7 @@
 # Mobile App - AGENTS.md
 
+> **Форк `cfyz1297/opencode-mobile`.** Актуальное состояние, версия и порядок релиза — в `HANDOFF.md` (верхняя часть). Активны только `Build Android APK` и `Security scan`; Play Store, F-Droid, App Store не используются. Разделы ниже про Play Console, Bitwarden, macOS-эмулятор и версии 0.4.x унаследованы от upstream и к форку не применяются.
+
 ## Retrospectives (read before related work)
 
 See [`.agents/retro.md`](.agents/retro.md) for lessons from past tasks. Read entries related to your current work before starting — they document mistakes that cost hours and how to avoid them.
