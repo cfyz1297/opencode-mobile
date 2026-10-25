@@ -626,5 +626,16 @@
     "readOnly": "保存副本 · 只读 · 可能不完整或已过时",
     "user": "你",
     "assistant": "助手"
+  },
+  "models": {
+    "title": "模型",
+    "settingsDescription": "选择会话中可用的模型",
+    "description": "启用要在会话选择器中显示的模型。设置按服务器连接保存在此设备上。当前会话模型将保留。",
+    "search": "搜索模型",
+    "empty": "暂无模型。请连接服务商并刷新。",
+    "noResults": "未找到模型",
+    "noServer": "请先连接服务器。",
+    "saveError": "无法保存模型设置，请重试。",
+    "loadError": "无法加载模型设置，点击重试。"
   }
 }

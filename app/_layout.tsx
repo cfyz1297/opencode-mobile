@@ -234,6 +234,7 @@ function RootLayout() {
                   presentation: "card",
                 }}
               />
+              <Stack.Screen name="models" options={{ title: t("models.title") }} />
             </Stack>
               <StatusBar style={isDark ? "light" : "dark"} />
             </AuthGate>

@@ -43,9 +43,9 @@ test("Custom provider screen never asks to store API keys", () => {
   assert.doesNotMatch(src, /apiKey|API key input/i)
 })
 
-test("session ModelPicker wires onManageModels to Providers", () => {
+test("session ModelPicker wires onManageModels to Models", () => {
   const src = readFileSync(join(root, "app/session/[id].tsx"), "utf8")
-  assert.match(src, /onManageModels=\{\(\) => router\.push\(PROVIDERS_ROUTE\)\}/)
+  assert.match(src, /onManageModels=\{\(\) => router\.push\("\/models"\)\}/)
 })
 
 test("ModelPicker exposes manage callback and search testIDs", () => {

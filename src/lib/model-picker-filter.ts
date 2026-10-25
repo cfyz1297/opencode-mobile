@@ -22,15 +22,18 @@ export interface ModelPickerSection {
 export function buildModelPickerSections(opts: {
   providers: ModelPickerProvider[]
   query: string
+  hidden?: readonly string[]
   selected: { providerID: string; modelID: string } | null
 }): ModelPickerSection[] {
   const list = Array.isArray(opts.providers) ? opts.providers : []
   const q = (opts.query || "").toLowerCase().trim()
   const selected = opts.selected
+  const hidden = new Set(opts.hidden ?? [])
 
   const result: ModelPickerSection[] = list
     .map((p) => {
       const models = (p.models || [])
+        .filter(m => !hidden.has(JSON.stringify([p.id, m.id])))
         .filter(
           (m) =>
             !q ||

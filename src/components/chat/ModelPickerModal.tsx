@@ -10,6 +10,8 @@ import { buildModelPickerSections } from "../../lib/model-picker-filter"
 // in app/(tabs)/index.tsx) — so the sessions screen cannot open the chat
 // screen's BottomSheet-based ModelPicker from inside it. This twin covers that
 // case with the same search + grouping as the session picker.
+import { useHiddenModels } from "../../stores/model-visibility"
+
 interface Provider {
   id: string
   name: string
@@ -30,10 +32,11 @@ interface Props {
 export function ModelPickerModal({ visible, providers, selected, isDark, onClose, onSelect, onClear }: Props) {
   const { t } = useTranslation()
   const [search, setSearch] = useState("")
+  const { hidden, loaded } = useHiddenModels()
 
   const sections = useMemo(
-    () => buildModelPickerSections({ providers, query: search, selected }),
-    [providers, search, selected],
+    () => buildModelPickerSections({ providers: loaded ? providers : [], query: search, selected, hidden }),
+    [providers, search, selected, hidden, loaded],
   )
 
   const handleSelect = useCallback(

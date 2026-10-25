@@ -44,7 +44,7 @@ import { useCatalog } from "../../src/stores/catalog"
 import { useSpeech } from "../../src/lib/speech"
 import { adaptiveLayout } from '../../src/lib/adaptive-layout'
 import { TabletSessions } from '../../src/components/TabletSessions'
-import { PROVIDERS_ROUTE } from "../../src/lib/providers-ui"
+
 
 // --- Builtin slash commands ---
 const BUILTIN_COMMANDS: SlashCommand[] = [
@@ -1102,7 +1102,7 @@ export default function SessionScreen() {
         selected={model}
         isDark={isDark}
         onSelect={handleModelSelect}
-        onManageModels={() => router.push(PROVIDERS_ROUTE)}
+        onManageModels={() => router.push("/models")}
       />
 
       {/* Reasoning effort (variant) picker bottom sheet */}

@@ -5,6 +5,8 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetSectionList, BottomSheetTe
 import { useTranslation } from "react-i18next"
 import { buildModelPickerSections, type ModelPickerItem } from "../../lib/model-picker-filter"
 
+import { useHiddenModels } from "../../stores/model-visibility"
+
 interface Provider {
   id: string
   name: string
@@ -17,17 +19,18 @@ interface Props {
   isDark: boolean
   onSelect: (providerID: string, modelID: string) => void
   sheetRef: React.RefObject<BottomSheet | null>
-  /** Opens Settings → Providers (desktop "Manage models"). */
+  /** Opens Settings → Models. */
   onManageModels?: () => void
 }
 
 export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, onManageModels }: Props) {
   const { t } = useTranslation()
   const [search, setSearch] = useState("")
+  const { hidden, loaded } = useHiddenModels()
 
   const sections = useMemo(
-    () => buildModelPickerSections({ providers, query: search, selected }),
-    [providers, search, selected],
+    () => buildModelPickerSections({ providers: loaded ? providers : [], query: search, selected, hidden }),
+    [providers, search, selected, hidden, loaded],
   )
 
   const handleSelect = useCallback(

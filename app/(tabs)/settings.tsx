@@ -234,6 +234,14 @@ export default function SettingsScreen() {
           onPress={() => router.push(PROVIDERS_ROUTE)}
           right={<Ionicons name="chevron-forward" size={20} color={isDark ? "#666666" : "#999999"} />}
         />
+        <SettingRow
+          icon="options-outline"
+          label={t("models.title")}
+          description={t("models.settingsDescription")}
+          isDark={isDark}
+          onPress={() => router.push("/models")}
+          right={<Ionicons name="chevron-forward" size={20} color={isDark ? "#666666" : "#999999"} />}
+        />
       </SettingSection>
 
       <SettingSection title={t("settings.sections.about")} isDark={isDark}>
