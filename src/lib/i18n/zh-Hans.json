@@ -222,6 +222,9 @@
         "deleteTitle": "删除连接",
         "deleteMessage": "确定要删除 \"{{name}}\" 吗？"
       }
+    },
+    "security": {
+      "cleartext": "普通 http：服务器密码和聊天内容不加密传输。在不受信任的网络上请使用 https 或隧道。"
     }
   },
   "nav": {

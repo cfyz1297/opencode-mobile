@@ -20,6 +20,7 @@ import type { ConnectionType } from "../../src/lib/types"
 import { probeConnection, shareReport } from "../../src/lib/diagnostics"
 import { parseUrl } from "../../src/lib/diagnostics-classify"
 import { quickConnectUrl } from "../../src/lib/quick-connect-url"
+import { sendsPasswordInClearText } from "../../src/lib/connection-security"
 import { buildAuth } from "../../src/lib/auth"
 import { submitWaitlistSignup, buildWaitlistMailtoUrl, needsManualEscapeHatch, type QueuedSignup } from "../../src/lib/waitlist"
 import { flushPendingSignups, queuePendingSignup, readPendingSignups, dropPendingSignup } from "../../src/lib/waitlist-queue-storage"
@@ -359,6 +360,11 @@ export default function AddConnectionScreen() {
           secureTextEntry
           testID="connect-password-input"
         />
+        {sendsPasswordInClearText(buildUrl()) && (
+          <Text style={[styles.securityHint, isDark && styles.securityHintDark]}>
+            {t("connection.security.cleartext")}
+          </Text>
+        )}
         <Text style={[styles.usernameHint, isDark && styles.hintDark]}>
           {t("connection.add.quick.usernameHintPrefix")}
           <Text style={styles.code}>opencode</Text>
@@ -630,6 +636,11 @@ export default function AddConnectionScreen() {
         onChangeText={setPassword}
         secureTextEntry
       />
+      {sendsPasswordInClearText(buildUrl()) && (
+        <Text style={[styles.securityHint, isDark && styles.securityHintDark]}>
+          {t("connection.security.cleartext")}
+        </Text>
+      )}
 
       {/* Save */}
       <TouchableOpacity
@@ -830,6 +841,14 @@ const styles = StyleSheet.create({
   },
   hintDark: {
     color: "#888888",
+  },
+  securityHint: {
+    fontSize: 13,
+    color: "#b45309",
+    marginTop: 8,
+  },
+  securityHintDark: {
+    color: "#fbbf24",
   },
   input: {
     backgroundColor: "#f5f5f5",

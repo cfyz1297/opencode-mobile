@@ -222,6 +222,9 @@
         "deleteTitle": "Delete Connection",
         "deleteMessage": "Are you sure you want to delete \"{{name}}\"?"
       }
+    },
+    "security": {
+      "cleartext": "Plain http: your server password and chat traffic travel unencrypted. Use https or a tunnel on networks you do not trust."
     }
   },
   "nav": {
