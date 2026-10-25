@@ -233,6 +233,8 @@
   },
   "connectionsList": {
     "activeBadge": "Активно",
+    "offlineBadge": "Сервер недоступен",
+    "checkingBadge": "Проверка...",
     "lastConnected": "Последнее подключение: {{date}}",
     "actionsAlert": {
       "message": "Что сделать?",

@@ -233,6 +233,8 @@
   },
   "connectionsList": {
     "activeBadge": "Active",
+    "offlineBadge": "Server unreachable",
+    "checkingBadge": "Checking...",
     "lastConnected": "Last connected: {{date}}",
     "actionsAlert": {
       "message": "What would you like to do?",

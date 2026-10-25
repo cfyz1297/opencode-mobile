@@ -233,6 +233,8 @@
   },
   "connectionsList": {
     "activeBadge": "当前使用",
+    "offlineBadge": "服务器未响应",
+    "checkingBadge": "正在检查...",
     "lastConnected": "上次连接：{{date}}",
     "actionsAlert": {
       "message": "您想执行什么操作？",

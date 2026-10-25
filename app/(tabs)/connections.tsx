@@ -1,17 +1,23 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, useColorScheme, Alert } from "react-native"
-import { router } from "expo-router"
+import { useState, useCallback } from "react"
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, useColorScheme, Alert, AppState } from "react-native"
+import { router, useFocusEffect } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { useConnections } from "../../src/stores/connections"
 import { useSettings } from "../../src/stores/settings"
+import { probeConnection, type ConnectionHealth } from "../../src/lib/connection-health"
 import type { ServerConnection } from "../../src/lib/types"
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200] as const
+// Re-probe while the tab is open so a server started or stopped in Termux
+// shows up without leaving and reopening the screen.
+const PROBE_INTERVAL_MS = 15_000
 
 function ConnectionItem({
   connection,
   isDark,
   isActive,
+  health,
   onSelect,
   onEdit,
   onDelete,
@@ -19,12 +25,32 @@ function ConnectionItem({
   connection: ServerConnection
   isDark: boolean
   isActive: boolean
+  health: ConnectionHealth | null
   onSelect: () => void
   onEdit: () => void
   onDelete: () => void
 }) {
   const { t } = useTranslation()
   const typeIcon = connection.type === "local" ? "wifi" : connection.type === "tunnel" ? "globe" : "cloud"
+  const online = health === "online"
+  const offline = health === "offline"
+  const badge = offline
+    ? {
+        bg: isDark ? styles.offlineBadgeDark : styles.offlineBadge,
+        text: isDark ? styles.offlineBadgeTextDark : styles.offlineBadgeText,
+        label: t("connectionsList.offlineBadge"),
+      }
+    : online
+      ? {
+          bg: isDark ? styles.activeBadgeDark : styles.activeBadge,
+          text: isDark ? styles.activeBadgeTextDark : styles.activeBadgeText,
+          label: t("connectionsList.activeBadge"),
+        }
+      : {
+          bg: isDark ? styles.checkingBadgeDark : styles.checkingBadge,
+          text: isDark ? styles.checkingBadgeTextDark : styles.checkingBadgeText,
+          label: t("connectionsList.checkingBadge"),
+        }
 
   const handleLongPress = () => {
     Alert.alert(connection.name, t("connectionsList.actionsAlert.message"), [
@@ -39,14 +65,18 @@ function ConnectionItem({
       style={[
         styles.connectionItem,
         isDark && styles.connectionItemDark,
-        isActive && styles.connectionItemActive,
-        isActive && isDark && styles.connectionItemActiveDark,
+        online && styles.connectionItemActive,
+        online && isDark && styles.connectionItemActiveDark,
       ]}
       onPress={onSelect}
       onLongPress={handleLongPress}
     >
       <View style={styles.connectionIcon}>
-        <Ionicons name={typeIcon} size={24} color={isActive ? "#22c55e" : isDark ? "#888888" : "#666666"} />
+        <Ionicons
+          name={typeIcon}
+          size={24}
+          color={offline ? "#ef4444" : online ? "#22c55e" : isDark ? "#888888" : "#666666"}
+        />
       </View>
       <View style={styles.connectionContent}>
         <View style={styles.connectionHeader}>
@@ -54,22 +84,20 @@ function ConnectionItem({
             style={[
               styles.connectionName,
               isDark && styles.textDark,
-              isActive && styles.connectionNameActive,
-              isActive && isDark && styles.connectionNameActiveDark,
+              online && styles.connectionNameActive,
+              online && isDark && styles.connectionNameActiveDark,
             ]}
           >
             {connection.name}
           </Text>
           {isActive && (
-            <View style={[styles.activeBadge, isDark && styles.activeBadgeDark]}>
-              <Text style={[styles.activeBadgeText, isDark && styles.activeBadgeTextDark]}>
-                {t("connectionsList.activeBadge")}
-              </Text>
+            <View style={[styles.badge, badge.bg]}>
+              <Text style={[styles.badgeText, badge.text]}>{badge.label}</Text>
             </View>
           )}
         </View>
         <Text
-          style={[styles.connectionUrl, isDark && styles.metaDark, isActive && styles.connectionUrlActive]}
+          style={[styles.connectionUrl, isDark && styles.metaDark, online && styles.connectionUrlActive]}
           numberOfLines={1}
         >
           {connection.url}
@@ -92,8 +120,47 @@ export default function ConnectionsScreen() {
   const isDark = colorScheme === "dark"
   const { t } = useTranslation()
 
-  const { connections, activeConnection, setActiveConnection, removeConnection } = useConnections()
+  const { connections, activeConnection, setActiveConnection, removeConnection, client } = useConnections()
   const { pageSize, setPageSize } = useSettings()
+  const [report, setReport] = useState<{ client: unknown; health: ConnectionHealth }>({
+    client: null,
+    health: "checking",
+  })
+  // A probe result belongs to the client it was taken from: switching servers
+  // must not show the previous server's status.
+  const health = report.client === client ? report.health : "checking"
+
+  // Probe only while this tab is focused, so a backgrounded app stops asking.
+  useFocusEffect(
+    useCallback(() => {
+      if (!client) {
+        setReport({ client: null, health: "checking" })
+        return
+      }
+      let cancelled = false
+      let busy = false
+      const check = async () => {
+        if (busy) return
+        busy = true
+        try {
+          const next = await probeConnection(client)
+          if (!cancelled) setReport({ client, health: next })
+        } finally {
+          busy = false
+        }
+      }
+      void check()
+      const timer = setInterval(() => void check(), PROBE_INTERVAL_MS)
+      const subscription = AppState.addEventListener("change", (state) => {
+        if (state === "active") void check()
+      })
+      return () => {
+        cancelled = true
+        clearInterval(timer)
+        subscription.remove()
+      }
+    }, [client, activeConnection?.id]),
+  )
 
   const handleDelete = (connection: ServerConnection) => {
     Alert.alert(
@@ -120,6 +187,7 @@ export default function ConnectionsScreen() {
             connection={item}
             isDark={isDark}
             isActive={activeConnection?.id === item.id}
+            health={activeConnection?.id === item.id ? health : null}
             onSelect={() => setActiveConnection(item.id)}
             onEdit={() => router.push(`/connection/${item.id}`)}
             onDelete={() => handleDelete(item)}
@@ -259,22 +327,50 @@ const styles = StyleSheet.create({
   textDark: {
     color: "#ffffff",
   },
-  activeBadge: {
-    backgroundColor: "#22c55e",
+  badge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  activeBadge: {
+    backgroundColor: "#22c55e",
   },
   activeBadgeDark: {
     backgroundColor: "#16a34a",
   },
   activeBadgeText: {
     color: "#ffffff",
-    fontSize: 11,
-    fontWeight: "600",
   },
   activeBadgeTextDark: {
     color: "#ffffff",
+  },
+  offlineBadge: {
+    backgroundColor: "#dc2626",
+  },
+  offlineBadgeDark: {
+    backgroundColor: "#b91c1c",
+  },
+  offlineBadgeText: {
+    color: "#ffffff",
+  },
+  offlineBadgeTextDark: {
+    color: "#ffffff",
+  },
+  checkingBadge: {
+    backgroundColor: "#e5e5e5",
+  },
+  checkingBadgeDark: {
+    backgroundColor: "#333333",
+  },
+  checkingBadgeText: {
+    color: "#666666",
+  },
+  checkingBadgeTextDark: {
+    color: "#aaaaaa",
   },
   connectionUrl: {
     fontSize: 13,
