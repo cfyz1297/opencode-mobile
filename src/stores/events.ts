@@ -8,6 +8,7 @@ import { recordSuccessfulSession } from "../lib/store-review"
 import { isAuthError } from "../lib/api-error"
 import { isSessionActuallyIdle } from "../lib/session-status-reconcile"
 import { isStreamStalled } from "../lib/stream-watchdog"
+import { runsNeedingResync } from "../lib/run-watchdog"
 import { reconcilePendingQuestions } from "../lib/pending-questions"
 import type { Client, Part, Session, Message } from "../lib/sdk"
 
@@ -79,6 +80,33 @@ const STALL_CHECK_MS = 5_000
 // so a longer silence during a run means the socket is dead, not quiet.
 let lastStreamActivityAt = 0
 
+// Per-run event clocks. A healthy socket can still deliver zero events for a
+// run (see run-watchdog.ts), so each session is tracked separately and gets
+// its own transcript resync — otherwise "Working..." and an empty answer
+// bubble stay on screen until the session is reopened.
+const sessionActivityAt = new Map<string, number>()
+const sessionResyncedAt = new Map<string, number>()
+
+/** Record that this session produced a live event, so its run is not silent. */
+function markSessionActivity(sessionID: string | undefined) {
+  if (!sessionID) return
+  sessionActivityAt.set(sessionID, Date.now())
+  sessionResyncedAt.delete(sessionID)
+}
+
+/** Sessions the UI believes are running: SSE said non-idle, or the send tap
+ * set the optimistic flag and no status event has arrived since. */
+function activeRunSessionIDs(): string[] {
+  const ids = new Set<string>()
+  for (const [sessionID, status] of Object.entries(useEvents.getState().sessionStatus)) {
+    if (status.type !== "idle") ids.add(sessionID)
+  }
+  for (const [sessionID, sending] of Object.entries(useSessions.getState().sending)) {
+    if (sending) ids.add(sessionID)
+  }
+  return [...ids]
+}
+
 // Re-fetch pending permissions and questions from the server for a session.
 // Called when entering a session to recover from missed SSE events or failed
 // optimistic removals.
@@ -127,18 +155,8 @@ export async function refreshPending(client: Client, sessionID: string) {
 // clobber a genuinely still-busy session. Also re-checks sessionStatus right
 // before writing, so a real session.status event that lands while the fetch
 // is in flight (e.g. the session went busy again) wins over this resync.
-async function resyncBusySessions() {
-  // Sessions the UI believes are running: SSE said busy, or the send tap set
-  // the optimistic flag and no status event has arrived since (exactly the
-  // state a dead event stream leaves behind).
-  const pendingSessionIDs = new Set(
-    Object.entries(useEvents.getState().sessionStatus)
-      .filter(([, status]) => status.type === "busy")
-      .map(([sessionID]) => sessionID),
-  )
-  for (const [sessionID, sending] of Object.entries(useSessions.getState().sending)) {
-    if (sending) pendingSessionIDs.add(sessionID)
-  }
+async function resyncBusySessions(only?: ReadonlySet<string>) {
+  const pendingSessionIDs = new Set(activeRunSessionIDs().filter((sessionID) => !only || only.has(sessionID)))
   if (pendingSessionIDs.size === 0) return
 
   await Promise.all(
@@ -156,7 +174,14 @@ async function resyncBusySessions() {
 
         const response = await client.session.messages(sessionID)
         const messages = (response || []).map((m) => m.info)
-        if (!isSessionActuallyIdle(messages)) return // server says still busy - leave it alone
+        if (!isSessionActuallyIdle(messages)) {
+          // Still running server-side, but this client may simply have missed
+          // the streamed parts: show everything the server already has.
+          if (useSessions.getState().currentSession?.id === sessionID) {
+            useSessions.getState().refreshMessages()
+          }
+          return // server says still busy - leave the status alone
+        }
 
         // A fresh session.status event may have landed on the SSE stream
         // while this fetch was in flight — that's authoritative, don't
@@ -272,19 +297,35 @@ export const useEvents = create<EventsState>((set, get) => ({
         }, jitteredDelay)
       }
 
-      // A mobile socket can die without a FIN: `connected` stays true and
-      // reader.read() never returns, so no reconnect is ever scheduled and the
-      // optimistic "Working..." spinner hangs forever (the transcript only
-      // appears after reopening the session). The server heartbeats every
-      // ~15s, so silence during a run means the stream is dead - reconnect and
-      // pull the transcript/status over HTTP.
+      // Two independent failure modes, both ending in a stuck "Working...":
+      // a dead socket (whole-stream silence) and a healthy socket that stops
+      // delivering one run's events (per-session silence). Check either.
       const stallWatchdog = setInterval(() => {
         if (currentController.signal.aborted || !get().connected) return
         const sessions = useSessions.getState()
+        const now = Date.now()
+        const runIDs = activeRunSessionIDs()
+
+        const runs = runIDs.map((sessionID) => {
+          // First sighting of a run starts its clock: a fresh send has no
+          // event yet by definition.
+          if (!sessionActivityAt.has(sessionID)) sessionActivityAt.set(sessionID, now)
+          return {
+            sessionID,
+            lastEventAt: sessionActivityAt.get(sessionID)!,
+            lastResyncAt: sessionResyncedAt.get(sessionID),
+          }
+        })
+        const quiet = runsNeedingResync(runs, now)
+        if (quiet.length > 0) {
+          for (const sessionID of quiet) sessionResyncedAt.set(sessionID, now)
+          console.warn("[SSE] No events for a running session - resyncing its transcript:", quiet.join(", "))
+          void resyncBusySessions(new Set(quiet))
+        }
+
         const activeRun =
-          Object.values(get().sessionStatus).some((status) => status.type !== "idle") ||
-          Object.values(sessions.sending).some(Boolean)
-        if (!isStreamStalled({ activeRun, lastActivityAt: lastStreamActivityAt, now: Date.now() })) return
+          runIDs.length > 0 || Object.values(sessions.sending).some(Boolean)
+        if (!isStreamStalled({ activeRun, lastActivityAt: lastStreamActivityAt, now })) return
 
         console.warn("[SSE] No stream activity during a run - resyncing and reconnecting")
         void resyncBusySessions()
@@ -316,8 +357,14 @@ export const useEvents = create<EventsState>((set, get) => ({
               const sessionID = props.sessionID as string
               const status = props.status as SessionStatus
               if (!sessionID) break
-
-              // Detect busy → idle transition for completion notification
+              // An idle run needs no recovery; forget its clocks so a later
+              // send starts from a clean window.
+              if (status.type === "idle") {
+                sessionActivityAt.delete(sessionID)
+                sessionResyncedAt.delete(sessionID)
+              } else {
+                markSessionActivity(sessionID)
+              }
               const previous = get().sessionStatus[sessionID]
               const completed = previous?.type === "busy" && status.type === "idle"
 
@@ -376,6 +423,7 @@ export const useEvents = create<EventsState>((set, get) => ({
             case "message.updated": {
               const info = props.info as Message | undefined
               if (!info) break
+              markSessionActivity(info.sessionID)
               useSessions.getState().handleEvent({ type, properties: { info } } as any)
               break
             }
@@ -383,6 +431,7 @@ export const useEvents = create<EventsState>((set, get) => ({
             case "message.part.updated": {
               const part = props.part as Part | undefined
               if (!part) break
+              markSessionActivity((part as any).sessionID)
 
               // Update status text from the latest part
               const sessionID = (part as any).sessionID as string
@@ -422,6 +471,7 @@ export const useEvents = create<EventsState>((set, get) => ({
               // Mark so the eventual busy -> idle transition is not counted
               // as a success for the store review prompt
               erroredSessions.add(sessionID)
+              markSessionActivity(sessionID)
               // Clear sending state unconditionally — SSE is truth
               useSessions.setState((state) => ({
                 sending: { ...state.sending, [sessionID]: false },
@@ -555,6 +605,8 @@ export const useEvents = create<EventsState>((set, get) => ({
     controller = null
     erroredSessions.clear()
     abortedSessions.clear()
+    sessionActivityAt.clear()
+    sessionResyncedAt.clear()
     set({
       connected: false,
       authError: false,
