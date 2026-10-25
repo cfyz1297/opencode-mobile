@@ -13,7 +13,14 @@
       "security": "Security",
       "notifications": "Notifications",
       "privacy": "Privacy",
+      "providers": "Providers",
       "about": "About"
+    },
+    "providers": {
+      "row": {
+        "label": "Providers",
+        "description": "Connected AI providers on your server"
+      }
     },
     "security": {
       "biometricOpen": {
@@ -215,6 +222,9 @@
         "deleteTitle": "Delete Connection",
         "deleteMessage": "Are you sure you want to delete \"{{name}}\"?"
       }
+    },
+    "security": {
+      "cleartext": "Plain http: your server password and chat traffic travel unencrypted. Use https or a tunnel on networks you do not trust."
     }
   },
   "nav": {
@@ -226,6 +236,8 @@
   },
   "connectionsList": {
     "activeBadge": "Active",
+    "offlineBadge": "Server unreachable",
+    "checkingBadge": "Checking...",
     "lastConnected": "Last connected: {{date}}",
     "actionsAlert": {
       "message": "What would you like to do?",
@@ -386,7 +398,9 @@
       "title": "Select Model",
       "searchPlaceholder": "Search models...",
       "serverDefault": "Server default",
-      "empty": "No connected providers yet"
+      "empty": "No connected providers yet",
+      "manageModels": "Manage models",
+      "freeBadge": "Free"
     },
     "message": {
       "copy": "Copy",
@@ -462,6 +476,111 @@
       }
     }
   },
+  "providers": {
+    "title": "Providers",
+    "subtitle": "Connect popular providers with an API key sent to your OpenCode server. Keys are not stored in the app.",
+    "connectedTitle": "Connected providers",
+    "connectedEmpty": "No providers with models yet. Connect a provider below, then pull to refresh.",
+    "popularTitle": "Popular providers",
+    "popularEmpty": "No matching providers. Try another search or add a custom provider above.",
+    "customTitle": "Custom provider",
+    "customCta": "+ Other",
+    "searchPlaceholder": "Search providers...",
+    "noServer": "Connect an OpenCode server first to see providers.",
+    "modelsAvailable_one": "{{count}} model available",
+    "modelsAvailable_few": "{{count}} models available",
+    "modelsAvailable_many": "{{count}} models available",
+    "modelsAvailable_other": "{{count}} models available",
+    "connectCta": "+ Connect",
+    "connectTitle": "Connect {{name}}",
+    "connectBody": "Paste an API key to store it on your OpenCode server. This app does not keep the key after submit.",
+    "connectBodyNamed": "Paste an API key for \"{{name}}\" (id: {{id}}). It is sent to your OpenCode server and not stored in the app.",
+    "connect": {
+      "title": "Connect {{name}}",
+      "unknown": "Provider",
+      "missingId": "Missing provider id.",
+      "lead": "Send an API key for {{name}} ({{id}}) to your connected OpenCode server.",
+      "securityNote": "The key is transmitted over your existing server connection and cleared from this screen after submit. It is never written to device storage by the app.",
+      "apiKeyLabel": "API key",
+      "apiKeyPlaceholder": "Paste API key",
+      "showKey": "Show key",
+      "hideKey": "Hide key",
+      "submit": "Connect on server",
+      "success": "{{name}} connected. Pull to refresh if models do not appear yet.",
+      "errors": {
+        "required": "Enter an API key.",
+        "too_short": "API key looks too short.",
+        "id_required": "Missing provider id.",
+        "id_invalid": "Provider id is invalid.",
+        "unauthorized": "Server rejected the request. Check the connection password.",
+        "server": "Server returned HTTP {{status}}.",
+        "unknown": "Could not connect this provider. Try again."
+      }
+    },
+    "badge": {
+      "account": "Account",
+      "apiKey": "API Key"
+    },
+    "custom": {
+      "title": "Custom provider",
+      "rowName": "Other (Custom)",
+      "lead": "Same as desktop /connect → Other: define an OpenAI-compatible provider, apply the config on the server, then connect an API key from the app.",
+      "noSecretsNote": "This form only builds config with {env:VAR} placeholders. Paste the real key on the Connect screen after the config is on the server.",
+      "fields": {
+        "id": "Provider ID",
+        "name": "Display name",
+        "baseURL": "Base URL",
+        "modelID": "Model ID",
+        "modelName": "Model display name (optional)"
+      },
+      "errors": {
+        "required": "Required",
+        "invalid": "Invalid value",
+        "reserved": "This ID is reserved — pick another"
+      },
+      "invalidForm": "Fix the highlighted fields first.",
+      "generate": "Generate Termux steps",
+      "configTitle": "opencode.json fragment",
+      "stepsTitle": "Steps on the server",
+      "copyConfig": "Copy config",
+      "copySteps": "Copy steps",
+      "copiedConfig": "Config copied. Merge it into opencode.json on the server.",
+      "copiedSteps": "Steps copied.",
+      "connectKeyCta": "Connect API key"
+    },
+    "popular": {
+      "generic": {
+        "description": "Connect {{name}} with an API key from this app"
+      },
+      "opencode": {
+        "description": "OpenCode Zen — tested models from the OpenCode team"
+      },
+      "opencodeGo": {
+        "description": "OpenCode Go subscription for coding models"
+      },
+      "opencodeConsole": {
+        "description": "OpenCode Console workspace providers"
+      },
+      "anthropic": {
+        "description": "Direct access to Claude models via API key"
+      },
+      "openai": {
+        "description": "GPT models for fast general AI tasks"
+      },
+      "githubCopilot": {
+        "description": "AI coding models through GitHub Copilot"
+      },
+      "beatapi": {
+        "description": "OpenAI-compatible BeatAPI models"
+      },
+      "google": {
+        "description": "Gemini models via Google AI"
+      },
+      "other": {
+        "description": "Any OpenAI-compatible endpoint (desktop Other)"
+      }
+    }
+  },
   "demo": {
     "title": "Demo",
     "banner": "Demo — sample conversation, no server connected",
@@ -512,5 +631,16 @@
     "readOnly": "Saved copy · read only · may be incomplete or out of date",
     "user": "You",
     "assistant": "Assistant"
+  },
+  "models": {
+    "title": "Models",
+    "settingsDescription": "Choose models available in session pickers",
+    "description": "Enable models to show in session pickers. Saved on this device for each server connection. Your current session model is kept.",
+    "search": "Search models",
+    "empty": "No models available. Connect a provider, then refresh.",
+    "noResults": "No matching models",
+    "noServer": "Connect a server to manage models.",
+    "saveError": "Could not save model preferences. Please try again.",
+    "loadError": "Could not load model preferences. Tap to retry."
   }
 }

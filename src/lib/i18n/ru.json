@@ -13,7 +13,14 @@
       "security": "Безопасность",
       "notifications": "Уведомления",
       "privacy": "Конфиденциальность",
+      "providers": "Провайдеры",
       "about": "О приложении"
+    },
+    "providers": {
+      "row": {
+        "label": "Провайдеры",
+        "description": "Подключённые ИИ-провайдеры на вашем сервере"
+      }
     },
     "security": {
       "biometricOpen": {
@@ -215,6 +222,9 @@
         "deleteTitle": "Удалить подключение",
         "deleteMessage": "Удалить \"{{name}}\"?"
       }
+    },
+    "security": {
+      "cleartext": "Обычный http: пароль сервера и переписка идут без шифрования. В недоверенных сетях используйте https или туннель."
     }
   },
   "nav": {
@@ -226,6 +236,8 @@
   },
   "connectionsList": {
     "activeBadge": "Активно",
+    "offlineBadge": "Сервер недоступен",
+    "checkingBadge": "Проверка...",
     "lastConnected": "Последнее подключение: {{date}}",
     "actionsAlert": {
       "message": "Что сделать?",
@@ -386,7 +398,9 @@
       "title": "Выбор модели",
       "searchPlaceholder": "Поиск моделей...",
       "serverDefault": "По умолчанию сервера",
-      "empty": "Нет подключённых провайдеров"
+      "empty": "Нет подключённых провайдеров",
+      "manageModels": "Управление моделями",
+      "freeBadge": "Бесплатно"
     },
     "message": {
       "copy": "Скопировать",
@@ -462,6 +476,111 @@
       }
     }
   },
+  "providers": {
+    "title": "Провайдеры",
+    "subtitle": "Популярных провайдеров можно подключить API-ключом прямо на сервер OpenCode. Ключи в приложении не хранятся.",
+    "connectedTitle": "Подключённые провайдеры",
+    "connectedEmpty": "Пока нет провайдеров с моделями. Подключите провайдера ниже и потяните вниз для обновления.",
+    "popularTitle": "Популярные провайдеры",
+    "popularEmpty": "Нет совпадений. Измените поиск или добавьте кастомного провайдера выше.",
+    "customTitle": "Кастомный провайдер",
+    "customCta": "+ Other",
+    "searchPlaceholder": "Поиск провайдеров...",
+    "noServer": "Сначала подключите сервер OpenCode, чтобы увидеть провайдеров.",
+    "modelsAvailable_one": "{{count}} модель",
+    "modelsAvailable_few": "{{count}} модели",
+    "modelsAvailable_many": "{{count}} моделей",
+    "modelsAvailable_other": "{{count}} моделей",
+    "connectCta": "+ Подключить",
+    "connectTitle": "Подключить {{name}}",
+    "connectBody": "Вставьте API-ключ — он сохранится на сервере OpenCode. После отправки приложение его не хранит.",
+    "connectBodyNamed": "Вставьте API-ключ для «{{name}}» (id: {{id}}). Ключ уходит на сервер OpenCode и не сохраняется в приложении.",
+    "connect": {
+      "title": "Подключить {{name}}",
+      "unknown": "Провайдер",
+      "missingId": "Не указан id провайдера.",
+      "lead": "Отправить API-ключ для {{name}} ({{id}}) на подключённый сервер OpenCode.",
+      "securityNote": "Ключ передаётся по уже установленному соединению с сервером и очищается с экрана после отправки. Приложение не пишет его в хранилище устройства.",
+      "apiKeyLabel": "API-ключ",
+      "apiKeyPlaceholder": "Вставьте API-ключ",
+      "showKey": "Показать ключ",
+      "hideKey": "Скрыть ключ",
+      "submit": "Подключить на сервере",
+      "success": "{{name}} подключён. Если модели не появились — потяните список вниз.",
+      "errors": {
+        "required": "Введите API-ключ.",
+        "too_short": "API-ключ слишком короткий.",
+        "id_required": "Не указан id провайдера.",
+        "id_invalid": "Некорректный id провайдера.",
+        "unauthorized": "Сервер отклонил запрос. Проверьте пароль подключения.",
+        "server": "Сервер вернул HTTP {{status}}.",
+        "unknown": "Не удалось подключить провайдера. Попробуйте ещё раз."
+      }
+    },
+    "badge": {
+      "account": "Account",
+      "apiKey": "Ключ API"
+    },
+    "custom": {
+      "title": "Кастомный провайдер",
+      "rowName": "Other (свой)",
+      "lead": "Как на десктопе /connect → Other: опишите OpenAI-compatible провайдера, примените конфиг на сервере, затем подключите API-ключ из приложения.",
+      "noSecretsNote": "Здесь только конфиг с плейсхолдерами {env:VAR}. Реальный ключ вставляйте на экране Connect после установки конфига на сервере.",
+      "fields": {
+        "id": "ID провайдера",
+        "name": "Отображаемое имя",
+        "baseURL": "Base URL",
+        "modelID": "ID модели",
+        "modelName": "Имя модели (необязательно)"
+      },
+      "errors": {
+        "required": "Обязательное поле",
+        "invalid": "Некорректное значение",
+        "reserved": "Этот ID занят — выберите другой"
+      },
+      "invalidForm": "Сначала исправьте отмеченные поля.",
+      "generate": "Сгенерировать шаги для Termux",
+      "configTitle": "Фрагмент opencode.json",
+      "stepsTitle": "Шаги на сервере",
+      "copyConfig": "Копировать конфиг",
+      "copySteps": "Копировать шаги",
+      "copiedConfig": "Конфиг скопирован. Вставьте его в opencode.json на сервере.",
+      "copiedSteps": "Шаги скопированы.",
+      "connectKeyCta": "Подключить API-ключ"
+    },
+    "popular": {
+      "generic": {
+        "description": "Подключите {{name}} API-ключом из приложения"
+      },
+      "opencode": {
+        "description": "OpenCode Zen — проверенные модели команды OpenCode"
+      },
+      "opencodeGo": {
+        "description": "Подписка OpenCode Go для моделей кодирования"
+      },
+      "opencodeConsole": {
+        "description": "Провайдеры рабочего пространства OpenCode Console"
+      },
+      "anthropic": {
+        "description": "Прямой доступ к моделям Claude по API-ключу"
+      },
+      "openai": {
+        "description": "Модели GPT для быстрых задач общего ИИ"
+      },
+      "githubCopilot": {
+        "description": "ИИ-модели для помощи в кодировании через GitHub Copilot"
+      },
+      "beatapi": {
+        "description": "Модели BeatAPI (OpenAI-compatible)"
+      },
+      "google": {
+        "description": "Модели Gemini через Google AI"
+      },
+      "other": {
+        "description": "Любой OpenAI-compatible endpoint (как Other на ПК)"
+      }
+    }
+  },
   "demo": {
     "title": "Демо",
     "banner": "Демо — пример диалога, сервер не подключён",
@@ -512,5 +631,16 @@
     "readOnly": "Сохранённая копия · только чтение · может быть неполной или устаревшей",
     "user": "Вы",
     "assistant": "Ассистент"
+  },
+  "models": {
+    "title": "Модели",
+    "settingsDescription": "Выбор моделей, доступных в сессиях",
+    "description": "Включите модели для выбора в сессиях. Настройки сохраняются на устройстве отдельно для каждого сервера. Текущая модель сессии сохранится.",
+    "search": "Поиск моделей",
+    "empty": "Нет доступных моделей. Подключите провайдера и обновите список.",
+    "noResults": "Модели не найдены",
+    "noServer": "Подключите сервер для настройки моделей.",
+    "saveError": "Не удалось сохранить настройки моделей. Повторите попытку.",
+    "loadError": "Не удалось загрузить настройки моделей. Нажмите, чтобы повторить."
   }
 }

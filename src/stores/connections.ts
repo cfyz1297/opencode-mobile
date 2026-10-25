@@ -14,6 +14,9 @@ export type ConnectionTestSource = "onboarding" | "edit_test" | "sse"
 
 const CONNECTIONS_KEY = "opencode_connections"
 const PASSWORDS_PREFIX = "opencode_password_"
+// A server password must not ride an iOS backup onto another device; Android's
+// Keystore is device-bound already. History uses the same policy.
+const SECURE_OPTIONS = { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY }
 const RECENT_DIRS_KEY = "opencode_recent_dirs"
 const MAX_RECENT_DIRS = 10
 // A bad IP (unreachable host, wrong port) otherwise hangs for the full 30s
@@ -161,7 +164,7 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
 
     // Store password separately if provided
     if (password) {
-      await SecureStore.setItemAsync(`${PASSWORDS_PREFIX}${id}`, password)
+      await SecureStore.setItemAsync(`${PASSWORDS_PREFIX}${id}`, password, SECURE_OPTIONS)
     }
 
     await SecureStore.setItemAsync(CONNECTIONS_KEY, JSON.stringify(connections))
@@ -306,7 +309,7 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
     // empty value means "keep the existing password", not "clear it". Written
     // before the active-client rebuild below so the rebuilt client picks it up.
     if (password) {
-      await SecureStore.setItemAsync(`${PASSWORDS_PREFIX}${id}`, password)
+      await SecureStore.setItemAsync(`${PASSWORDS_PREFIX}${id}`, password, SECURE_OPTIONS)
     }
 
     // If updating active connection, recreate client

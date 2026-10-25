@@ -10,9 +10,10 @@ import {
   Linking,
   Alert,
 } from "react-native"
+import { router } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
-import { router } from 'expo-router'
+import { PROVIDERS_ROUTE } from "../../src/lib/providers-ui"
 import { useAuth } from "../../src/stores/auth"
 import { useSettings } from "../../src/stores/settings"
 import {
@@ -221,6 +222,25 @@ export default function SettingsScreen() {
           isDark={isDark}
           onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
           right={<Ionicons name="open-outline" size={20} color={isDark ? "#666666" : "#999999"} />}
+        />
+      </SettingSection>
+
+      <SettingSection title={t("settings.sections.providers")} isDark={isDark}>
+        <SettingRow
+          icon="cloud-outline"
+          label={t("settings.providers.row.label")}
+          description={t("settings.providers.row.description")}
+          isDark={isDark}
+          onPress={() => router.push(PROVIDERS_ROUTE)}
+          right={<Ionicons name="chevron-forward" size={20} color={isDark ? "#666666" : "#999999"} />}
+        />
+        <SettingRow
+          icon="options-outline"
+          label={t("models.title")}
+          description={t("models.settingsDescription")}
+          isDark={isDark}
+          onPress={() => router.push("/models")}
+          right={<Ionicons name="chevron-forward" size={20} color={isDark ? "#666666" : "#999999"} />}
         />
       </SettingSection>
 

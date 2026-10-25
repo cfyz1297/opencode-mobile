@@ -1,20 +1,16 @@
-import { useState, useCallback, useMemo, useRef } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import BottomSheet, { BottomSheetBackdrop, BottomSheetSectionList, BottomSheetTextInput } from "@gorhom/bottom-sheet"
 import { useTranslation } from "react-i18next"
+import { buildModelPickerSections, type ModelPickerItem } from "../../lib/model-picker-filter"
 
-interface ModelItem {
-  providerID: string
-  providerName: string
-  modelID: string
-  modelName: string
-}
+import { useHiddenModels } from "../../stores/model-visibility"
 
 interface Provider {
   id: string
   name: string
-  models: Array<{ id: string; name: string }>
+  models: Array<{ id: string; name: string; free?: boolean }>
 }
 
 interface Props {
@@ -23,52 +19,19 @@ interface Props {
   isDark: boolean
   onSelect: (providerID: string, modelID: string) => void
   sheetRef: React.RefObject<BottomSheet | null>
+  /** Opens Settings → Models. */
+  onManageModels?: () => void
 }
 
-export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef }: Props) {
+export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, onManageModels }: Props) {
   const { t } = useTranslation()
   const [search, setSearch] = useState("")
+  const { hidden, loaded } = useHiddenModels()
 
-  const sections = useMemo(() => {
-    const list = Array.isArray(providers) ? providers : []
-    const q = search.toLowerCase()
-    const result = list
-      .map((p) => {
-        const models = (p.models || [])
-          .filter(
-            (m) =>
-              !q ||
-              m.id.toLowerCase().includes(q) ||
-              m.name.toLowerCase().includes(q) ||
-              p.name.toLowerCase().includes(q),
-          )
-          .map((m) => ({
-            providerID: p.id,
-            providerName: p.name || p.id,
-            modelID: m.id,
-            modelName: m.name || m.id,
-          }))
-        // Sort selected model to top within its group
-        if (selected) {
-          models.sort((a, b) => {
-            const aActive = a.providerID === selected.providerID && a.modelID === selected.modelID
-            const bActive = b.providerID === selected.providerID && b.modelID === selected.modelID
-            return aActive === bActive ? 0 : aActive ? -1 : 1
-          })
-        }
-        return { title: p.name || p.id, data: models }
-      })
-      .filter((s) => s.data.length > 0)
-    // Sort the section containing the selected model to the top
-    if (selected) {
-      result.sort((a, b) => {
-        const aHas = a.data.some((m) => m.providerID === selected.providerID && m.modelID === selected.modelID)
-        const bHas = b.data.some((m) => m.providerID === selected.providerID && m.modelID === selected.modelID)
-        return aHas === bHas ? 0 : aHas ? -1 : 1
-      })
-    }
-    return result
-  }, [providers, search, selected])
+  const sections = useMemo(
+    () => buildModelPickerSections({ providers: loaded ? providers : [], query: search, selected, hidden }),
+    [providers, search, selected, hidden, loaded],
+  )
 
   const handleSelect = useCallback(
     (providerID: string, modelID: string) => {
@@ -78,6 +41,12 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef }:
     },
     [onSelect, sheetRef],
   )
+
+  const handleManage = useCallback(() => {
+    setSearch("")
+    sheetRef.current?.close()
+    onManageModels?.()
+  }, [onManageModels, sheetRef])
 
   return (
     <BottomSheet
@@ -110,17 +79,18 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef }:
           onChangeText={setSearch}
           autoCorrect={false}
           autoCapitalize="none"
+          testID="model-picker-search"
         />
       </View>
       <BottomSheetSectionList
         sections={sections}
-        keyExtractor={(item: ModelItem) => `${item.providerID}/${item.modelID}`}
+        keyExtractor={(item: ModelPickerItem) => `${item.providerID}/${item.modelID}`}
         renderSectionHeader={({ section }: { section: { title: string } }) => (
           <View style={[s.sectionHeader, isDark && s.sectionHeaderDark]}>
             <Text style={[s.sectionTitle, isDark && s.metaDark]}>{section.title}</Text>
           </View>
         )}
-        renderItem={({ item }: { item: ModelItem }) => {
+        renderItem={({ item }: { item: ModelPickerItem }) => {
           const active = selected?.providerID === item.providerID && selected?.modelID === item.modelID
           return (
             <TouchableOpacity
@@ -129,15 +99,36 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef }:
               testID={`model-option-${item.providerID}-${item.modelID}`}
             >
               <View style={s.rowText}>
-                <Text style={[s.rowName, isDark && s.textWhite]} numberOfLines={1}>
-                  {item.modelName || item.modelID}
-                </Text>
+                <View style={s.nameRow}>
+                  <Text style={[s.rowName, isDark && s.textWhite]} numberOfLines={1}>
+                    {item.modelName || item.modelID}
+                  </Text>
+                  {item.free ? (
+                    <View style={[s.freeBadge, isDark && s.freeBadgeDark]}>
+                      <Text style={[s.freeBadgeText, isDark && s.freeBadgeTextDark]}>
+                        {t("chat.modelPicker.freeBadge")}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
                 <Text style={[s.rowProvider, isDark && s.metaDark]}>{item.providerName || item.providerID}</Text>
               </View>
               {active && <Ionicons name="checkmark-circle" size={20} color="#8b5cf6" />}
             </TouchableOpacity>
           )
         }}
+        ListFooterComponent={
+          onManageModels ? (
+            <TouchableOpacity
+              style={[s.manageRow, isDark && s.manageRowDark]}
+              onPress={handleManage}
+              testID="model-picker-manage"
+            >
+              <Ionicons name="options-outline" size={18} color={isDark ? "#cccccc" : "#444444"} />
+              <Text style={[s.manageText, isDark && s.textWhite]}>{t("chat.modelPicker.manageModels")}</Text>
+            </TouchableOpacity>
+          ) : null
+        }
         contentContainerStyle={s.content}
         stickySectionHeadersEnabled
       />
@@ -187,6 +178,28 @@ const s = StyleSheet.create({
   rowSelected: { backgroundColor: "#f5f3ff" },
   rowSelectedDark: { backgroundColor: "#1f1a2e" },
   rowText: { flex: 1 },
-  rowName: { fontSize: 15, fontWeight: "500", color: "#0a0a0a" },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  rowName: { fontSize: 15, fontWeight: "500", color: "#0a0a0a", flexShrink: 1 },
   rowProvider: { fontSize: 12, color: "#999999", marginTop: 1 },
+  freeBadge: {
+    backgroundColor: "#e8e8e8",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  freeBadgeDark: { backgroundColor: "#2a2a2a" },
+  freeBadgeText: { fontSize: 11, fontWeight: "600", color: "#555555" },
+  freeBadgeTextDark: { color: "#bbbbbb" },
+  manageRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#e5e5e5",
+    marginTop: 4,
+  },
+  manageRowDark: { borderTopColor: "#2a2a2a" },
+  manageText: { fontSize: 15, fontWeight: "500", color: "#0a0a0a" },
 })

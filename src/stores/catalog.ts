@@ -2,12 +2,14 @@ import { create } from "zustand"
 import { useConnections } from "./connections"
 import type { Agent, Command } from "../lib/sdk"
 import { chooseModelSelection } from "../lib/model-selection"
+import { isFreeModel } from "../lib/providers-ui"
 
 export interface ProviderModel {
   id: string
   name: string
   reasoning: boolean
   attachment: boolean
+  free?: boolean
   limit?: { context: number; output: number }
   variants?: Record<string, { reasoningEffort?: string }>
 }
@@ -29,6 +31,8 @@ function sameModel(left: ModelSelection | null, right: ModelSelection | null) {
 }
 
 interface CatalogState {
+  catalogClient: import("../lib/sdk").Client | null
+  catalogConnection: string | null
   agents: Agent[]
   commands: Command[]
   providers: Provider[]
@@ -48,6 +52,8 @@ interface CatalogState {
 }
 
 export const useCatalog = create<CatalogState>((set, get) => ({
+  catalogClient: null,
+  catalogConnection: null,
   agents: [],
   commands: [],
   providers: [],
@@ -58,7 +64,8 @@ export const useCatalog = create<CatalogState>((set, get) => ({
   loaded: false,
 
   load: async () => {
-    const client = useConnections.getState().client
+    const { client, activeConnection } = useConnections.getState()
+    const scope = activeConnection?.id ?? null
     if (!client) return
 
     const [agentResult, commandResult, providerResult] = await Promise.all([
@@ -66,6 +73,9 @@ export const useCatalog = create<CatalogState>((set, get) => ({
       client.command.list().catch(() => [] as Command[]),
       client.provider.list().catch(() => null),
     ])
+
+    // Ignore in-flight responses from a connection that is no longer active.
+    if (useConnections.getState().client !== client || (useConnections.getState().activeConnection?.id ?? null) !== scope) return
 
     const agents = Array.isArray(agentResult) ? agentResult : []
     const commands = Array.isArray(commandResult) ? commandResult : []
@@ -88,6 +98,7 @@ export const useCatalog = create<CatalogState>((set, get) => ({
                 name: m.name || m.id,
                 reasoning: m.reasoning ?? false,
                 attachment: m.attachment ?? false,
+                free: isFreeModel(m.cost),
                 limit: m.limit,
                 variants: m.variants,
               })),
@@ -127,6 +138,8 @@ export const useCatalog = create<CatalogState>((set, get) => ({
         : existing // network failure — keep current choice
 
     set((state) => ({
+      catalogClient: client,
+      catalogConnection: scope,
       agents: visible,
       commands,
       providers,

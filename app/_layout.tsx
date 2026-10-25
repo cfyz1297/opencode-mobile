@@ -213,6 +213,28 @@ function RootLayout() {
                   presentation: "modal",
                 }}
               />
+              <Stack.Screen
+                name="providers/index"
+                options={{
+                  title: t("providers.title"),
+                  presentation: "card",
+                }}
+              />
+              <Stack.Screen
+                name="providers/custom"
+                options={{
+                  title: t("providers.custom.title"),
+                  presentation: "card",
+                }}
+              />
+              <Stack.Screen
+                name="providers/connect"
+                options={{
+                  title: t("providers.connect.title", { name: "" }),
+                  presentation: "card",
+                }}
+              />
+              <Stack.Screen name="models" options={{ title: t("models.title") }} />
             </Stack>
               <StatusBar style={isDark ? "light" : "dark"} />
             </AuthGate>

@@ -20,6 +20,7 @@ import type { ConnectionType } from "../../src/lib/types"
 import { probeConnection, shareReport } from "../../src/lib/diagnostics"
 import { parseUrl } from "../../src/lib/diagnostics-classify"
 import { buildAuth } from "../../src/lib/auth"
+import { sendsPasswordInClearText } from "../../src/lib/connection-security"
 
 // labelKey (not literal text): this is a module-level constant evaluated
 // before i18next is guaranteed ready, so the label is resolved with t() at
@@ -281,6 +282,11 @@ export default function EditConnectionScreen() {
         onChangeText={setPassword}
         secureTextEntry
       />
+      {sendsPasswordInClearText(url) && (
+        <Text style={[styles.securityHint, isDark && styles.securityHintDark]}>
+          {t("connection.security.cleartext")}
+        </Text>
+      )}
 
       {/* Actions */}
       <View style={styles.actions}>
@@ -409,6 +415,14 @@ const styles = StyleSheet.create({
   },
   hintDark: {
     color: "#888888",
+  },
+  securityHint: {
+    fontSize: 13,
+    color: "#b45309",
+    marginTop: 8,
+  },
+  securityHintDark: {
+    color: "#fbbf24",
   },
   sectionTitle: {
     fontSize: 18,

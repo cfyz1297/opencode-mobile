@@ -1,0 +1,2 @@
+v0.2.21
+Connection status now reflects the server: "Active" only after a real health reply, "Server unreachable" when it is off. New Models screen next to Providers with search, grouping and per-model visibility shared by both pickers. Providers use a short popular list with server-side API key connect. Security: warning before a password over plain http, passwords marked this-device-only, and no more draw-over-other-apps permission. 524 tests, 96%/84%/94% coverage.

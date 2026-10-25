@@ -30,6 +30,7 @@ import {
   V2EventAdapter,
 } from "./v2-compat"
 import type { ProviderCatalog, V2FormField, V2FormInfo, V2MessageBody, V2SessionInfo } from "./v2-compat"
+import { connectKeyAttempts, shouldTryNextConnectEndpoint } from "./provider-auth"
 export { ApiAuthError, isAuthError } from "./api-error"
 
 export interface ClientConfig {
@@ -746,6 +747,32 @@ export function createClient(config: ClientConfig) {
             .catch(() => null),
         ])
         return mapProviders(raw, rawDefault)
+      },
+      /**
+       * Store an API key for a provider on the remote opencode serve instance.
+       * Tries V2 `/api/integration/.../connect/key`, then classic `/auth/:id`.
+       * The key is sent over the existing authenticated connection and is not
+       * retained by the client after the call returns.
+       */
+      connectApiKey: async (providerID: string, apiKey: string): Promise<{ path: string }> => {
+        const attempts = connectKeyAttempts(providerID, apiKey)
+        let lastError: unknown
+        for (const attempt of attempts) {
+          try {
+            await request(config, attempt.path, {
+              method: attempt.method,
+              body: JSON.stringify(attempt.body),
+            })
+            return { path: attempt.path }
+          } catch (error) {
+            lastError = error
+            if (error instanceof ApiError && shouldTryNextConnectEndpoint(error.status)) {
+              continue
+            }
+            throw error
+          }
+        }
+        throw lastError instanceof Error ? lastError : new ApiError(0, "Provider connect failed")
       },
     },
 

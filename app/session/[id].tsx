@@ -45,6 +45,7 @@ import { useSpeech } from "../../src/lib/speech"
 import { adaptiveLayout } from '../../src/lib/adaptive-layout'
 import { TabletSessions } from '../../src/components/TabletSessions'
 
+
 // --- Builtin slash commands ---
 const BUILTIN_COMMANDS: SlashCommand[] = [
   {
@@ -1101,6 +1102,7 @@ export default function SessionScreen() {
         selected={model}
         isDark={isDark}
         onSelect={handleModelSelect}
+        onManageModels={() => router.push("/models")}
       />
 
       {/* Reasoning effort (variant) picker bottom sheet */}
