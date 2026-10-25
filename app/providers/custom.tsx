@@ -9,10 +9,11 @@ import {
   useColorScheme,
   Alert,
 } from "react-native"
-import { Stack } from "expo-router"
+import { Stack, router } from "expo-router"
 import * as Clipboard from "expo-clipboard"
 import { useTranslation } from "react-i18next"
 import { buildCustomProviderPlan, validateCustomProvider } from "../../src/lib/custom-provider"
+import { connectHref } from "../../src/lib/providers-ui"
 
 export default function CustomProviderScreen() {
   const colorScheme = useColorScheme()
@@ -65,6 +66,15 @@ export default function CustomProviderScreen() {
     await Clipboard.setStringAsync(steps.join("\n"))
     Alert.alert(t("common.ok"), t("providers.custom.copiedSteps"))
   }, [steps, t])
+
+  const onConnectKey = useCallback(() => {
+    const plan = buildCustomProviderPlan(input)
+    if (!plan) {
+      Alert.alert(t("common.error"), t("providers.custom.invalidForm"))
+      return
+    }
+    router.push(connectHref(plan.providerID, plan.displayName))
+  }, [input, t])
 
   return (
     <>
@@ -157,6 +167,13 @@ export default function CustomProviderScreen() {
             ))}
             <TouchableOpacity style={styles.secondaryBtn} onPress={onCopySteps} testID="custom-provider-copy-steps">
               <Text style={[styles.secondaryBtnText, isDark && styles.textDark]}>{t("providers.custom.copySteps")}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.primaryBtn, { marginTop: 12 }]}
+              onPress={onConnectKey}
+              testID="custom-provider-connect-key"
+            >
+              <Text style={styles.primaryBtnText}>{t("providers.custom.connectKeyCta")}</Text>
             </TouchableOpacity>
           </View>
         )}

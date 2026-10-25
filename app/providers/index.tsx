@@ -7,7 +7,6 @@ import {
   StyleSheet,
   useColorScheme,
   RefreshControl,
-  Alert,
   TextInput,
 } from "react-native"
 import { Stack, router } from "expo-router"
@@ -16,6 +15,7 @@ import { useCatalog } from "../../src/stores/catalog"
 import { useConnections } from "../../src/stores/connections"
 import {
   buildProvidersScreenModel,
+  connectHref,
   CUSTOM_PROVIDER_ROUTE,
   type ConnectionBadge,
   type PopularProviderRow,
@@ -42,19 +42,15 @@ export default function ProvidersScreen() {
     }
   }, [load])
 
-  const showConnectHelp = useCallback(
+  const openConnect = useCallback(
     (row: PopularProviderRow) => {
       if (row.isCustom) {
         router.push(CUSTOM_PROVIDER_ROUTE)
         return
       }
-      Alert.alert(
-        t("providers.connectTitle", { name: row.name }),
-        t("providers.connectBodyNamed", { name: row.name, id: row.id }),
-        [{ text: t("common.ok") }],
-      )
+      router.push(connectHref(row.id, row.name))
     },
-    [t],
+    [],
   )
 
   const badgeLabel = useCallback(
@@ -133,7 +129,7 @@ export default function ProvidersScreen() {
             </View>
             <TouchableOpacity
               style={[styles.connectBtn, isDark && styles.connectBtnDark]}
-              onPress={() => showConnectHelp(screen.custom)}
+              onPress={() => openConnect(screen.custom)}
               testID="provider-connect-other"
             >
               <Text style={[styles.connectBtnText, isDark && styles.connectBtnTextDark]}>
@@ -178,7 +174,7 @@ export default function ProvidersScreen() {
                 </View>
                 <TouchableOpacity
                   style={[styles.connectBtn, isDark && styles.connectBtnDark]}
-                  onPress={() => showConnectHelp(row)}
+                  onPress={() => openConnect(row)}
                   testID={`provider-connect-${row.id}`}
                 >
                   <Text style={[styles.connectBtnText, isDark && styles.connectBtnTextDark]}>

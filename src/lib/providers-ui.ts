@@ -1,8 +1,8 @@
-/** Pure helpers for Settings > Providers screen (server-backed; no secrets). */
+/** Pure helpers for Settings ? Providers screen (server-backed; no secrets). */
 
 /**
- * Catalog of providers shown under Popular / connect help.
- * IDs match OpenCode `/connect` and models.dev where possible.
+ * Catalog of providers shown under Popular.
+ * IDs match OpenCode `/connect` where possible.
  * Descriptions use i18n: special keys when present, else providers.popular.generic.
  */
 
@@ -11,13 +11,15 @@ export interface PopularProviderDef {
   name: string
   /** Optional i18n key; default providers.popular.generic.description */
   descriptionKey?: string
-  /** Account-style providers (OpenCode Go/Zen, Copilot, …) */
+  /** Account-style providers (OpenCode Go/Zen, Copilot, ...) */
   badge?: "account" | "api_key"
 }
 
-/** OpenCode first-party + common `/connect` directory (docs.opencode.ai/providers). */
+/**
+ * Short popular list ? OpenCode first, then by common usage.
+ * Other / custom stays a separate always-on entry.
+ */
 export const POPULAR_PROVIDERS: readonly PopularProviderDef[] = [
-  // OpenCode family — must stay near the top (user subscription)
   {
     id: "opencode",
     name: "OpenCode Zen",
@@ -30,20 +32,6 @@ export const POPULAR_PROVIDERS: readonly PopularProviderDef[] = [
     descriptionKey: "providers.popular.opencodeGo.description",
     badge: "account",
   },
-  {
-    id: "opencode-zen",
-    name: "OpenCode Zen (alias)",
-    descriptionKey: "providers.popular.opencode.description",
-    badge: "account",
-  },
-  {
-    id: "opencode-console",
-    name: "OpenCode Console",
-    descriptionKey: "providers.popular.opencodeConsole.description",
-    badge: "account",
-  },
-
-  // Major clouds / labs
   {
     id: "anthropic",
     name: "Anthropic",
@@ -60,222 +48,43 @@ export const POPULAR_PROVIDERS: readonly PopularProviderDef[] = [
     descriptionKey: "providers.popular.google.description",
   },
   {
-    id: "google-vertex",
-    name: "Google Vertex AI",
-  },
-  {
     id: "github-copilot",
     name: "GitHub Copilot",
     descriptionKey: "providers.popular.githubCopilot.description",
     badge: "account",
   },
   {
-    id: "amazon-bedrock",
-    name: "Amazon Bedrock",
-  },
-  {
-    id: "azure",
-    name: "Azure OpenAI",
-  },
-  {
-    id: "azure-cognitive-services",
-    name: "Azure Cognitive Services",
-  },
-
-  // Gateways / aggregators
-  {
     id: "openrouter",
     name: "OpenRouter",
   },
   {
-    id: "vercel",
-    name: "Vercel AI Gateway",
-  },
-  {
-    id: "cloudflare-ai-gateway",
-    name: "Cloudflare AI Gateway",
-  },
-  {
-    id: "cloudflare-workers-ai",
-    name: "Cloudflare Workers AI",
-  },
-  {
-    id: "helicone",
-    name: "Helicone",
-  },
-  {
-    id: "llmgateway",
-    name: "LLM Gateway",
-  },
-  {
-    id: "eden",
-    name: "Eden AI",
-  },
-  {
-    id: "302ai",
-    name: "302.AI",
-  },
-
-  // Model vendors
-  {
     id: "deepseek",
     name: "DeepSeek",
-  },
-  {
-    id: "xai",
-    name: "xAI",
   },
   {
     id: "groq",
     name: "Groq",
   },
   {
-    id: "cerebras",
-    name: "Cerebras",
+    id: "xai",
+    name: "xAI",
   },
-  {
-    id: "mistral",
-    name: "Mistral",
-  },
-  {
-    id: "cohere",
-    name: "Cohere",
-  },
-  {
-    id: "fireworks",
-    name: "Fireworks AI",
-  },
-  {
-    id: "together",
-    name: "Together AI",
-  },
-  {
-    id: "deepinfra",
-    name: "Deep Infra",
-  },
-  {
-    id: "baseten",
-    name: "Baseten",
-  },
-  {
-    id: "huggingface",
-    name: "Hugging Face",
-  },
-  {
-    id: "nvidia",
-    name: "NVIDIA",
-  },
-  {
-    id: "moonshot",
-    name: "Moonshot AI",
-  },
-  {
-    id: "minimax",
-    name: "MiniMax",
-  },
-  {
-    id: "zai",
-    name: "Z.AI",
-  },
-  {
-    id: "venice",
-    name: "Venice AI",
-  },
-  {
-    id: "zenmux",
-    name: "ZenMux",
-  },
-
-  // Local / self-hosted
   {
     id: "ollama",
     name: "Ollama",
   },
   {
-    id: "ollama-cloud",
-    name: "Ollama Cloud",
-  },
-  {
-    id: "lmstudio",
-    name: "LM Studio",
-  },
-  {
-    id: "llama.cpp",
-    name: "llama.cpp",
-  },
-
-  // Enterprise / niche (still in /connect directory)
-  {
-    id: "gitlab",
-    name: "GitLab Duo",
-    badge: "account",
-  },
-  {
-    id: "digitalocean",
-    name: "DigitalOcean",
-  },
-  {
-    id: "nebius",
-    name: "Nebius Token Factory",
-  },
-  {
-    id: "scaleway",
-    name: "Scaleway",
-  },
-  {
-    id: "ovhcloud",
-    name: "OVHcloud AI Endpoints",
-  },
-  {
-    id: "stackit",
-    name: "STACKIT",
-  },
-  {
-    id: "snowflake",
-    name: "Snowflake Cortex",
-  },
-  {
-    id: "sap-aicore",
-    name: "SAP AI Core",
-  },
-  {
-    id: "cortecs",
-    name: "Cortecs",
-  },
-  {
-    id: "gmi",
-    name: "GMI Cloud",
-  },
-  {
-    id: "ionet",
-    name: "IO.NET",
-  },
-  {
-    id: "modal",
-    name: "Modal",
-  },
-  {
-    id: "poolside",
-    name: "Poolside",
-  },
-  {
-    id: "scx",
-    name: "SCX.ai",
-  },
-  {
-    id: "atomic-chat",
-    name: "Atomic Chat",
-  },
-  {
-    id: "frogbot",
-    name: "FrogBot",
-  },
-
-  // Community / third-party used with OpenCode
-  {
     id: "beatapi",
     name: "BeatAPI",
     descriptionKey: "providers.popular.beatapi.description",
+  },
+  {
+    id: "azure",
+    name: "Azure OpenAI",
+  },
+  {
+    id: "amazon-bedrock",
+    name: "Amazon Bedrock",
   },
 ] as const
 
@@ -286,10 +95,10 @@ export const CUSTOM_PROVIDER_ENTRY = {
   descriptionKey: "providers.popular.other.description",
 } as const
 
-
-/** Expo Router path for the Providers settings screen. */
+/** Expo Router paths. */
 export const PROVIDERS_ROUTE = "/providers" as const
 export const CUSTOM_PROVIDER_ROUTE = "/providers/custom" as const
+export const CONNECT_PROVIDER_ROUTE = "/providers/connect" as const
 
 export type ConnectionBadge = "account" | "api_key"
 
@@ -318,14 +127,14 @@ export interface PopularProviderRow {
   name: string
   descriptionKey: string
   badge: ConnectionBadge
-  /** Opens custom provider form instead of generic connect help */
+  /** Opens custom provider form instead of connect screen */
   isCustom?: boolean
 }
 
 export interface ProvidersScreenModel {
   connected: ConnectedProviderRow[]
   popular: PopularProviderRow[]
-  /** Always present — Other / Custom entry */
+  /** Always present ? Other / Custom entry */
   custom: PopularProviderRow
 }
 
@@ -336,7 +145,6 @@ const ACCOUNT_PROVIDER_IDS = new Set([
   "opencode-console",
   "github-copilot",
   "copilot",
-  "gitlab",
 ])
 
 /** Aliases so connecting one OpenCode id hides related popular rows. */
@@ -374,6 +182,17 @@ function expandConnectedIds(ids: Iterable<string>): Set<string> {
     for (const alias of CONNECTED_ALIASES[id] || []) out.add(alias)
   }
   return out
+}
+
+export function findPopularProvider(id: string): PopularProviderDef | undefined {
+  const needle = id.toLowerCase()
+  return POPULAR_PROVIDERS.find((p) => p.id.toLowerCase() === needle)
+}
+
+export function connectHref(providerID: string, name?: string): string {
+  const q = new URLSearchParams({ id: providerID })
+  if (name) q.set("name", name)
+  return `${CONNECT_PROVIDER_ROUTE}?${q.toString()}`
 }
 
 export function buildProvidersScreenModel(
@@ -417,5 +236,6 @@ export function buildProvidersScreenModel(
   return { connected, popular, custom }
 }
 
-/** Minimum expected catalog size — guards against accidental shrink regressions. */
-export const MIN_POPULAR_PROVIDER_COUNT = 40
+/** Guards against accidental shrink / empty catalog regressions. */
+export const MIN_POPULAR_PROVIDER_COUNT = 10
+export const MAX_POPULAR_PROVIDER_COUNT = 20

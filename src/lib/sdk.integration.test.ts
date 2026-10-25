@@ -383,3 +383,31 @@ test("Directory-less clients are cached separately from project-scoped clients",
   await global.global.health()
   assert.equal(calls[0].headers["x-opencode-directory"], undefined)
 })
+
+test("provider.connectApiKey prefers V2 integration connect/key", async () => {
+  routes["/api/integration/anthropic/connect/key"] = { status: 204, body: undefined }
+  const result = await createClient({ baseUrl: base }).provider.connectApiKey("anthropic", "sk-live-abcdefgh")
+  assert.equal(result.path, "/api/integration/anthropic/connect/key")
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].method, "POST")
+  assert.deepEqual(calls[0].body, { key: "sk-live-abcdefgh" })
+})
+
+test("provider.connectApiKey falls back to PUT /auth when V2 route is missing", async () => {
+  routes["/api/integration/openai/connect/key"] = { status: 404, body: { error: "missing" } }
+  routes["/auth/openai"] = { status: 200, body: true }
+  const result = await createClient({ baseUrl: base }).provider.connectApiKey("openai", "sk-openai-keyxx")
+  assert.equal(result.path, "/auth/openai")
+  assert.equal(calls[0].path, "/api/integration/openai/connect/key")
+  assert.equal(calls[1].path, "/auth/openai")
+  assert.deepEqual(calls[1].body, { type: "api", key: "sk-openai-keyxx" })
+})
+
+test("provider.connectApiKey does not fall through on 401", async () => {
+  routes["/api/integration/anthropic/connect/key"] = { status: 401, body: { error: "unauthorized" } }
+  await assert.rejects(
+    createClient({ baseUrl: base }).provider.connectApiKey("anthropic", "sk-live-abcdefgh"),
+    isAuthError,
+  )
+  assert.equal(calls.length, 1)
+})

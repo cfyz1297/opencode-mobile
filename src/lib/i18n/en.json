@@ -473,9 +473,9 @@
   },
   "providers": {
     "title": "Providers",
-    "subtitle": "Provider settings mirror what is already connected on your OpenCode server (for example Termux). API keys stay on the server.",
+    "subtitle": "Connect popular providers with an API key sent to your OpenCode server. Keys are not stored in the app.",
     "connectedTitle": "Connected providers",
-    "connectedEmpty": "No providers with models yet. Connect a provider on the server, then pull to refresh.",
+    "connectedEmpty": "No providers with models yet. Connect a provider below, then pull to refresh.",
     "popularTitle": "Popular providers",
     "popularEmpty": "No matching providers. Try another search or add a custom provider above.",
     "customTitle": "Custom provider",
@@ -488,8 +488,30 @@
     "modelsAvailable_other": "{{count}} models available",
     "connectCta": "+ Connect",
     "connectTitle": "Connect {{name}}",
-    "connectBody": "Open OpenCode on the server (Termux or desktop), run the provider connect / auth flow for this provider, then pull to refresh here. This app never stores API keys.",
-    "connectBodyNamed": "On the OpenCode server (Termux or desktop) run /connect, select \"{{name}}\" (id: {{id}}), finish auth, then pull to refresh here. This app never stores API keys.",
+    "connectBody": "Paste an API key to store it on your OpenCode server. This app does not keep the key after submit.",
+    "connectBodyNamed": "Paste an API key for \"{{name}}\" (id: {{id}}). It is sent to your OpenCode server and not stored in the app.",
+    "connect": {
+      "title": "Connect {{name}}",
+      "unknown": "Provider",
+      "missingId": "Missing provider id.",
+      "lead": "Send an API key for {{name}} ({{id}}) to your connected OpenCode server.",
+      "securityNote": "The key is transmitted over your existing server connection and cleared from this screen after submit. It is never written to device storage by the app.",
+      "apiKeyLabel": "API key",
+      "apiKeyPlaceholder": "Paste API key",
+      "showKey": "Show key",
+      "hideKey": "Hide key",
+      "submit": "Connect on server",
+      "success": "{{name}} connected. Pull to refresh if models do not appear yet.",
+      "errors": {
+        "required": "Enter an API key.",
+        "too_short": "API key looks too short.",
+        "id_required": "Missing provider id.",
+        "id_invalid": "Provider id is invalid.",
+        "unauthorized": "Server rejected the request. Check the connection password.",
+        "server": "Server returned HTTP {{status}}.",
+        "unknown": "Could not connect this provider. Try again."
+      }
+    },
     "badge": {
       "account": "Account",
       "apiKey": "API Key"
@@ -497,8 +519,8 @@
     "custom": {
       "title": "Custom provider",
       "rowName": "Other (Custom)",
-      "lead": "Same as desktop /connect → Other: define an OpenAI-compatible provider, then apply the config on the server.",
-      "noSecretsNote": "Do not paste API keys here. Keys are entered only in Termux via /connect or environment variables.",
+      "lead": "Same as desktop /connect → Other: define an OpenAI-compatible provider, apply the config on the server, then connect an API key from the app.",
+      "noSecretsNote": "This form only builds config with {env:VAR} placeholders. Paste the real key on the Connect screen after the config is on the server.",
       "fields": {
         "id": "Provider ID",
         "name": "Display name",
@@ -518,11 +540,12 @@
       "copyConfig": "Copy config",
       "copySteps": "Copy steps",
       "copiedConfig": "Config copied. Merge it into opencode.json on the server.",
-      "copiedSteps": "Steps copied."
+      "copiedSteps": "Steps copied.",
+      "connectKeyCta": "Connect API key"
     },
     "popular": {
       "generic": {
-        "description": "Connect {{name}} with /connect on your OpenCode server"
+        "description": "Connect {{name}} with an API key from this app"
       },
       "opencode": {
         "description": "OpenCode Zen — tested models from the OpenCode team"

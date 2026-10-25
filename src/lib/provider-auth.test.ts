@@ -1,0 +1,63 @@
+import { test } from "node:test"
+import assert from "node:assert/strict"
+import {
+  connectKeyAttempts,
+  redactConnectBody,
+  resolveConnectDisplayName,
+  shouldTryNextConnectEndpoint,
+  validateApiKeyInput,
+  validateConnectProviderId,
+} from "./provider-auth.ts"
+
+test("validateApiKeyInput rejects empty and tiny keys", () => {
+  assert.deepEqual(validateApiKeyInput(""), { ok: false, error: "required" })
+  assert.deepEqual(validateApiKeyInput("  "), { ok: false, error: "required" })
+  assert.deepEqual(validateApiKeyInput("short"), { ok: false, error: "too_short" })
+  assert.deepEqual(validateApiKeyInput("  sk-live-abcdef  "), { ok: true, key: "sk-live-abcdef" })
+})
+
+test("connectKeyAttempts tries V2 integration then V1 auth paths", () => {
+  const attempts = connectKeyAttempts("anthropic", "sk-test-key-123456")
+  assert.equal(attempts.length, 3)
+  assert.equal(attempts[0].method, "POST")
+  assert.equal(attempts[0].path, "/api/integration/anthropic/connect/key")
+  assert.deepEqual(attempts[0].body, { key: "sk-test-key-123456" })
+  assert.equal(attempts[1].method, "PUT")
+  assert.equal(attempts[1].path, "/auth/anthropic")
+  assert.deepEqual(attempts[1].body, { type: "api", key: "sk-test-key-123456" })
+  assert.equal(attempts[2].path, "/api/auth/anthropic")
+})
+
+test("connectKeyAttempts encodes provider ids", () => {
+  const attempts = connectKeyAttempts("github-copilot", "token-value-xx")
+  assert.equal(attempts[0].path, "/api/integration/github-copilot/connect/key")
+})
+
+test("redactConnectBody never leaks key material", () => {
+  const redacted = redactConnectBody({ key: "sk-secret", type: "api", other: 1 })
+  assert.equal(redacted.key, "[redacted]")
+  assert.equal(redacted.type, "api")
+  assert.equal(redacted.other, 1)
+})
+
+test("shouldTryNextConnectEndpoint only for missing-route statuses", () => {
+  assert.equal(shouldTryNextConnectEndpoint(404), true)
+  assert.equal(shouldTryNextConnectEndpoint(405), true)
+  assert.equal(shouldTryNextConnectEndpoint(501), true)
+  assert.equal(shouldTryNextConnectEndpoint(401), false)
+  assert.equal(shouldTryNextConnectEndpoint(400), false)
+  assert.equal(shouldTryNextConnectEndpoint(500), false)
+})
+
+test("validateConnectProviderId rejects empty and malformed ids", () => {
+  assert.deepEqual(validateConnectProviderId(""), { ok: false, error: "required" })
+  assert.deepEqual(validateConnectProviderId("Bad Id"), { ok: false, error: "invalid" })
+  assert.deepEqual(validateConnectProviderId("anthropic"), { ok: true, id: "anthropic" })
+  assert.deepEqual(validateConnectProviderId(" GitHub-Copilot "), { ok: true, id: "github-copilot" })
+})
+
+test("resolveConnectDisplayName prefers catalog over query name", () => {
+  assert.equal(resolveConnectDisplayName("evil", "Anthropic", "Evil Co"), "Evil Co")
+  assert.equal(resolveConnectDisplayName("acme", "Acme LLM", undefined), "Acme LLM")
+  assert.equal(resolveConnectDisplayName("acme", undefined, undefined), "acme")
+})

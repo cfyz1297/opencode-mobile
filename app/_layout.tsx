@@ -227,6 +227,13 @@ function RootLayout() {
                   presentation: "card",
                 }}
               />
+              <Stack.Screen
+                name="providers/connect"
+                options={{
+                  title: t("providers.connect.title", { name: "" }),
+                  presentation: "card",
+                }}
+              />
             </Stack>
               <StatusBar style={isDark ? "light" : "dark"} />
             </AuthGate>

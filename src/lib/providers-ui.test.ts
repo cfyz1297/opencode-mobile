@@ -3,7 +3,9 @@ import assert from "node:assert/strict"
 import {
   POPULAR_PROVIDERS,
   MIN_POPULAR_PROVIDER_COUNT,
+  MAX_POPULAR_PROVIDER_COUNT,
   buildProvidersScreenModel,
+  connectHref,
   connectionBadgeFor,
   isFreeModel,
   type CatalogProvider,
@@ -18,17 +20,21 @@ function provider(partial: Partial<CatalogProvider> & Pick<CatalogProvider, "id"
   }
 }
 
-test("catalog includes OpenCode family and stays large", () => {
+test("catalog is a short popular list with OpenCode first", () => {
   assert.ok(POPULAR_PROVIDERS.length >= MIN_POPULAR_PROVIDER_COUNT)
+  assert.ok(POPULAR_PROVIDERS.length <= MAX_POPULAR_PROVIDER_COUNT)
+  assert.equal(POPULAR_PROVIDERS[0].id, "opencode")
+  assert.equal(POPULAR_PROVIDERS[1].id, "opencode-go")
   const ids = new Set(POPULAR_PROVIDERS.map((p) => p.id))
-  assert.ok(ids.has("opencode"), "missing opencode (Zen)")
-  assert.ok(ids.has("opencode-go"), "missing opencode-go")
-  assert.ok(ids.has("opencode-console"), "missing opencode-console")
   assert.ok(ids.has("anthropic"))
   assert.ok(ids.has("openai"))
   assert.ok(ids.has("beatapi"))
-  assert.ok(ids.has("ollama"))
-  assert.ok(ids.has("openrouter"))
+  assert.ok(!ids.has("opencode-console"), "console should not clutter short list")
+  assert.ok(!ids.has("frogbot"))
+})
+
+test("connectHref builds providers/connect query", () => {
+  assert.equal(connectHref("anthropic", "Anthropic"), "/providers/connect?id=anthropic&name=Anthropic")
 })
 
 test("popular provider ids are unique", () => {
@@ -58,11 +64,11 @@ test("buildProvidersScreenModel: connected rows come from catalog with model cou
   assert.ok(!model.popular.some((p) => p.id === "beatapi"))
 })
 
-test("opencode connected hides opencode-zen popular row via alias", () => {
+test("opencode connected hides zen alias and keeps Go available", () => {
   const model = buildProvidersScreenModel([provider({ id: "opencode", name: "OpenCode Zen" })])
   assert.ok(!model.popular.some((p) => p.id === "opencode"))
-  assert.ok(!model.popular.some((p) => p.id === "opencode-zen"))
   assert.ok(model.popular.some((p) => p.id === "opencode-go"))
+  assert.equal(model.popular[0]?.id !== "opencode", true)
 })
 
 test("buildProvidersScreenModel: query filters popular by name or id", () => {
