@@ -1,7 +1,6 @@
 # OpenCode Mobile — мастер-документ (форк cfyz1297)
 
 Актуально на **2026-10-25**.
-
 - App: **`cc.agentlabs.opencode`** — Expo/React Native Android-клиент к собственному серверу `opencode serve` (V2 API).
 - Репозиторий форка: **`cfyz1297/opencode-mobile`**. Апстрим для справки: `dzianisv/opencode-mobile`.
 - Пользователь запускает сервер в Termux на телефоне; приложение — клиент к нему.
@@ -10,15 +9,18 @@
 
 | Что | Значение |
 |---|---|
-| Версия | **0.2.21**, versionCode **55** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
-| Ветки | `main` = `master` = `origin/main` = `origin/master` = `4da83de` |
-| Тег | `v0.2.21` |
-| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.21 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
-| APK | 86 385 477 байт, SHA256 `ff4c156ccc36f4ee4279e48a465e8f599bae956e9a64eb5d78fd0aaedb8968df` |
-| Подпись | production keystore, сертификат совпадает с 0.2.20 → установка поверх без удаления |
+| Версия | **0.2.22**, versionCode **56** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
+| Ветки | `main` = `master` (релизный коммит — см. `git log -1`) |
+| Тег | `v0.2.22` |
+| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.22 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
+| APK | см. тело релиза: SHA256 указан в описании и в `SHA256SUMS.txt` |
+| Подпись | production keystore, сертификат тот же, что у 0.2.20 → установка поверх без удаления |
 | Каналы | только `Build Android APK` и `Security scan`. Play / F-Droid / App Store не используются, на тег `v*` не запускаются |
-| Тесты | `npm test` — **506 passed, 0 failed**; покрытие **98.59 / 84.87 / 96.02** при пороге 80; `npm run typecheck` чисто |
-| CI на релизе | run **40193595672** (`test`, `build`, `Android roadmap CUA smoke` — success) |
+| Тесты | `npm test` — **520 passed, 0 failed**; покрытие **98.61 / 84.97 / 96.06** при пороге 80; `npm run typecheck` чисто |
+
+Что нового в 0.2.22:
+
+- **Диалог обновляется сам.** Если события одного прогона потерялись при живом сокете, приложение через 12 с тишины само дочитывает переписку: ответ появляется, «Работаю…» гаснет, незавершённый ответ показывается частично. Раньше помогал только перезаход в сессию. Реализация: `src/lib/run-watchdog.ts` + сторож в `src/stores/events.ts`, `applyServerMessages` в `src/stores/sessions.ts`. Отчёт: `docs/run-resync-validation.md`.
 
 Что нового в 0.2.21:
 
@@ -27,12 +29,12 @@
 3. **Провайдеры**: короткий каталог популярных (OpenCode Zen/Go первыми), подключение API-ключом через сервер. Ключи в APK не хранятся. OAuth **не реализован**.
 4. **Безопасность**: пароли серверов пишутся только как `WHEN_UNLOCKED_THIS_DEVICE_ONLY`; форма подключения предупреждает о пароле по `http://`; разрешение `SYSTEM_ALERT_WINDOW` заблокировано и в APK отсутствует.
 
-Подробности: `docs/security-review-0.2.21.md`, `docs/connection-status-validation.md`, `docs/model-visibility-validation.md`, пользовательское описание — `README.md`.
+Подробности: `docs/run-resync-validation.md`, `docs/security-review-0.2.21.md`, `docs/connection-status-validation.md`, `docs/model-visibility-validation.md`, пользовательское описание — `README.md`.
 
 ## Что дальше
 
-1. **Ручная проверка на устройстве** (единственный содержательный долг): провайдер → «Модели» → выключить модель → оба окна выбора → перезапуск → смена сервера → включить обратно. Отдельно: туннель, планшетный layout, офлайн-история — функции 0.2.20, вручную не проверялись.
-2. Известные остатки: 401/403 показывается как «Сервер недоступен»; `global.health()` в SDK считает отсутствующий `healthy` за `true` (совместимость со старыми серверами); `npm audit` — 11 уязвимостей только в сборочной цепочке Metro/PostCSS, в APK не входят. Подробно — `docs/security-review-0.2.21.md`.
+1. **Ручная проверка на устройстве** (единственный содержательный долг): провайдер → «Модели» → выключить модель → оба окна выбора → перезапуск → смена сервера → включить обратно. Отдельно: туннель, планшетный layout, офлайн-история — функции 0.2.20, вручную не проверялись. И отдельно — новый досбор диалога: отправить сообщение, дождаться ответа, ничего не перезаходя.
+2. Известные остатки: 401/403 показывается как «Сервер недоступен»; `global.health()` в SDK считает отсутствующий `healthy` за `true` (совместимость со старыми серверами); `npm audit` — 11 уязвимостей только в сборочной цепочке Metro/PostCSS, в APK не входят; сессия, навсегда оставшаяся «busy» при не-404 ошибке, опрашивается раз в 12 с. Подробно — `docs/security-review-0.2.21.md`, `docs/run-resync-validation.md`.
 
 ## Как собрать и выпустить
 

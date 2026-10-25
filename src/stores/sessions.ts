@@ -51,6 +51,8 @@ interface SessionsState {
   ) => Promise<void>
   abortSession: () => Promise<void>
   refreshMessages: () => Promise<void>
+  /** Apply a transcript that the caller already fetched, without a second GET. */
+  applyServerMessages: (response: MessageWithParts[]) => void
 
   // Revert (edit sent message) / unrevert (undo the pending revert)
   revertToMessage: (messageID: string) => Promise<RevertResult>
@@ -406,6 +408,14 @@ export const useSessions = create<SessionsState>((set, get) => ({
       if (epoch !== connectionEpoch) return
       set({ error: "Failed to abort session" })
     }
+  },
+
+  applyServerMessages: (response) => {
+    const { messages, parts } = parseMessages(response)
+    // Same temp reconciliation as refreshMessages: an optimistic message whose
+    // server copy is in this transcript must not be duplicated.
+    const merged = reconcileTemps(messages, parts, get().messages, get().parts)
+    set({ messages: merged.messages, parts: { ...merged.parts } })
   },
 
   refreshMessages: async () => {

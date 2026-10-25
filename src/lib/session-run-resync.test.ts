@@ -53,14 +53,18 @@ function harness() {
     },
   }
 
-  const stats = { messageCalls: 0, pendingCalls: 0, refreshCalls: 0, handled: [] as string[] }
+  const stats = { messageCalls: 0, pendingCalls: 0, refreshCalls: 0, applied: 0, handled: [] as string[] }
+  // Transcript the fake server returns. `null` means "run still in progress".
+  let transcript: Array<{ info: Record<string, unknown>; parts: unknown[] }> | null = COMPLETED_TRANSCRIPT
+  let failWith: { status: number } | null = null
   let onActivity: (() => void) | null = null
 
   const client = {
     session: {
       messages: async () => {
         stats.messageCalls++
-        return COMPLETED_TRANSCRIPT
+        if (failWith) throw failWith
+        return transcript
       },
     },
     permission: {
@@ -110,6 +114,9 @@ function harness() {
     sending: {},
     refreshMessages: async () => {
       stats.refreshCalls++
+    },
+    applyServerMessages: () => {
+      stats.applied++
     },
     handleEvent: (event: { type: string }) => {
       stats.handled.push(event.type)
@@ -218,6 +225,12 @@ function harness() {
       heartbeatEvery = ms
       nextHeartbeat = now + ms
     },
+    setTranscript(next: typeof transcript) {
+      transcript = next
+    },
+    failNextFetch(error: { status: number } | null) {
+      failWith = error
+    },
     setBusy: () => {
       sessions.setState({ sending: { [SESSION]: true } })
     },
@@ -243,10 +256,68 @@ test("a run whose events are lost still shows the answer without reopening the s
   await app.advance(45_000)
 
   assert.equal(app.events.getState().connected, true, "socket stayed up — the stream watchdog cannot help")
-  assert.ok(app.stats.messageCalls > 0, "the run watchdog must fetch the transcript itself")
+  assert.equal(app.stats.messageCalls, 1, "one transcript fetch — not one to check plus one to display")
   assert.equal(app.events.getState().sessionStatus[SESSION].type, "idle")
   assert.equal(app.sessions.getState().sending[SESSION], false)
-  assert.ok(app.stats.refreshCalls > 0, "the visible transcript is refreshed, not just the spinner")
+  assert.equal(app.stats.applied, 1, "the already-fetched transcript is applied, not re-requested")
+})
+
+test("a run that is still working shows its partial answer and stays busy", async () => {
+  const app = harness()
+  app.heartbeatEvery(15_000)
+  app.setTranscript([
+    { info: { id: "u1", sessionID: SESSION, role: "user", time: { created: 1 } }, parts: [] },
+    { info: { id: "a1", sessionID: SESSION, role: "assistant", time: { created: 2 } }, parts: [] },
+  ])
+  app.setBusy()
+  app.connect()
+  await app.settle()
+  await app.push(busyEvent)
+
+  await app.advance(30_000)
+
+  assert.ok(app.stats.messageCalls >= 1)
+  assert.ok(app.stats.applied >= 1, "partial output must reach the screen")
+  assert.equal(app.events.getState().sessionStatus[SESSION].type, "busy", "the server still runs")
+  assert.equal(app.sessions.getState().sending[SESSION], true)
+})
+
+test("a recovered run does not fast-forward the next one", async () => {
+  const app = harness()
+  app.heartbeatEvery(15_000)
+  app.setBusy()
+  app.connect()
+  await app.settle()
+  await app.push(busyEvent)
+  await app.advance(20_000)
+  assert.equal(app.events.getState().sessionStatus[SESSION].type, "idle")
+
+  // Next send, again with no events at all: its own quiet window must start now.
+  app.setBusy()
+  await app.advance(5_000)
+  assert.equal(app.stats.messageCalls, 1, "no immediate resync from the previous run's stale clock")
+
+  await app.advance(20_000)
+  assert.ok(app.stats.messageCalls > 1, "the new run is still watched")
+})
+
+test("a session deleted elsewhere stops being polled", async () => {
+  const app = harness()
+  app.heartbeatEvery(15_000)
+  app.failNextFetch({ status: 404 })
+  app.setBusy()
+  app.connect()
+  await app.settle()
+  await app.push(busyEvent)
+
+  await app.advance(40_000)
+  const calls = app.stats.messageCalls
+  assert.equal(calls, 1)
+  assert.equal(app.events.getState().sessionStatus[SESSION].type, "idle")
+  assert.equal(app.sessions.getState().sending[SESSION], false)
+
+  await app.advance(60_000)
+  assert.equal(app.stats.messageCalls, calls, "a 404 is terminal, not retried forever")
 })
 
 test("a run that keeps emitting events is never re-fetched", async () => {

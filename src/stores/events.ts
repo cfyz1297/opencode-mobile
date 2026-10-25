@@ -107,6 +107,20 @@ function activeRunSessionIDs(): string[] {
   return [...ids]
 }
 
+// Finish a run on the client without a server status event: clear the spinner,
+// drop that run's clocks. Leaving a stale clock behind would make the NEXT send
+// look silent immediately and could clear its sending flag before the server
+// has persisted the new prompt.
+function finishRunLocally(sessionID: string) {
+  useEvents.setState((state) => ({
+    sessionStatus: { ...state.sessionStatus, [sessionID]: { type: "idle" } },
+    statusText: { ...state.statusText, [sessionID]: "" },
+  }))
+  useSessions.setState((state) => ({ sending: { ...state.sending, [sessionID]: false } }))
+  sessionActivityAt.delete(sessionID)
+  sessionResyncedAt.delete(sessionID)
+}
+
 // Re-fetch pending permissions and questions from the server for a session.
 // Called when entering a session to recover from missed SSE events or failed
 // optimistic removals.
@@ -174,12 +188,12 @@ async function resyncBusySessions(only?: ReadonlySet<string>) {
 
         const response = await client.session.messages(sessionID)
         const messages = (response || []).map((m) => m.info)
+        const viewing = () => useSessions.getState().currentSession?.id === sessionID
         if (!isSessionActuallyIdle(messages)) {
           // Still running server-side, but this client may simply have missed
-          // the streamed parts: show everything the server already has.
-          if (useSessions.getState().currentSession?.id === sessionID) {
-            useSessions.getState().refreshMessages()
-          }
+          // the streamed parts: show everything the server already has, from
+          // the response we already paid for.
+          if (viewing()) useSessions.getState().applyServerMessages(response)
           return // server says still busy - leave the status alone
         }
 
@@ -190,15 +204,12 @@ async function resyncBusySessions(only?: ReadonlySet<string>) {
         const latestStatus = useEvents.getState().sessionStatus[sessionID]
         if (latestStatus && latestStatus.type !== "busy") return
 
-        useEvents.setState((state) => ({
-          sessionStatus: { ...state.sessionStatus, [sessionID]: { type: "idle" } },
-          statusText: { ...state.statusText, [sessionID]: "" },
-        }))
-        useSessions.setState((state) => ({ sending: { ...state.sending, [sessionID]: false } }))
-        if (useSessions.getState().currentSession?.id === sessionID) {
-          useSessions.getState().refreshMessages()
-        }
+        finishRunLocally(sessionID)
+        if (viewing()) useSessions.getState().applyServerMessages(response)
       } catch (err) {
+        // A session deleted elsewhere would otherwise be re-polled every quiet
+        // window forever.
+        if ((err as { status?: number } | null)?.status === 404) finishRunLocally(sessionID)
         console.warn("[Events] Failed to resync session status for", sessionID, err)
       }
     }),
