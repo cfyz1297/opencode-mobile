@@ -1,7 +1,5 @@
 // Quick Connect URL assembly — extracted from app/connection/add.tsx so this
-// policy is testable. Every passing test here pins behavior that ALREADY holds;
-// the skipped test documents the desired behavior for a confirmed bug
-// (BUGS.md#BUG-006) — un-skip it when the bug is fixed.
+// policy is testable. Every passing test here pins behavior that must hold.
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { quickConnectUrl } from "./quick-connect-url.ts"
@@ -31,10 +29,9 @@ test("quickConnectUrl: whitespace-only input yields empty string", () => {
   assert.equal(quickConnectUrl("   ", ""), "")
 })
 
-// BUG-006 (https://github.com/…/BUGS.md): a pasted https:// URL (a public
-// tunnel with no port in it) used to get the http-era default ":4096", which
-// no tunnel serves — Quick Connect against any https URL always failed.
-// Fixed: default port is now scheme-aware (https -> 443, http -> 4096).
+// A pasted https:// URL (a public tunnel with no port in it) used to get the
+// http-era default ":4096", which no tunnel serves — Quick Connect against any
+// https URL always failed. Default port is now scheme-aware (https -> 443).
 test("BUG-006: pasted https URL without a port gets :443, not :4096", () => {
   assert.equal(quickConnectUrl("https://demo.example.com", ""), "https://demo.example.com:443")
   assert.equal(quickConnectUrl("http://demo.example.com", ""), "http://demo.example.com:4096")

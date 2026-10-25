@@ -1,1 +1,0 @@
-The chat no longer hangs on "Working…" when the event stream dies silently: the app detects the missing heartbeat, reconnects, and refreshes the transcript and status over HTTP, so a finished answer appears without reopening the session.

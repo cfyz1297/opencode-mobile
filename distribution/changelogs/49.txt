@@ -1,6 +1,0 @@
-v0.2.15 — Streaming recovers by itself
-
-- The chat no longer hangs on "Working…" when the event stream dies silently (Wi-Fi drop, Doze, NAT timeout): the app notices the missing server heartbeat, reconnects, and refreshes the transcript and status over HTTP.
-- An in-flight run now always ends: the transcript and the spinner recover even when the completion event was lost, without leaving and reopening the session.
-- The SSE request asks for an uncompressed stream so proxies cannot buffer it.
-- No server changes are required.

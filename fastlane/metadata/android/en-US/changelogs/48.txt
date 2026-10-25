@@ -1,1 +1,0 @@
-Image attachments now stay visible after upload instead of turning into a blank white box. The app reads the V2 base64 payload correctly, so sent photos render in the chat and can be restored for editing.

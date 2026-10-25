@@ -1,1 +1,0 @@
-Picking a builtin slash command from the list (for example /compact) now clears the composer instead of leaving the typed fragment in the input.

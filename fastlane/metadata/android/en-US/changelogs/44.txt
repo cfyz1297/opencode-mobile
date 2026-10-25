@@ -1,5 +1,0 @@
-v0.2.9 — Phantom update prompt and revert banner fixed
-
-- The update check now stamps its cached result with the app build that fetched it. A leftover cache entry from the 0.2.7 era (which still pointed at the upstream repo and stored its tag v0.4.15) resurfaced after the 0.2.8 upgrade as "0.2.8 -> 0.4.15" with a link to the wrong repo — stale entries are now ignored and refetched instead.
-- The "message reverted" banner no longer pushes its Undo button past the screen edge when the text is long.
-- The per-message "reset to this point" button is no longer offered for messages that are still being sent (placeholder ids), which used to end in a failure alert.

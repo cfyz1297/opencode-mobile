@@ -1,5 +1,0 @@
-v0.2.17 — Composer clears after a command
-
-- Picking a builtin slash command from the list (for example /compact) now clears the composer instead of leaving the typed fragment in the input.
-- Only /compact was affected: the other builtins and custom commands already behaved correctly.
-- No server changes are required.

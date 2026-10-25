@@ -1,2 +1,0 @@
-v0.2.21
-Connections now show the real server status: "Active" only after a health reply, "Server unreachable" when the server is off. New Models screen with search, provider groups and per-model visibility used by both pickers. Shorter popular provider list with server-side API key connect. Security: warning for passwords over plain http, passwords kept this-device-only, draw-over-apps permission removed.

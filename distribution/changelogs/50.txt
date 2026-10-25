@@ -1,6 +1,0 @@
-v0.2.16 — Chat follows the answer
-
-- The transcript now scrolls itself while the assistant is writing, including runs with many messages and tool calls; it no longer stops after the first reply.
-- Auto-scroll only works while you are at the bottom: scroll up to read history and it leaves you there.
-- Sending a message jumps back to the newest reply, and the arrow button still returns to the bottom.
-- No server changes are required.

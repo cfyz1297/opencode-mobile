@@ -376,8 +376,7 @@ describe("V2EventAdapter", () => {
     assert.deepEqual(idle[0].properties.status, { type: "idle" })
   })
 
-  // BUG-003 (BUGS.md): session.execution.failed used to map to the exact same
-  // output as succeeded — a bare "session.status: idle" with no error signal.
+  // session.execution.failed used to map to the exact same output as succeeded — a bare "session.status: idle" with no error signal.
   // Fixed: failed now emits a v1 session.error with the server's message, so
   // the store marks erroredSessions, shows an error banner, and does not count
   // the failure toward the store-review prompt.

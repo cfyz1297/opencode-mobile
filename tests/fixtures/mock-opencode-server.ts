@@ -1,5 +1,5 @@
-// Minimal opencode-server protocol stub used by the Maestro activation E2E flows
-// (.maestro/flows/activation-*.yaml). It is NOT a real opencode server — it
+// Minimal opencode-server protocol stub for HTTP integration tests and manual
+// app testing. It is NOT a real opencode server — it
 // implements just enough of the REST + Server-Sent-Events surface that the
 // mobile client (src/lib/sdk.ts) actually talks to, so the app can genuinely
 // go through connect -> create session -> send message -> receive a streamed
@@ -25,9 +25,8 @@
 //     message.part.updated) before the canned assistant reply, and returns
 //     it from GET /session/:id/message.
 //
-// Also implements the surface the newer flows need (DirectoryBrowserSheet,
-// all-sessions across directories, VariantPicker — see
-// .maestro/flows/directory-picker.yaml / all-sessions.yaml / variant-picker.yaml):
+// Also implements the surface the newer screens need (DirectoryBrowserSheet,
+// all-sessions across directories, VariantPicker):
 //   - GET /file (directory-scoped via the x-opencode-directory header, NOT the
 //     literal ?path= query — see src/lib/headers.ts) -> FAKE_FILE_TREE below.
 //   - GET /project -> FAKE_SERVER_PROJECTS, for the "Server Projects" section.
@@ -60,9 +59,9 @@
 //   - Normal mode: implements the endpoints above so the app can connect,
 //     open a session, send a message, and render a canned assistant reply.
 //   - `--fail-auth` mode: every request returns 401, simulating a
-//     connect-time auth failure (GitHub issue #76's failure class). Used by
-//     .maestro/flows/activation-negative-401.yaml to assert the app surfaces
-//     a visible, actionable error instead of failing silently.
+//     connect-time auth failure (GitHub issue #76's failure class), so the
+//     app can be checked for a visible, actionable error instead of a silent
+//     failure.
 //
 // Usage:
 //   node tests/fixtures/mock-opencode-server.ts --port 4096
@@ -83,19 +82,18 @@ export interface MockServerOptions {
   replyDelayMs?: number
   /**
    * Pre-populate two sessions in two different directories at startup
-   * (used by .maestro/flows/all-sessions.yaml to test the directory-less
-   * "all sessions across all projects" list — see src/stores/sessions.ts
-   * loadSessions()'s clientForDirectory(undefined) — and the cross-project
-   * open regression for GitHub issues #46/#48).
+   * (tests the directory-less "all sessions across all projects" list — see
+   * src/stores/sessions.ts loadSessions()'s clientForDirectory(undefined) —
+   * and the cross-project open regression for GitHub issues #46/#48).
    */
   seedSessions?: boolean
   /**
    * Pre-populate a session (id "seed-diff", in DEFAULT_DIRECTORY so it shows
    * up on the normal home-tab session list) with ONE assistant message that
    * already contains a wide `edit` tool part (renders via DiffView) and a
-   * wide fenced code block in its text (renders via CodeBlock) — used by
-   * .maestro/flows/diff-scroll.yaml (GitHub issue #21) to prove both
-   * components' horizontal ScrollView actually scrolls on-device.
+   * wide fenced code block in its text (renders via CodeBlock) — used to
+   * prove both components' horizontal ScrollView actually scrolls on-device
+   * (GitHub issue #21).
    *
    * Deliberately seeded as pre-existing history, fetched via GET
    * /session/:id/message, NOT delivered over SSE — the positive-flow SSE
@@ -191,9 +189,8 @@ export const FAKE_SERVER_PROJECTS = [
   },
 ]
 
-// Exported so .maestro/flows/diff-scroll.yaml's assertions and this file's
-// own seeding logic share one source of truth for what's "off-screen until
-// you scroll" in the seeded diff/code content.
+// Shared source of truth for what's "off-screen until you scroll" in the
+// seeded diff/code content.
 export const SEED_DIFF_SESSION_ID = "seed-diff"
 export const SEED_DIFF_TITLE = "Wide Diff Session"
 export const SEED_DIFF_TOOL_TITLE = "Edit wide_diff_target.ts"

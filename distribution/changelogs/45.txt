@@ -1,4 +1,0 @@
-v0.2.11 — Compaction summaries now visible in the app
-
-- Manual compaction no longer disappears from the chat. A completed compaction renders its summary as a collapsible block in the transcript, a running one shows a spinner, and a failed one shows the server's error (for example "Nothing to compact yet") instead of nothing at all.
-- The message footer shows the token count again instead of a raw "chat.message.tokens" i18n key.

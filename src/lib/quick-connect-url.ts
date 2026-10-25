@@ -4,9 +4,9 @@
 // src/lib, screens only wire state — see message-merge.ts, scroll-config.ts).
 //
 // Behavior-preserving extraction (0.2.10 audit): every branch here matches the
-// previous inline implementation 1:1. KNOWN BUG pinned by
-// quick-connect-url.test.ts ({ skip: "BUG-006" }): an explicitly pasted
-// https:// URL still gets the http-era default ":4096" appended — see BUGS.md.
+// previous inline implementation 1:1. The default port is scheme-aware — an
+// explicitly pasted https:// URL must not get the http-era ":4096" appended
+// (regression pinned in quick-connect-url.test.ts).
 
 export function quickConnectUrl(rawIp: string, rawPort: string): string {
   const raw = rawIp.trim()

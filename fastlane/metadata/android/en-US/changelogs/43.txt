@@ -1,6 +1,0 @@
-v0.2.8 — Model at session start, message actions, fork links
-
-- A model can now be picked right when creating a session, before the first message.
-- Every message gets a Copy action; user messages also get "Reset to this point" (desktop parity).
-- In-app links now point at the fork's repo, with the original project linked under Settings > About.
-- The build version now matches the fork's release tags (0.2.x).
