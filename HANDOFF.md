@@ -10,10 +10,9 @@
 | Что | Значение |
 |---|---|
 | Версия | **0.2.22**, versionCode **56** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
-| Ветки | `main` = `master` (релизный коммит — см. `git log -1`) |
-| Тег | `v0.2.22` |
-| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.22 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
-| APK | см. тело релиза: SHA256 указан в описании и в `SHA256SUMS.txt` |
+| Ветки | `main` = `master` (релизный коммит — см. `git log -1`) || Тег | `v0.2.22` |
+| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.22 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` (id 423628959) |
+| APK | 86 387 089 байт, SHA256 `f65a029072bb81c878ec1a7e99fdb060af855110567b5f6771825f57616f1783` |
 | Подпись | production keystore, сертификат тот же, что у 0.2.20 → установка поверх без удаления |
 | Каналы | только `Build Android APK` и `Security scan`. Play / F-Droid / App Store не используются, на тег `v*` не запускаются |
 | Тесты | `npm test` — **520 passed, 0 failed**; покрытие **98.61 / 84.97 / 96.06** при пороге 80; `npm run typecheck` чисто |
