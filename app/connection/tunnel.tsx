@@ -27,7 +27,7 @@ export default function TunnelScreen() {
   const fg = T.ink
   let commands: string[] = []
   try { commands = tunnelCommands(provider, port, platform) } catch { /* Invalid port is shown inline. */ }
-  const button = (label: string, action: () => void, id?: string) => <Pressable testID={id} accessibilityRole="button" disabled={busy} onPress={action} style={{ padding: 14, marginVertical: 6, borderRadius: 0, backgroundColor: T.paper3, minHeight: 48 }}><Text style={{ color: fg, fontFamily: T.mono }}>{label}</Text></Pressable>
+  const button = (label: string, action: () => void, id?: string) => <Pressable testID={id} accessibilityRole="button" disabled={busy} onPress={action} style={{ padding: 14, marginVertical: 6, borderWidth: 1, borderColor: T.rule2, minHeight: 48 }}><Text style={{ color: fg, fontFamily: T.mono }}>{label}</Text></Pressable>
   async function connect() {
     if (guard.current) return
     try {

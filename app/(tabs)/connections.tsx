@@ -75,7 +75,7 @@ function ConnectionItem({
       <View style={styles.connectionIcon}>
         <Ionicons
           name={typeIcon}
-          size={24}
+          size={20}
           color={offline ? T.ink2 : online ? T.accent : T.muted}
         />
       </View>
@@ -299,10 +299,8 @@ const styles = StyleSheet.create({
     backgroundColor: T.paper2,
   },
   connectionIcon: {
-    width: 44,
-    height: 44,
+    width: 24,
     borderRadius: 0,
-    backgroundColor: T.accentWash,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,

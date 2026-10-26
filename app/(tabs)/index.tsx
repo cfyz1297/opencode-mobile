@@ -953,7 +953,7 @@ const styles = StyleSheet.create({
   },
   statRow: {
     flexDirection: "row",
-    alignItems: "baseline",
+    alignItems: "center",
     gap: 6,
     paddingHorizontal: 16,
     paddingVertical: 10,

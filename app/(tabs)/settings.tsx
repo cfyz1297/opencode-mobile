@@ -46,7 +46,7 @@ function SettingRow({
   const content = (
     <View style={[styles.settingRow, isDark && styles.settingRowDark]}>
       <View style={[styles.settingIcon, isDark && styles.settingIconDark]}>
-        <Ionicons name={icon} size={22} color={T.ink} />
+        <Ionicons name={icon} size={20} color={T.muted} />
       </View>
       <View style={styles.settingContent}>
         <Text style={[styles.settingLabel, isDark && styles.textDark]}>{label}</Text>
@@ -356,13 +356,10 @@ const styles = StyleSheet.create({
     borderBottomColor: T.rule,
   },
   settingIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 0,
-    backgroundColor: T.accentWash,
+    width: 20,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 14,
   },
   settingIconDark: {
     backgroundColor: T.paper3,

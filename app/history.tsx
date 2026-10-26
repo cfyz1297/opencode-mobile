@@ -61,8 +61,8 @@ export default function HistoryScreen() {
       }} />
     </View>
     <Text style={{ color: T.ink, fontWeight: '700', fontFamily: T.mono }}>{connections.find(c => c.id === active)?.name ?? t('history.noConnection')}</Text>
-    <Pressable accessibilityRole="button" testID="history-refresh" onPress={() => { void reload() }} style={{ padding: 14, backgroundColor: T.paper3, borderRadius: 0, }}><Text style={{ color: T.ink, fontFamily: T.mono }}>{t('common.retry')}</Text></Pressable>
-    <Pressable accessibilityRole="button" testID="history-clear" onPress={clear} style={{ padding: 14, backgroundColor: T.paper3, borderRadius: 0, }}><Text style={{ color: T.ink, fontFamily: T.mono }}>{t('history.clear')}</Text></Pressable>
+    <Pressable accessibilityRole="button" testID="history-refresh" onPress={() => { void reload() }} style={{ padding: 14, borderWidth: 1, borderColor: T.rule2 }}><Text style={{ color: T.ink, fontFamily: T.mono }}>{t('common.retry')}</Text></Pressable>
+    <Pressable accessibilityRole="button" testID="history-clear" onPress={clear} style={{ padding: 14, borderWidth: 1, borderColor: T.rule2 }}><Text style={{ color: T.ink, fontFamily: T.mono }}>{t('history.clear')}</Text></Pressable>
     {busy && <ActivityIndicator />}
     {!busy && !sessions.length && <Text style={{ color: T.ink, fontFamily: T.mono }}>{t('history.empty')}</Text>}
     {selected ? <>
