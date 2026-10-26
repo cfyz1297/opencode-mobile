@@ -1,5 +1,6 @@
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { T } from "../../theme/tokens"
 
 export interface Attachment {
   uri: string
@@ -26,7 +27,7 @@ export function ImageAttachments({ attachments, isDark, onRemove }: Props) {
           <View key={`${att.uri}-${idx}`} style={s.thumb}>
             <Image source={{ uri: att.uri }} style={s.image} resizeMode="cover" />
             <TouchableOpacity style={[s.remove, isDark && s.removeDark]} onPress={() => onRemove(idx)}>
-              <Ionicons name="close" size={14} color="#ffffff" />
+              <Ionicons name="close" size={14} color={T.ink} />
             </TouchableOpacity>
             {att.filename && (
               <Text style={[s.label, isDark && s.labelDark]} numberOfLines={1}>
@@ -45,17 +46,17 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
-    backgroundColor: "#ffffff",
+    borderTopColor: T.rule,
+    backgroundColor: T.paper,
   },
-  containerDark: { backgroundColor: "#0a0a0a", borderTopColor: "#1a1a1a" },
+  containerDark: { backgroundColor: T.paper, borderTopColor: T.rule },
   scroll: { gap: 8 },
   thumb: { position: "relative" },
   image: {
     width: 72,
     height: 72,
-    borderRadius: 8,
-    backgroundColor: "#f0f0f0",
+    borderRadius: 0,
+    backgroundColor: T.paper2,
   },
   remove: {
     position: "absolute",
@@ -63,20 +64,21 @@ const s = StyleSheet.create({
     right: -6,
     width: 22,
     height: 22,
-    borderRadius: 11,
-    backgroundColor: "#0a0a0a",
+    borderRadius: 0,
+    backgroundColor: T.paper,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#ffffff",
+    borderColor: T.rule,
   },
-  removeDark: { backgroundColor: "#ef4444", borderColor: "#0a0a0a" },
+  removeDark: { backgroundColor: T.paper3, borderColor: T.rule },
   label: {
     fontSize: 10,
-    color: "#666666",
+    color: T.muted,
     marginTop: 2,
     maxWidth: 72,
     textAlign: "center",
+    fontFamily: T.mono,
   },
-  labelDark: { color: "#888888" },
+  labelDark: { fontFamily: T.mono, color: T.muted },
 })

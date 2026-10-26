@@ -20,6 +20,7 @@ import {
   type ConnectionBadge,
   type PopularProviderRow,
 } from "../../src/lib/providers-ui"
+import { T } from "../../src/theme/tokens"
 
 export default function ProvidersScreen() {
   const colorScheme = useColorScheme()
@@ -75,7 +76,7 @@ export default function ProvidersScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#fff" : "#0a0a0a"} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.ink} />
         }
         testID="providers-screen"
       >
@@ -145,7 +146,7 @@ export default function ProvidersScreen() {
         <TextInput
           style={[styles.search, isDark && styles.searchDark]}
           placeholder={t("providers.searchPlaceholder")}
-          placeholderTextColor={isDark ? "#666666" : "#999999"}
+          placeholderTextColor={T.muted}
           value={query}
           onChangeText={setQuery}
           autoCorrect={false}
@@ -191,86 +192,87 @@ export default function ProvidersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#ffffff" },
-  containerDark: { backgroundColor: "#0a0a0a" },
+  container: { flex: 1, backgroundColor: T.paper },
+  containerDark: { backgroundColor: T.paper },
   content: { padding: 16, paddingBottom: 40 },
-  subtitle: { fontSize: 14, color: "#666666", marginBottom: 20, lineHeight: 20 },
+  subtitle: { fontFamily: T.mono, fontSize: 14, color: T.muted, marginBottom: 20, lineHeight: 20 },
   sectionTitle: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#666666",
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
+    color: T.muted,
+
+
     marginBottom: 8,
     marginTop: 8,
   },
-  sectionTitleDark: { color: "#999999" },
+  sectionTitleDark: { fontFamily: T.mono, color: T.muted },
   search: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 10,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
-    color: "#0a0a0a",
+    color: T.ink,
     marginBottom: 10,
+    fontFamily: T.mono,
   },
-  searchDark: { backgroundColor: "#2a2a2a", color: "#ffffff" },
+  searchDark: { fontFamily: T.mono, backgroundColor: T.paper3, color: T.ink },
   card: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 12,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     marginBottom: 20,
     overflow: "hidden",
   },
-  cardDark: { backgroundColor: "#1a1a1a" },
+  cardDark: { backgroundColor: T.paper2 },
   emptyCard: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 12,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     padding: 16,
     marginBottom: 20,
   },
-  emptyCardDark: { backgroundColor: "#1a1a1a" },
-  emptyText: { fontSize: 14, color: "#666666", lineHeight: 20 },
+  emptyCardDark: { backgroundColor: T.paper2 },
+  emptyText: { fontFamily: T.mono, fontSize: 14, color: T.muted, lineHeight: 20 },
   connectedRow: {
     paddingHorizontal: 14,
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#e5e5e5",
+    borderBottomColor: T.rule,
   },
-  connectedRowDark: { borderBottomColor: "#2a2a2a" },
+  connectedRowDark: { borderBottomColor: T.rule },
   rowLast: { borderBottomWidth: 0 },
   connectedMain: { gap: 6 },
-  providerName: { fontSize: 16, fontWeight: "600", color: "#0a0a0a" },
-  textDark: { color: "#ffffff" },
-  metaDark: { color: "#888888" },
+  providerName: { fontFamily: T.mono, fontSize: 16, fontWeight: "600", color: T.ink },
+  textDark: { fontFamily: T.mono, color: T.ink },
+  metaDark: { fontFamily: T.mono, color: T.muted },
   badgeRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
   badge: {
-    backgroundColor: "#e8e8e8",
-    borderRadius: 4,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  badgeDark: { backgroundColor: "#2a2a2a" },
-  badgeText: { fontSize: 11, fontWeight: "600", color: "#555555" },
-  badgeTextDark: { color: "#bbbbbb" },
-  modelCount: { fontSize: 12, color: "#888888" },
+  badgeDark: { backgroundColor: T.paper3 },
+  badgeText: { fontFamily: T.mono, fontSize: 11, fontWeight: "600", color: T.muted },
+  badgeTextDark: { fontFamily: T.mono, color: T.muted },
+  modelCount: { fontFamily: T.mono, fontSize: 12, color: T.muted },
   popularRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 14,
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#e5e5e5",
+    borderBottomColor: T.rule,
     gap: 12,
   },
   popularText: { flex: 1, gap: 4 },
-  popularDesc: { fontSize: 13, color: "#666666", lineHeight: 18 },
+  popularDesc: { fontFamily: T.mono, fontSize: 13, color: T.muted, lineHeight: 18 },
   connectBtn: {
-    backgroundColor: "#0a0a0a",
-    borderRadius: 8,
+    backgroundColor: T.accent,
+    borderRadius: 0,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  connectBtnDark: { backgroundColor: "#ffffff" },
-  connectBtnText: { fontSize: 13, fontWeight: "600", color: "#ffffff" },
-  connectBtnTextDark: { color: "#0a0a0a" },
+  connectBtnDark: { backgroundColor: T.accent },
+  connectBtnText: { fontFamily: T.mono, fontSize: 13, fontWeight: "600", color: T.accentInk },
+  connectBtnTextDark: { fontFamily: T.mono, color: T.accentInk },
 })

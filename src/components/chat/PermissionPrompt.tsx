@@ -2,6 +2,7 @@ import { useRef } from "react"
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
+import { T } from "../../theme/tokens"
 
 interface Props {
   permission: { id: string; permission: string; patterns: string[] }
@@ -22,7 +23,7 @@ export function PermissionPrompt({ permission, isDark, onReply }: Props) {
   return (
     <View style={[s.card, isDark && s.cardDark]}>
       <View style={s.header}>
-        <Ionicons name="shield-outline" size={18} color="#f59e0b" />
+        <Ionicons name="shield-outline" size={18} color={T.ink2} />
         <Text style={[s.title, isDark && s.textWhite]}>{t("chat.permissionPrompt.title")}</Text>
       </View>
       <Text style={[s.type, isDark && s.typeDark]}>
@@ -47,26 +48,26 @@ const s = StyleSheet.create({
   card: {
     margin: 12,
     padding: 16,
-    backgroundColor: "#fffbeb",
-    borderRadius: 12,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     borderWidth: 1,
-    borderColor: "#fef3c7",
+    borderColor: T.rule,
   },
-  cardDark: { backgroundColor: "#1a1800", borderColor: "#333300" },
+  cardDark: { backgroundColor: T.paper2, borderColor: T.rule },
   header: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
-  title: { fontSize: 15, fontWeight: "600", color: "#92400e" },
-  textWhite: { color: "#ffffff" },
-  type: { fontSize: 13, color: "#78350f", marginBottom: 12 },
-  typeDark: { color: "#d4a574" },
+  title: { fontFamily: T.mono, fontSize: 15, fontWeight: "600", color: T.ink },
+  textWhite: { fontFamily: T.mono, color: T.ink },
+  type: { fontFamily: T.mono, fontSize: 13, color: T.ink, marginBottom: 12 },
+  typeDark: { fontFamily: T.mono, color: T.ink },
   actions: { flexDirection: "row", gap: 8 },
-  btn: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: "center" },
-  deny: { backgroundColor: "#fef2f2" },
-  denyText: { color: "#dc2626", fontWeight: "600", fontSize: 14 },
-  always: { backgroundColor: "#f5f5f5" },
-  alwaysDark: { backgroundColor: "#2a2a2a" },
-  alwaysText: { color: "#0a0a0a", fontWeight: "600", fontSize: 14 },
-  allow: { backgroundColor: "#0a0a0a" },
-  allowDark: { backgroundColor: "#ffffff" },
-  allowText: { color: "#ffffff", fontWeight: "600", fontSize: 14 },
-  allowTextDark: { color: "#0a0a0a" },
+  btn: { flex: 1, paddingVertical: 10, borderRadius: 0, alignItems: "center" },
+  deny: { backgroundColor: T.accentWash },
+  denyText: { fontFamily: T.mono, color: T.ink2, fontWeight: "600", fontSize: 14 },
+  always: { backgroundColor: T.paper2 },
+  alwaysDark: { backgroundColor: T.paper3 },
+  alwaysText: { fontFamily: T.mono, color: T.ink, fontWeight: "600", fontSize: 14 },
+  allow: { backgroundColor: T.paper },
+  allowDark: { backgroundColor: T.paper },
+  allowText: { fontFamily: T.mono, color: T.ink, fontWeight: "600", fontSize: 14 },
+  allowTextDark: { fontFamily: T.mono, color: T.ink },
 })

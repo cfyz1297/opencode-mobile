@@ -40,12 +40,14 @@ function screen() {
     useEffect: (effect: () => void) => { if (!mounted) effects.push(effect) },
   }
   const jsx = (type: unknown, props: unknown) => ({ type, props })
+  const tokens = { paper: '#040805', paper2: '#080f0a', paper3: '#101a12', ink: '#e1f1de', ink2: '#b2cdaf', muted: '#769676', rule: '#1d2a1f', rule2: '#334934', accent: '#7ef473', accentInk: '#040b05', accentWash: '#062409', mono: 'monospace', radius: 0, hair: 1 }
   const modules: Record<string, unknown> = {
     react,
     'react/jsx-runtime': { jsx, jsxs: jsx },
     'react-native': { Alert: { alert: (...args: unknown[]) => alerts.push(args) }, View: 'View', Text: 'Text', TextInput: 'TextInput', SectionList: 'SectionList', Switch: 'Switch', TouchableOpacity: 'TouchableOpacity', ActivityIndicator: 'ActivityIndicator', StyleSheet: { create: (v: unknown) => v, hairlineWidth: 1 }, useColorScheme: () => 'dark' },
     'expo-router': { Stack: { Screen: 'Screen' }, router: { push: (url: string) => routes.push(url) }, useFocusEffect: react.useEffect },
     'react-i18next': { useTranslation: () => ({ t: (key: string) => key }) },
+    '../src/theme/tokens': { T: tokens },
     '../src/stores/catalog': { useCatalog: hook(() => catalog) },
     '../src/stores/connections': { useConnections: hook(() => connections) },
     '../src/stores/model-visibility': { useModelVisibility: () => preferences },

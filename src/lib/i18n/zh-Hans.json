@@ -301,7 +301,9 @@
     },
     "renameModal": {
       "title": "重命名会话"
-    }
+    },
+    "statSessions": "会话",
+    "statProjects": "目录"
   },
   "notifications": {
     "categories": {

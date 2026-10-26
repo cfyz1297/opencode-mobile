@@ -7,6 +7,7 @@ import { useConnections } from "../../src/stores/connections"
 import { useSettings } from "../../src/stores/settings"
 import { probeConnection, type ConnectionHealth } from "../../src/lib/connection-health"
 import type { ServerConnection } from "../../src/lib/types"
+import { T } from "../../src/theme/tokens"
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200] as const
 // Re-probe while the tab is open so a server started or stopped in Termux
@@ -75,7 +76,7 @@ function ConnectionItem({
         <Ionicons
           name={typeIcon}
           size={24}
-          color={offline ? "#ef4444" : online ? "#22c55e" : isDark ? "#888888" : "#666666"}
+          color={offline ? T.ink2 : online ? T.accent : T.muted}
         />
       </View>
       <View style={styles.connectionContent}>
@@ -109,7 +110,7 @@ function ConnectionItem({
         )}
       </View>
       <TouchableOpacity onPress={onEdit} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-        <Ionicons name="ellipsis-vertical" size={20} color={isDark ? "#666666" : "#999999"} />
+        <Ionicons name="ellipsis-vertical" size={20} color={T.muted} />
       </TouchableOpacity>
     </TouchableOpacity>
   )
@@ -195,7 +196,7 @@ export default function ConnectionsScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="server-outline" size={64} color={isDark ? "#444444" : "#cccccc"} />
+            <Ionicons name="server-outline" size={64} color={T.ink} />
             <Text style={[styles.emptyTitle, isDark && styles.textDark]}>{t("connectionsList.empty.title")}</Text>
             <Text style={[styles.emptySubtitle, isDark && styles.metaDark]}>
               {t("connectionsList.empty.subtitle")}
@@ -214,7 +215,7 @@ export default function ConnectionsScreen() {
             </Text>
             <View style={styles.settingRow}>
               <View style={styles.settingLabel}>
-                <Ionicons name="layers-outline" size={18} color={isDark ? "#888888" : "#666666"} />
+                <Ionicons name="layers-outline" size={18} color={T.muted} />
                 <Text style={[styles.settingText, isDark && styles.textDark]}>
                   {t("connectionsList.preferences.pageSizeLabel")}
                 </Text>
@@ -254,7 +255,7 @@ export default function ConnectionsScreen() {
 
       {/* FAB to add connection */}
       <TouchableOpacity style={[styles.fab, isDark && styles.fabDark]} onPress={() => router.push("/connection/add")}>
-        <Ionicons name="add" size={28} color={isDark ? "#0a0a0a" : "#ffffff"} />
+        <Ionicons name="add" size={28} color={T.accentInk} />
       </TouchableOpacity>
     </View>
   )
@@ -263,44 +264,45 @@ export default function ConnectionsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: T.paper,
   },
   containerDark: {
-    backgroundColor: "#0a0a0a",
+    backgroundColor: T.paper,
   },
   header: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
+    borderBottomColor: T.rule,
   },
   headerDark: {
-    borderBottomColor: "#1a1a1a",
+    borderBottomColor: T.rule,
   },
   headerText: {
     fontSize: 13,
-    color: "#666666",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   connectionItem: {
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
+    borderBottomColor: T.rule,
   },
   connectionItemDark: {
-    borderBottomColor: "#1a1a1a",
+    borderBottomColor: T.rule,
   },
   connectionItemActive: {
-    backgroundColor: "#f0fdf4",
+    backgroundColor: T.paper2,
   },
   connectionItemActiveDark: {
-    backgroundColor: "#1a2e1a",
+    backgroundColor: T.paper2,
   },
   connectionIcon: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: "#f5f5f5",
+    borderRadius: 0,
+    backgroundColor: T.accentWash,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -316,77 +318,92 @@ const styles = StyleSheet.create({
   connectionName: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   connectionNameActive: {
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   connectionNameActiveDark: {
-    color: "#ffffff",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   textDark: {
-    color: "#ffffff",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   badge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 0,
   },
   badgeText: {
     fontSize: 11,
     fontWeight: "600",
+    fontFamily: T.mono,
   },
   activeBadge: {
-    backgroundColor: "#22c55e",
+    backgroundColor: T.accentWash,
   },
   activeBadgeDark: {
-    backgroundColor: "#16a34a",
+    backgroundColor: T.accentWash,
   },
   activeBadgeText: {
-    color: "#ffffff",
+    color: T.accent,
+    fontFamily: T.mono,
   },
   activeBadgeTextDark: {
-    color: "#ffffff",
+    color: T.accent,
+    fontFamily: T.mono,
   },
   offlineBadge: {
-    backgroundColor: "#dc2626",
+    backgroundColor: T.paper3,
   },
   offlineBadgeDark: {
-    backgroundColor: "#b91c1c",
+    backgroundColor: T.paper2,
   },
   offlineBadgeText: {
-    color: "#ffffff",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   offlineBadgeTextDark: {
-    color: "#ffffff",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   checkingBadge: {
-    backgroundColor: "#e5e5e5",
+    backgroundColor: T.accentWash,
   },
   checkingBadgeDark: {
-    backgroundColor: "#333333",
+    backgroundColor: T.accentWash,
   },
   checkingBadgeText: {
-    color: "#666666",
+    color: T.accent,
+    fontFamily: T.mono,
   },
   checkingBadgeTextDark: {
-    color: "#aaaaaa",
+    color: T.accent,
+    fontFamily: T.mono,
   },
   connectionUrl: {
     fontSize: 13,
-    color: "#666666",
+    color: T.muted,
     marginTop: 2,
+    fontFamily: T.mono,
   },
   connectionUrlActive: {
-    color: "#888888",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   connectionMeta: {
     fontSize: 12,
-    color: "#999999",
+    color: T.muted,
     marginTop: 4,
+    fontFamily: T.mono,
   },
   metaDark: {
-    color: "#888888",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   emptyContainer: {
     flex: 1,
@@ -398,13 +415,15 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "600",
     marginTop: 16,
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: "#666666",
+    color: T.muted,
     marginTop: 8,
     textAlign: "center",
+    fontFamily: T.mono,
   },
   emptyContent: {
     flex: 1,
@@ -415,33 +434,29 @@ const styles = StyleSheet.create({
     bottom: 16,
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: "#0a0a0a",
+    borderRadius: 0,
+    backgroundColor: T.accent,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
   },
   fabDark: {
-    backgroundColor: "#ffffff",
+    backgroundColor: T.accent,
   },
   settingsSection: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
+    borderTopColor: T.rule,
     marginTop: 16,
     gap: 10,
   },
   settingsSectionDark: {
-    borderTopColor: "#1a1a1a",
+    borderTopColor: T.rule,
   },
   settingsTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   settingRow: {
     flexDirection: "row",
@@ -455,7 +470,8 @@ const styles = StyleSheet.create({
   },
   settingText: {
     fontSize: 14,
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   pagePicker: {
     flexDirection: "row",
@@ -464,33 +480,36 @@ const styles = StyleSheet.create({
   pageOption: {
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 8,
+    borderRadius: 0,
     borderWidth: 1,
-    borderColor: "#e5e5e5",
-    backgroundColor: "#f5f5f5",
+    borderColor: T.rule,
+    backgroundColor: T.accentWash,
   },
   pageOptionDark: {
-    borderColor: "#2a2a2a",
-    backgroundColor: "#1a1a1a",
+    borderColor: T.rule,
+    backgroundColor: T.paper2,
   },
   pageOptionActive: {
-    backgroundColor: "#0a0a0a",
-    borderColor: "#0a0a0a",
+    backgroundColor: T.paper,
+    borderColor: T.rule,
   },
   pageOptionActiveDark: {
-    backgroundColor: "#3b82f6",
-    borderColor: "#3b82f6",
+    backgroundColor: T.paper3,
+    borderColor: T.rule,
   },
   pageOptionText: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#666666",
+    color: T.accent,
+    fontFamily: T.mono,
   },
   pageOptionTextActive: {
-    color: "#ffffff",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   settingHint: {
     fontSize: 12,
-    color: "#999999",
+    color: T.muted,
+    fontFamily: T.mono,
   },
 })

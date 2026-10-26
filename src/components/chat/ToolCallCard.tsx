@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import type { Part } from "../../lib/sdk"
 import { DiffView } from "./DiffView"
+import { T } from "../../theme/tokens"
 
 const TOOL_ICONS: Record<string, string> = {
   read: "glasses-outline",
@@ -25,11 +26,12 @@ const TOOL_ICONS: Record<string, string> = {
 
 const mono = Platform.OS === "ios" ? "Menlo" : "monospace"
 
+// One hue: the signal marks done, ink carries a failure, everything else recedes.
 function statusColor(status: string): string {
-  if (status === "completed") return "#22c55e"
-  if (status === "error") return "#ef4444"
-  if (status === "running") return "#f59e0b"
-  return "#888888"
+  if (status === "completed") return T.accent
+  if (status === "error") return T.ink
+  if (status === "running") return T.ink2
+  return T.muted
 }
 
 // --- Tool-specific detail renderers ---
@@ -181,7 +183,7 @@ function WebfetchDetail({ input, isDark }: { input: unknown; isDark: boolean }) 
   return (
     <View style={s.detailSection}>
       {typeof url === "string" && (
-        <Text style={[s.detailFile, isDark && s.detailFileDark, { color: "#8b5cf6" }]} selectable numberOfLines={3}>
+        <Text style={[s.detailFile, isDark && s.detailFileDark, { color: T.accent }]} selectable numberOfLines={3}>
           {url}
         </Text>
       )}
@@ -220,7 +222,7 @@ function TodoDetail({ input, isDark }: { input: unknown; isDark: boolean }) {
             <Ionicons
               name={done ? "checkbox" : "square-outline"}
               size={16}
-              color={done ? "#22c55e" : isDark ? "#666666" : "#999999"}
+              color={done ? T.accent : T.muted}
             />
             <Text style={[s.todoText, isDark && s.todoTextDark, done && s.todoDone]} numberOfLines={2}>
               {String(item.content || item.title || "")}
@@ -290,7 +292,7 @@ function ToolDetail({ tool, isDark }: { tool: Part; isDark: boolean }) {
 function ErrorBanner({ message, isDark }: { message: string; isDark: boolean }) {
   return (
     <View style={[s.errorBanner, isDark && s.errorBannerDark]}>
-      <Ionicons name="alert-circle" size={14} color="#ef4444" />
+      <Ionicons name="alert-circle" size={14} color={T.ink2} />
       <Text style={s.errorText} numberOfLines={3} selectable>
         {message}
       </Text>
@@ -348,13 +350,13 @@ export function ToolCallCard({ tool, isDark }: Props) {
         </View>
         <View style={s.headerRight}>
           {status === "running" && <ActivityIndicator size="small" color={color} />}
-          {status === "completed" && <Ionicons name="checkmark-circle" size={16} color="#22c55e" />}
-          {status === "error" && <Ionicons name="close-circle" size={16} color="#ef4444" />}
+          {status === "completed" && <Ionicons name="checkmark-circle" size={16} color={T.accent} />}
+          {status === "error" && <Ionicons name="close-circle" size={16} color={T.ink2} />}
           {hasDetail && (
             <Ionicons
               name={expanded ? "chevron-up" : "chevron-down"}
               size={16}
-              color={isDark ? "#666666" : "#999999"}
+              color={T.muted}
             />
           )}
         </View>
@@ -376,16 +378,16 @@ export function ToolCallCard({ tool, isDark }: Props) {
 
 const s = StyleSheet.create({
   card: {
-    backgroundColor: "#ffffff",
+    backgroundColor: T.paper,
     padding: 10,
-    borderRadius: 8,
+    borderRadius: 0,
     marginTop: 8,
     borderWidth: 1,
-    borderColor: "#f0f0f0",
+    borderColor: T.rule,
   },
-  cardDark: { backgroundColor: "#2a2a2a", borderColor: "#3a3a3a" },
-  cardError: { borderColor: "#fecaca" },
-  cardErrorDark: { borderColor: "#7f1d1d" },
+  cardDark: { backgroundColor: T.paper3, borderColor: T.rule },
+  cardError: { borderColor: T.rule },
+  cardErrorDark: { borderColor: T.rule },
 
   header: {
     flexDirection: "row",
@@ -394,10 +396,10 @@ const s = StyleSheet.create({
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 6 },
-  name: { fontSize: 13, fontWeight: "500", color: "#0a0a0a", flex: 1 },
-  nameDark: { color: "#e5e5e5" },
-  elapsed: { fontSize: 11, color: "#999999" },
-  elapsedDark: { color: "#666666" },
+  name: { fontFamily: T.mono, fontSize: 13, fontWeight: "500", color: T.ink, flex: 1 },
+  nameDark: { fontFamily: T.mono, color: T.ink2 },
+  elapsed: { fontFamily: T.mono, fontSize: 11, color: T.muted },
+  elapsedDark: { fontFamily: T.mono, color: T.muted },
 
   // Error
   errorBanner: {
@@ -406,11 +408,11 @@ const s = StyleSheet.create({
     gap: 6,
     marginTop: 8,
     padding: 8,
-    backgroundColor: "#fef2f2",
-    borderRadius: 6,
+    backgroundColor: T.accentWash,
+    borderRadius: 0,
   },
-  errorBannerDark: { backgroundColor: "#1a0a0a" },
-  errorText: { fontSize: 12, color: "#dc2626", flex: 1, lineHeight: 18 },
+  errorBannerDark: { backgroundColor: T.paper2 },
+  errorText: { fontFamily: T.mono, fontSize: 12, color: T.ink2, flex: 1, lineHeight: 18 },
 
   // Detail
   detailScroll: { maxHeight: 300, marginTop: 8 },
@@ -418,32 +420,32 @@ const s = StyleSheet.create({
   detailFile: {
     fontSize: 12,
     fontFamily: mono,
-    color: "#6d28d9",
-    backgroundColor: "#f5f3ff",
+    color: T.accent,
+    backgroundColor: T.accentWash,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 0,
     overflow: "hidden",
   },
-  detailFileDark: { color: "#a78bfa", backgroundColor: "#1a1a2e" },
-  detailMeta: { fontSize: 12, color: "#666666", lineHeight: 18 },
-  detailMetaDark: { color: "#888888" },
+  detailFileDark: { fontFamily: T.mono, color: T.accent, backgroundColor: T.accentWash },
+  detailMeta: { fontFamily: T.mono, fontSize: 12, color: T.muted, lineHeight: 18 },
+  detailMetaDark: { fontFamily: T.mono, color: T.muted },
 
   // Code block
   codeBlock: {
-    backgroundColor: "#f8f8f8",
-    borderRadius: 6,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     padding: 10,
   },
-  codeBlockDark: { backgroundColor: "#1a1a1a" },
+  codeBlockDark: { backgroundColor: T.paper2 },
   codePre: {
     fontSize: 12,
     fontFamily: mono,
-    color: "#0a0a0a",
+    color: T.ink,
     lineHeight: 18,
   },
-  codePteDark: { color: "#e5e5e5" },
-  codePrompt: { color: "#8b5cf6", fontWeight: "700" },
+  codePteDark: { fontFamily: T.mono, color: T.ink2 },
+  codePrompt: { fontFamily: T.mono, color: T.accent, fontWeight: "700" },
 
   // Todo
   todoRow: {
@@ -452,7 +454,7 @@ const s = StyleSheet.create({
     gap: 8,
     paddingVertical: 3,
   },
-  todoText: { fontSize: 13, color: "#0a0a0a", flex: 1, lineHeight: 20 },
-  todoTextDark: { color: "#e5e5e5" },
-  todoDone: { textDecorationLine: "line-through", color: "#999999" },
+  todoText: { fontFamily: T.mono, fontSize: 13, color: T.ink, flex: 1, lineHeight: 20 },
+  todoTextDark: { fontFamily: T.mono, color: T.ink2 },
+  todoDone: { fontFamily: T.mono, textDecorationLine: "line-through", color: T.muted },
 })

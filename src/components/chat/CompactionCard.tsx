@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { Markdown } from "../markdown"
 import type { Part } from "../../lib/sdk"
+import { T } from "../../theme/tokens"
 
 interface Props {
   part: Part
@@ -20,7 +21,7 @@ export function CompactionCard({ part, isDark }: Props) {
   const text = part.text?.trim() ?? ""
   const [expanded, setExpanded] = useState(true)
 
-  const accent = failed ? "#ef4444" : "#8b5cf6"
+  const accent = failed ? T.ink : T.accent
 
   return (
     <View style={s.wrap} testID="chat-compaction">
@@ -46,7 +47,7 @@ export function CompactionCard({ part, isDark }: Props) {
             <Ionicons
               name={expanded ? "chevron-up" : "chevron-down"}
               size={14}
-              color={isDark ? "#666666" : "#999999"}
+              color={T.muted}
             />
           )}
         </TouchableOpacity>
@@ -63,18 +64,18 @@ export function CompactionCard({ part, isDark }: Props) {
 const s = StyleSheet.create({
   wrap: { marginBottom: 16 },
   dividerRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  line: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: "#d4d4d4" },
-  lineDark: { backgroundColor: "#333333" },
+  line: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: T.paper2 },
+  lineDark: { backgroundColor: T.paper3 },
   header: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 6 },
-  title: { fontSize: 12, fontWeight: "600" },
+  title: { fontFamily: T.mono, fontSize: 12, fontWeight: "600" },
   body: {
     marginTop: 8,
     padding: 10,
-    borderRadius: 8,
+    borderRadius: 0,
     borderWidth: 1,
-    borderColor: "#e5e5e5",
-    backgroundColor: "#fafafa",
+    borderColor: T.rule,
+    backgroundColor: T.paper2,
   },
-  bodyDark: { backgroundColor: "#141414", borderColor: "#2a2a2a" },
-  error: { fontSize: 13, lineHeight: 20, color: "#ef4444" },
+  bodyDark: { backgroundColor: T.paper2, borderColor: T.rule },
+  error: { fontFamily: T.mono, fontSize: 13, lineHeight: 20, color: T.ink2 },
 })

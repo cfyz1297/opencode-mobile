@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, useColorScheme, Platform, Scr
 import * as Clipboard from "expo-clipboard"
 import { useTranslation } from "react-i18next"
 import { WIDE_CONTENT_SCROLL_CONFIG } from "../../lib/scroll-config"
+import { T } from "../../theme/tokens"
 
 interface Props {
   code: string
@@ -43,13 +44,13 @@ export function CodeBlock({ code, language }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     marginVertical: 8,
     overflow: "hidden",
   },
   containerDark: {
-    backgroundColor: "#1a1a1a",
+    backgroundColor: T.paper2,
   },
   header: {
     flexDirection: "row",
@@ -57,27 +58,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: "#e8e8e8",
+    backgroundColor: T.paper2,
   },
   headerDark: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: T.paper3,
   },
   language: {
     fontSize: 11,
     fontWeight: "600",
-    color: "#666666",
-    textTransform: "uppercase",
+    color: T.muted,
+
+    fontFamily: T.mono,
   },
   languageDark: {
-    color: "#888888",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   copyBtn: {
     fontSize: 11,
-    color: "#8b5cf6",
+    color: T.accent,
     fontWeight: "600",
+    fontFamily: T.mono,
   },
   copyBtnDark: {
-    color: "#a78bfa",
+    color: T.accent,
+    fontFamily: T.mono,
   },
   codeScroll: {
     padding: 12,
@@ -86,9 +91,10 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
     fontSize: 13,
     lineHeight: 20,
-    color: "#1a1a1a",
+    color: T.ink,
   },
   codeDark: {
-    color: "#e5e5e5",
+    color: T.ink2,
+    fontFamily: T.mono,
   },
 })

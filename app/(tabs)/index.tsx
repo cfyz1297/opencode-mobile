@@ -29,6 +29,7 @@ import { groupByDirectory } from "../../src/lib/session-grouping"
 import { UpdateBanner } from "../../src/components/UpdateBanner"
 import { nameOf } from "../../src/lib/path-utils"
 import { SETUP_GUIDE_URL } from "../../src/lib/links"
+import { T } from "../../src/theme/tokens"
 
 function formatTime(timestamp: number, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const date = new Date(timestamp)
@@ -98,13 +99,13 @@ function SessionItem({
           </Text>
           {shortDir && (
             <View style={styles.sessionDirBadge}>
-              <Ionicons name="folder-outline" size={12} color={isDark ? "#888888" : "#666666"} />
+              <Ionicons name="folder-outline" size={12} color={T.muted} />
               <Text style={[styles.sessionDirText, isDark && styles.metaDark]}>{shortDir}</Text>
             </View>
           )}
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={20} color={isDark ? "#666666" : "#999999"} />
+      <Ionicons name="chevron-forward" size={20} color={T.muted} />
     </TouchableOpacity>
   )
 }
@@ -131,7 +132,7 @@ function GroupHeader({
       onPress={onToggle}
       activeOpacity={0.7}
     >
-      <Ionicons name="folder-outline" size={16} color={isDark ? "#8b5cf6" : "#6d28d9"} />
+      <Ionicons name="folder-outline" size={16} color={T.accent} />
       <Text style={[styles.groupHeaderText, isDark && styles.textDark]} numberOfLines={1}>
         {row.shortName}
       </Text>
@@ -139,7 +140,7 @@ function GroupHeader({
       <Ionicons
         name={row.collapsed ? "chevron-forward" : "chevron-down"}
         size={16}
-        color={isDark ? "#666666" : "#999999"}
+        color={T.muted}
       />
     </TouchableOpacity>
   )
@@ -450,7 +451,7 @@ export default function SessionsScreen() {
   if (!activeConnection) {
     return (
       <View style={[styles.emptyContainer, isDark && styles.containerDark]}>
-        <Ionicons name="server-outline" size={64} color={isDark ? "#444444" : "#cccccc"} />
+        <Ionicons name="server-outline" size={64} color={T.ink} />
         <Text style={[styles.emptyTitle, isDark && styles.textDark]}>{t("sessionsList.empty.noConnectionTitle")}</Text>
         <Text style={[styles.emptySubtitle, isDark && styles.metaDark]}>
           {t("sessionsList.empty.noConnectionSubtitle")}
@@ -478,7 +479,7 @@ export default function SessionsScreen() {
           onPress={() => router.push("/demo")}
           testID="try-demo-button"
         >
-          <Ionicons name="play-circle-outline" size={16} color={isDark ? "#a78bfa" : "#6d28d9"} />
+          <Ionicons name="play-circle-outline" size={16} color={T.accent} />
           <Text style={[styles.tryDemoButtonText, isDark && styles.tryDemoButtonTextDark]}>
             {t("sessionsList.empty.tryDemoButton")}
           </Text>
@@ -494,7 +495,7 @@ export default function SessionsScreen() {
   if (authError) {
     return (
       <View style={[styles.emptyContainer, isDark && styles.containerDark]}>
-        <Ionicons name="lock-closed-outline" size={64} color={isDark ? "#444444" : "#cccccc"} />
+        <Ionicons name="lock-closed-outline" size={64} color={T.ink} />
         <Text style={[styles.emptyTitle, isDark && styles.textDark]}>{t("sessionsList.empty.authFailedTitle")}</Text>
         <Text style={[styles.emptySubtitle, isDark && styles.metaDark]}>
           {t("sessionsList.empty.authFailedSubtitle", { name: activeConnection.name })}
@@ -539,20 +540,20 @@ export default function SessionsScreen() {
         testID="connection-status-bar"
       >
         <View style={styles.connectionInfo}>
-          <View style={[styles.connectionDot, { backgroundColor: "#22c55e" }]} testID="connection-status-dot" />
+          <View style={[styles.connectionDot, { backgroundColor: T.accent }]} testID="connection-status-dot" />
           <Text style={[styles.connectionName, isDark && styles.textDark]} numberOfLines={1}>
             {activeConnection.name}
           </Text>
           {shortPath && (
             <>
-              <Ionicons name="folder" size={14} color={isDark ? "#888888" : "#666666"} />
+              <Ionicons name="folder" size={14} color={T.muted} />
               <Text style={[styles.projectPath, isDark && styles.metaDark]} numberOfLines={1}>
                 {shortPath}
               </Text>
             </>
           )}
         </View>
-        <Ionicons name="swap-horizontal-outline" size={16} color={isDark ? "#666666" : "#999999"} />
+        <Ionicons name="swap-horizontal-outline" size={16} color={T.muted} />
       </TouchableOpacity>
 
       {error && (
@@ -562,8 +563,21 @@ export default function SessionsScreen() {
       )}
 
       <UpdateBanner isDark={isDark} />
-      <TouchableOpacity accessibilityRole="button" testID="open-offline-history" onPress={() => router.push('/history')} style={{ padding: 14, backgroundColor: isDark ? '#222' : '#eee' }}>
-        <Text style={{ color: isDark ? '#fff' : '#111' }}>{t('history.title')}</Text>
+
+      {/* Figures the list already holds, printed as a tool would print them */}
+      {sessions.length > 0 && (
+        <View style={styles.statRow} testID="sessions-stat-row">
+          <Text style={styles.statFigure}>{sessions.length}</Text>
+          <Text style={styles.statLabel}>{t("sessionsList.statSessions")}</Text>
+          <View style={styles.statRule} />
+          <Text style={styles.statFigure}>{new Set(sessions.map((s) => s.directory ?? "")).size}</Text>
+          <Text style={styles.statLabel}>{t("sessionsList.statProjects")}</Text>
+        </View>
+      )}
+
+      <TouchableOpacity accessibilityRole="button" testID="open-offline-history" onPress={() => router.push('/history')} style={styles.historyRow}>
+        <Ionicons name="time-outline" size={16} color={T.muted} />
+        <Text style={styles.historyRowText}>{t('history.title')}</Text>
       </TouchableOpacity>
 
       <FlatList
@@ -582,12 +596,12 @@ export default function SessionsScreen() {
           )
         }
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#ffffff" : "#0a0a0a"} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.ink} />
         }
         ListEmptyComponent={
           isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={isDark ? "#ffffff" : "#0a0a0a"} />
+              <ActivityIndicator size="large" color={T.ink} />
             </View>
           ) : (
             <View style={styles.emptyList}>
@@ -606,7 +620,7 @@ export default function SessionsScreen() {
         delayLongPress={500}
         testID="new-session-fab"
       >
-        <Ionicons name="add" size={28} color={isDark ? "#0a0a0a" : "#ffffff"} />
+        <Ionicons name="add" size={28} color={T.accentInk} />
       </TouchableOpacity>
 
       {/* New Session Info Modal */}
@@ -617,7 +631,7 @@ export default function SessionsScreen() {
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, isDark && styles.textDark]}>{t("sessionsList.newSessionModal.title")}</Text>
               <TouchableOpacity onPress={() => setShowNewSession(false)}>
-                <Ionicons name="close" size={24} color={isDark ? "#ffffff" : "#0a0a0a"} />
+                <Ionicons name="close" size={24} color={T.ink} />
               </TouchableOpacity>
             </View>
 
@@ -631,11 +645,11 @@ export default function SessionsScreen() {
                 onPress={() => onCreateInDirectory()}
                 disabled={isCreating}
               >
-                <Ionicons name="folder" size={20} color={isDark ? "#8b5cf6" : "#6d28d9"} />
+                <Ionicons name="folder" size={20} color={T.accent} />
                 <Text style={[styles.modalDirText, isDark && styles.textDark]} numberOfLines={2}>
                   {currentProject?.path?.absolute || activeConnection?.directory || t("sessionsList.newSessionModal.serverDefault")}
                 </Text>
-                <Ionicons name="arrow-forward-circle" size={20} color={isDark ? "#8b5cf6" : "#6d28d9"} />
+                <Ionicons name="arrow-forward-circle" size={20} color={T.accent} />
               </TouchableOpacity>
 
               {/* Model for the session created next */}
@@ -646,11 +660,11 @@ export default function SessionsScreen() {
                 style={[styles.modalDirBox, isDark && styles.modalDirBoxDark]}
                 onPress={() => setShowModelPicker(true)}
               >
-                <Ionicons name="hardware-chip-outline" size={20} color={isDark ? "#8b5cf6" : "#6d28d9"} />
+                <Ionicons name="hardware-chip-outline" size={20} color={T.accent} />
                 <Text style={[styles.modalDirText, isDark && styles.textDark]} numberOfLines={2}>
                   {catalogModel?.modelID || t("chat.modelPicker.serverDefault")}
                 </Text>
-                <Ionicons name="chevron-forward" size={20} color={isDark ? "#8b5cf6" : "#6d28d9"} />
+                <Ionicons name="chevron-forward" size={20} color={T.accent} />
               </TouchableOpacity>
 
               {/* Recent projects */}
@@ -677,7 +691,7 @@ export default function SessionsScreen() {
                         <Ionicons
                           name="folder-outline"
                           size={18}
-                          color={isCurrent ? "#8b5cf6" : isDark ? "#888888" : "#666666"}
+                          color={isCurrent ? T.accent : T.muted}
                         />
                         <View style={styles.projectRowContent}>
                           <Text
@@ -694,7 +708,7 @@ export default function SessionsScreen() {
                             {dir}
                           </Text>
                         </View>
-                        {isCurrent && <Ionicons name="checkmark-circle" size={18} color="#8b5cf6" />}
+                        {isCurrent && <Ionicons name="checkmark-circle" size={18} color={T.accent} />}
                       </TouchableOpacity>
                     )
                   })}
@@ -718,7 +732,7 @@ export default function SessionsScreen() {
                           onPress={() => onCreateInDirectory(p.path?.absolute)}
                           disabled={isCreating}
                         >
-                          <Ionicons name="code-slash-outline" size={18} color={isDark ? "#888888" : "#666666"} />
+                          <Ionicons name="code-slash-outline" size={18} color={T.muted} />
                           <View style={styles.projectRowContent}>
                             <Text style={[styles.projectRowName, isDark && styles.textDark]} numberOfLines={1}>
                               {short}
@@ -744,7 +758,7 @@ export default function SessionsScreen() {
                 disabled={isCreating}
                 testID="browse-folders-button"
               >
-                <Ionicons name="folder-open-outline" size={18} color={isDark ? "#8b5cf6" : "#6d28d9"} />
+                <Ionicons name="folder-open-outline" size={18} color={T.accent} />
                 <View style={styles.projectRowContent}>
                   <Text style={[styles.projectRowName, isDark && styles.textDark]}>
                     {t("sessionsList.newSessionModal.browseFoldersLabel")}
@@ -753,7 +767,7 @@ export default function SessionsScreen() {
                     {t("sessionsList.newSessionModal.browseFoldersHint")}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color={isDark ? "#666666" : "#999999"} />
+                <Ionicons name="chevron-forward" size={16} color={T.muted} />
               </TouchableOpacity>
 
               {/* Manual path input fallback */}
@@ -763,7 +777,7 @@ export default function SessionsScreen() {
               <TextInput
                 style={[styles.modalInput, isDark && styles.modalInputDark]}
                 placeholder={serverHome ? `${serverHome}/...` : "/path/to/project"}
-                placeholderTextColor={isDark ? "#666666" : "#999999"}
+                placeholderTextColor={T.muted}
                 value={customDir}
                 onChangeText={(text) => {
                   // Expand ~ to server home directory
@@ -810,7 +824,7 @@ export default function SessionsScreen() {
                   disabled={isCreating}
                 >
                   {isCreating ? (
-                    <ActivityIndicator size="small" color={isDark ? "#0a0a0a" : "#ffffff"} />
+                    <ActivityIndicator size="small" color={T.accentInk} />
                   ) : (
                     <Text style={[styles.modalButtonTextPrimary, isDark && styles.modalButtonTextPrimaryDark]}>
                       {t("sessionsList.newSessionModal.createInButton", {
@@ -831,7 +845,7 @@ export default function SessionsScreen() {
                   disabled={isCreating}
                 >
                   {isCreating ? (
-                    <ActivityIndicator size="small" color={isDark ? "#0a0a0a" : "#ffffff"} />
+                    <ActivityIndicator size="small" color={T.accentInk} />
                   ) : (
                     <Text style={[styles.modalButtonTextPrimary, isDark && styles.modalButtonTextPrimaryDark]}>
                       {t("sessionsList.newSessionModal.createSessionButton")}
@@ -932,10 +946,50 @@ export default function SessionsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: T.paper,
   },
   containerDark: {
-    backgroundColor: "#0a0a0a",
+    backgroundColor: T.paper,
+  },
+  statRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: T.rule,
+  },
+  statFigure: {
+    fontFamily: T.mono,
+    fontSize: 20,
+    fontWeight: "400",
+    color: T.ink,
+  },
+  statLabel: {
+    fontFamily: T.mono,
+    fontSize: 12,
+    color: T.muted,
+  },
+  statRule: {
+    width: 1,
+    height: 14,
+    backgroundColor: T.rule2,
+    marginHorizontal: 6,
+  },
+  historyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: T.rule,
+  },
+  historyRowText: {
+    fontFamily: T.mono,
+    fontSize: 13,
+    color: T.ink2,
   },
   connectionBar: {
     flexDirection: "row",
@@ -944,10 +998,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
+    borderBottomColor: T.rule,
   },
   connectionBarDark: {
-    borderBottomColor: "#1a1a1a",
+    borderBottomColor: T.rule,
   },
   connectionInfo: {
     flexDirection: "row",
@@ -957,31 +1011,35 @@ const styles = StyleSheet.create({
   connectionDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: 0,
   },
   connectionName: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   connectionUrl: {
     fontSize: 12,
-    color: "#666666",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   projectPath: {
     fontSize: 13,
-    color: "#666666",
+    color: T.muted,
     flex: 1,
+    fontFamily: T.mono,
   },
   errorBar: {
-    backgroundColor: "#fef2f2",
+    backgroundColor: T.accentWash,
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#fecaca",
+    borderBottomColor: T.rule,
   },
   errorText: {
-    color: "#dc2626",
+    color: T.ink2,
     fontSize: 14,
+    fontFamily: T.mono,
   },
   groupHeader: {
     flexDirection: "row",
@@ -989,33 +1047,35 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: T.paper2,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
+    borderBottomColor: T.rule,
   },
   groupHeaderDark: {
-    backgroundColor: "#151515",
-    borderBottomColor: "#1a1a1a",
+    backgroundColor: T.paper2,
+    borderBottomColor: T.rule,
   },
   groupHeaderText: {
     flex: 1,
     fontSize: 13,
     fontWeight: "600",
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   groupHeaderCount: {
     fontSize: 12,
-    color: "#666666",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   sessionItem: {
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
+    borderBottomColor: T.rule,
   },
   sessionItemDark: {
-    borderBottomColor: "#1a1a1a",
+    borderBottomColor: T.rule,
   },
   sessionContent: {
     flex: 1,
@@ -1029,15 +1089,18 @@ const styles = StyleSheet.create({
   sessionTitle: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#0a0a0a",
+    color: T.ink,
     marginBottom: 4,
+    fontFamily: T.mono,
   },
   textDark: {
-    color: "#ffffff",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   sessionMeta: {
     fontSize: 13,
-    color: "#666666",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   sessionMetaRow: {
     flexDirection: "row",
@@ -1048,42 +1111,46 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: T.accentWash,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 0,
   },
   sessionDirText: {
     fontSize: 11,
-    color: "#666666",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   metaDark: {
-    color: "#888888",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 32,
-    backgroundColor: "#ffffff",
+    backgroundColor: T.paper,
   },
   emptyTitle: {
     fontSize: 20,
     fontWeight: "600",
     marginTop: 16,
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: "#666666",
+    color: T.muted,
     marginTop: 8,
     textAlign: "center",
+    fontFamily: T.mono,
   },
   addButton: {
-    backgroundColor: "#0a0a0a",
+    backgroundColor: T.accent,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 0,
     marginTop: 24,
   },
   authErrorButtonRow: {
@@ -1091,14 +1158,16 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   addButtonDark: {
-    backgroundColor: "#ffffff",
+    backgroundColor: T.accent,
   },
   addButtonText: {
-    color: "#ffffff",
+    color: T.accentInk,
     fontWeight: "600",
+    fontFamily: T.mono,
   },
   addButtonTextDark: {
-    color: "#0a0a0a",
+    color: T.accentInk,
+    fontFamily: T.mono,
   },
   setupGuideLink: {
     marginTop: 16,
@@ -1106,7 +1175,8 @@ const styles = StyleSheet.create({
   setupGuideLinkText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#6366f1",
+    color: T.accent,
+    fontFamily: T.mono,
   },
   tryDemoButton: {
     flexDirection: "row",
@@ -1115,20 +1185,22 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 0,
     borderWidth: 1,
-    borderColor: "#8b5cf6",
+    borderColor: T.accent,
   },
   tryDemoButtonDark: {
-    borderColor: "#a78bfa",
+    borderColor: T.accent,
   },
   tryDemoButtonText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#6d28d9",
+    color: T.accent,
+    fontFamily: T.mono,
   },
   tryDemoButtonTextDark: {
-    color: "#a78bfa",
+    color: T.accent,
+    fontFamily: T.mono,
   },
   loadingContainer: {
     flex: 1,
@@ -1144,7 +1216,8 @@ const styles = StyleSheet.create({
   },
   emptyListText: {
     fontSize: 16,
-    color: "#666666",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   emptyContent: {
     flex: 1,
@@ -1155,37 +1228,32 @@ const styles = StyleSheet.create({
     bottom: 16,
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: "#0a0a0a",
+    borderRadius: 0,
+    backgroundColor: T.accent,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
   },
   fabDark: {
-    backgroundColor: "#ffffff",
+    backgroundColor: T.accent,
   },
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: T.overlay,
     justifyContent: "flex-end",
   },
   modalDismiss: {
     flex: 1,
   },
   modalContent: {
-    backgroundColor: "#ffffff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: T.paper,
+    borderTopWidth: 1,
+    borderTopColor: T.rule2,
     padding: 20,
     paddingBottom: 40,
   },
   modalContentDark: {
-    backgroundColor: "#1a1a1a",
+    backgroundColor: T.paper2,
   },
   modalHeader: {
     flexDirection: "row",
@@ -1196,7 +1264,8 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   modalBody: {
     marginBottom: 24,
@@ -1211,15 +1280,15 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 14,
     paddingVertical: 11,
-    borderRadius: 10,
-    backgroundColor: "#f5f5f5",
+    borderRadius: 0,
+    backgroundColor: T.paper2,
     marginBottom: 6,
   },
   projectRowDark: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: T.paper3,
   },
   projectRowActive: {
-    backgroundColor: "#f5f3ff",
+    backgroundColor: T.accentWash,
   },
   projectRowContent: {
     flex: 1,
@@ -1227,50 +1296,57 @@ const styles = StyleSheet.create({
   projectRowName: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   projectRowNameActive: {
-    color: "#8b5cf6",
+    color: T.accent,
+    fontFamily: T.mono,
   },
   projectRowPath: {
     fontSize: 11,
-    color: "#999999",
+    color: T.muted,
     marginTop: 1,
+    fontFamily: T.mono,
   },
   modalLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#666666",
+    color: T.muted,
     marginBottom: 8,
-    textTransform: "uppercase",
+
+    fontFamily: T.mono,
   },
   modalDirBox: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: T.paper2,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 0,
   },
   modalDirBoxDark: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: T.paper3,
   },
   modalDirText: {
     fontSize: 15,
-    color: "#0a0a0a",
+    color: T.ink,
     flex: 1,
+    fontFamily: T.mono,
   },
   modalInput: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 12,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   modalInputDark: {
-    backgroundColor: "#2a2a2a",
-    color: "#ffffff",
+    backgroundColor: T.paper3,
+    color: T.ink,
+    fontFamily: T.mono,
   },
   pathChips: {
     flexDirection: "row",
@@ -1280,24 +1356,27 @@ const styles = StyleSheet.create({
   pathChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: "#e8e5f0",
-    borderRadius: 16,
+    backgroundColor: T.accentWash,
+    borderRadius: 0,
   },
   pathChipDark: {
-    backgroundColor: "#2a2040",
+    backgroundColor: T.accentWash,
   },
   pathChipText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#6d28d9",
+    color: T.accent,
+    fontFamily: T.mono,
   },
   pathChipTextDark: {
-    color: "#c4b5fd",
+    color: T.accent,
+    fontFamily: T.mono,
   },
   modalHint: {
     fontSize: 13,
-    color: "#666666",
+    color: T.muted,
     marginTop: 12,
+    fontFamily: T.mono,
   },
   modalActions: {
     flexDirection: "row",
@@ -1310,32 +1389,37 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 0,
   },
   modalButtonSecondary: {
-    backgroundColor: "#f5f5f5",
+    borderWidth: 1,
+    borderColor: T.rule2,
   },
   modalButtonSecondaryDark: {
-    backgroundColor: "#2a2a2a",
+    borderWidth: 1,
+    borderColor: T.rule2,
   },
   modalButtonPrimary: {
-    backgroundColor: "#0a0a0a",
+    backgroundColor: T.accent,
   },
   modalButtonPrimaryDark: {
-    backgroundColor: "#ffffff",
+    backgroundColor: T.accent,
   },
   modalButtonText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   modalButtonTextPrimary: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#ffffff",
+    color: T.accentInk,
+    fontFamily: T.mono,
   },
   modalButtonTextPrimaryDark: {
-    color: "#0a0a0a",
+    color: T.accentInk,
+    fontFamily: T.mono,
   },
   modalButtonFull: {
     flex: 0,
@@ -1343,19 +1427,20 @@ const styles = StyleSheet.create({
   },
   // Rename modal
   renameCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
+    backgroundColor: T.paper,
+    borderRadius: 0,
     padding: 20,
     marginHorizontal: 32,
     gap: 16,
   },
   renameCardDark: {
-    backgroundColor: "#1a1a1a",
+    backgroundColor: T.paper2,
   },
   renameTitle: {
     fontSize: 17,
     fontWeight: "600",
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   renameActions: {
     flexDirection: "row",
@@ -1365,7 +1450,7 @@ const styles = StyleSheet.create({
   renameBtn: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 0,
   },
   renameBtnCancel: {
     backgroundColor: "transparent",
@@ -1373,6 +1458,7 @@ const styles = StyleSheet.create({
   renameBtnCancelText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#888888",
+    color: T.muted,
+    fontFamily: T.mono,
   },
 })

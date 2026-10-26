@@ -14,6 +14,7 @@ import * as Clipboard from "expo-clipboard"
 import { useTranslation } from "react-i18next"
 import { buildCustomProviderPlan, validateCustomProvider } from "../../src/lib/custom-provider"
 import { connectHref } from "../../src/lib/providers-ui"
+import { T } from "../../src/theme/tokens"
 
 export default function CustomProviderScreen() {
   const colorScheme = useColorScheme()
@@ -211,7 +212,7 @@ function Field({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={isDark ? "#666666" : "#999999"}
+        placeholderTextColor={T.muted}
         autoCorrect={false}
         autoCapitalize={autoCapitalize ?? "sentences"}
         keyboardType={keyboardType ?? "default"}
@@ -223,61 +224,61 @@ function Field({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#ffffff" },
-  containerDark: { backgroundColor: "#0a0a0a" },
+  container: { flex: 1, backgroundColor: T.paper },
+  containerDark: { backgroundColor: T.paper },
   content: { padding: 16, paddingBottom: 48, gap: 10 },
-  lead: { fontSize: 14, color: "#444444", lineHeight: 20 },
-  securityNote: { fontSize: 13, color: "#666666", lineHeight: 18, marginBottom: 8 },
-  metaDark: { color: "#888888" },
-  textDark: { color: "#ffffff" },
+  lead: { fontFamily: T.mono, fontSize: 14, color: T.ink, lineHeight: 20 },
+  securityNote: { fontFamily: T.mono, fontSize: 13, color: T.muted, lineHeight: 18, marginBottom: 8 },
+  metaDark: { fontFamily: T.mono, color: T.muted },
+  textDark: { fontFamily: T.mono, color: T.ink },
   field: { gap: 6 },
-  label: { fontSize: 13, fontWeight: "600", color: "#555555" },
+  label: { fontFamily: T.mono, fontSize: 13, fontWeight: "600", color: T.muted },
   input: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 10,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: "#0a0a0a",
+    color: T.ink,
     borderWidth: 1,
     borderColor: "transparent",
   },
-  inputDark: { backgroundColor: "#2a2a2a", color: "#ffffff" },
-  inputError: { borderColor: "#ef4444" },
-  errorText: { fontSize: 12, color: "#ef4444" },
+  inputDark: { fontFamily: T.mono, backgroundColor: T.paper3, color: T.ink },
+  inputError: { borderColor: T.rule },
+  errorText: { fontFamily: T.mono, fontSize: 12, color: T.ink2 },
   primaryBtn: {
     marginTop: 8,
-    backgroundColor: "#0a0a0a",
-    borderRadius: 10,
+    backgroundColor: T.accent,
+    borderRadius: 0,
     paddingVertical: 14,
     alignItems: "center",
   },
   primaryBtnDisabled: { opacity: 0.4 },
-  primaryBtnText: { color: "#ffffff", fontWeight: "700", fontSize: 15 },
+  primaryBtnText: { fontFamily: T.mono, color: T.accentInk, fontWeight: "700", fontSize: 15 },
   previewCard: {
     marginTop: 12,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 12,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     padding: 14,
     gap: 8,
   },
-  previewCardDark: { backgroundColor: "#1a1a1a" },
-  previewTitle: { fontSize: 14, fontWeight: "700", color: "#0a0a0a" },
+  previewCardDark: { backgroundColor: T.paper2 },
+  previewTitle: { fontFamily: T.mono, fontSize: 14, fontWeight: "700", color: T.ink },
   code: {
     fontFamily: "monospace",
     fontSize: 12,
-    color: "#222222",
+    color: T.ink,
     lineHeight: 18,
   },
-  codeDark: { color: "#dddddd" },
-  step: { fontSize: 13, color: "#555555", lineHeight: 18 },
+  codeDark: { fontFamily: T.mono, color: T.ink },
+  step: { fontFamily: T.mono, fontSize: 13, color: T.muted, lineHeight: 18 },
   secondaryBtn: {
     marginTop: 4,
-    borderRadius: 8,
+    borderRadius: 0,
     borderWidth: 1,
-    borderColor: "#cccccc",
+    borderColor: T.rule,
     paddingVertical: 10,
     alignItems: "center",
   },
-  secondaryBtnText: { fontSize: 14, fontWeight: "600", color: "#0a0a0a" },
+  secondaryBtnText: { fontFamily: T.mono, fontSize: 14, fontWeight: "600", color: T.ink },
 })

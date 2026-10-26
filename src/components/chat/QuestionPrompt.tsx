@@ -3,6 +3,7 @@ import { ActivityIndicator, View, Text, TextInput, TouchableOpacity, StyleSheet 
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { applyQuestionAnswer, parseCustomAnswer } from "../../lib/question-answers"
+import { T } from "../../theme/tokens"
 
 interface QuestionOption {
   label: string
@@ -148,7 +149,7 @@ export function QuestionPrompt({ request, isDark, onReply, onReject }: Props) {
   return (
     <View style={[s.card, isDark && s.cardDark]}>
       <View style={s.header}>
-        <Ionicons name="chatbubble-ellipses-outline" size={18} color="#8b5cf6" />
+        <Ionicons name="chatbubble-ellipses-outline" size={18} color={T.accent} />
         <Text style={[s.title, isDark && s.textWhite]}>{q.header || t("chat.questionPrompt.headerFallback")}</Text>
       </View>
       <Text style={[s.question, isDark && s.textWhite]}>{q.question}</Text>
@@ -183,7 +184,7 @@ export function QuestionPrompt({ request, isDark, onReply, onReject }: Props) {
               <TextInput
                 style={[s.customInput, isDark && s.customInputDark, busy && s.customInputBusy]}
                 placeholder={t("chat.questionPrompt.answerPlaceholder")}
-                placeholderTextColor={isDark ? "#666666" : "#999999"}
+                placeholderTextColor={T.muted}
                 value={custom}
                 onChangeText={(text) => {
                   if (busy) return
@@ -204,9 +205,9 @@ export function QuestionPrompt({ request, isDark, onReply, onReject }: Props) {
                 accessibilityState={{ disabled: busy }}
               >
                 {busy || customApplied ? (
-                  <Ionicons name="checkmark-circle" size={22} color="#22c55e" />
+                  <Ionicons name="checkmark-circle" size={22} color={T.accent} />
                 ) : (
-                  <Ionicons name="checkmark" size={20} color="#8b5cf6" />
+                  <Ionicons name="checkmark" size={20} color={T.accent} />
                 )}
               </TouchableOpacity>
             </View>
@@ -217,7 +218,7 @@ export function QuestionPrompt({ request, isDark, onReply, onReject }: Props) {
               disabled={busy}
               accessibilityRole="button"
             >
-              <Text style={[s.optionLabel, { color: "#8b5cf6" }]}>{t("chat.questionPrompt.customAnswerLabel")}</Text>
+              <Text style={[s.optionLabel, { color: T.accent }]}>{t("chat.questionPrompt.customAnswerLabel")}</Text>
             </TouchableOpacity>
           ))}
       </View>
@@ -245,9 +246,9 @@ export function QuestionPrompt({ request, isDark, onReply, onReject }: Props) {
 
       {status !== "idle" && (
         <View style={s.statusRow} accessibilityLiveRegion="polite">
-          {status === "sending" ? <ActivityIndicator size="small" color="#8b5cf6" /> : null}
-          {status === "sent" ? <Ionicons name="checkmark-circle" size={16} color="#22c55e" /> : null}
-          {status === "error" ? <Ionicons name="alert-circle" size={16} color="#ef4444" /> : null}
+          {status === "sending" ? <ActivityIndicator size="small" color={T.accent} /> : null}
+          {status === "sent" ? <Ionicons name="checkmark-circle" size={16} color={T.accent} /> : null}
+          {status === "error" ? <Ionicons name="alert-circle" size={16} color={T.ink2} /> : null}
           <Text style={[s.statusText, status === "error" && s.statusError, isDark && status !== "error" && s.statusTextDark]}>
             {status === "sending"
               ? t("chat.questionPrompt.sending")
@@ -265,60 +266,60 @@ const s = StyleSheet.create({
   card: {
     margin: 12,
     padding: 16,
-    backgroundColor: "#f5f3ff",
-    borderRadius: 12,
+    backgroundColor: T.accentWash,
+    borderRadius: 0,
     borderWidth: 1,
-    borderColor: "#ede9fe",
+    borderColor: T.rule,
   },
-  cardDark: { backgroundColor: "#1a1a2e", borderColor: "#2a2a3e" },
+  cardDark: { backgroundColor: T.accentWash, borderColor: T.rule },
   header: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
-  title: { fontSize: 15, fontWeight: "600", color: "#6d28d9" },
-  textWhite: { color: "#ffffff" },
-  question: { fontSize: 14, lineHeight: 20, color: "#0a0a0a", marginBottom: 12 },
-  metaDark: { color: "#666666" },
+  title: { fontFamily: T.mono, fontSize: 15, fontWeight: "600", color: T.accent },
+  textWhite: { fontFamily: T.mono, color: T.ink },
+  question: { fontFamily: T.mono, fontSize: 14, lineHeight: 20, color: T.ink, marginBottom: 12 },
+  metaDark: { fontFamily: T.mono, color: T.muted },
 
   options: { gap: 8 },
   option: {
     padding: 12,
-    borderRadius: 8,
-    backgroundColor: "#ffffff",
+    borderRadius: 0,
+    backgroundColor: T.accentWash,
     borderWidth: 1,
-    borderColor: "#e5e5e5",
+    borderColor: T.rule,
   },
-  optionDark: { backgroundColor: "#2a2a2a", borderColor: "#3a3a3a" },
-  optionSelected: { borderColor: "#8b5cf6", backgroundColor: "#f5f3ff" },
-  optionSelectedDark: { borderColor: "#8b5cf6", backgroundColor: "#2a1a3e" },
+  optionDark: { backgroundColor: T.paper3, borderColor: T.rule },
+  optionSelected: { borderColor: T.accent, backgroundColor: T.accentWash },
+  optionSelectedDark: { borderColor: T.accent, backgroundColor: T.paper2 },
   optionBusy: { opacity: 0.7 },
-  optionLabel: { fontSize: 14, fontWeight: "600", color: "#0a0a0a" },
-  optionLabelSelected: { color: "#6d28d9" },
-  optionDesc: { fontSize: 12, color: "#666666", marginTop: 2 },
+  optionLabel: { fontFamily: T.mono, fontSize: 14, fontWeight: "600", color: T.ink },
+  optionLabelSelected: { fontFamily: T.mono, color: T.accent },
+  optionDesc: { fontFamily: T.mono, fontSize: 12, color: T.muted, marginTop: 2 },
 
   customRow: { flexDirection: "row", gap: 8 },
   customInput: {
     flex: 1,
-    backgroundColor: "#ffffff",
-    borderRadius: 8,
+    backgroundColor: T.paper,
+    borderRadius: 0,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: "#e5e5e5",
-    color: "#0a0a0a",
+    borderColor: T.rule,
+    color: T.ink,
   },
-  customInputDark: { backgroundColor: "#2a2a2a", borderColor: "#3a3a3a", color: "#ffffff" },
-  customInputBusy: { borderColor: "#8b5cf6" },
+  customInputDark: { fontFamily: T.mono, backgroundColor: T.paper3, borderColor: T.rule, color: T.ink },
+  customInputBusy: { borderColor: T.accent },
   customSubmit: { justifyContent: "center", alignItems: "center", padding: 8 },
 
   footer: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 12 },
-  dismiss: { fontSize: 14, color: "#999999" },
+  dismiss: { fontFamily: T.mono, fontSize: 14, color: T.muted },
   dismissBusy: { opacity: 0.4 },
-  submitBtn: { backgroundColor: "#8b5cf6", paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
-  submitBtnDark: { backgroundColor: "#7c3aed" },
+  submitBtn: { backgroundColor: T.accent, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 0, },
+  submitBtnDark: { backgroundColor: T.accent },
   submitBtnBusy: { opacity: 0.6 },
-  submitText: { color: "#ffffff", fontWeight: "600", fontSize: 14 },
+  submitText: { fontFamily: T.mono, color: T.accentInk, fontWeight: "600", fontSize: 14 },
 
   statusRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
-  statusText: { fontSize: 12, color: "#6d28d9" },
-  statusTextDark: { color: "#c4b5fd" },
-  statusError: { color: "#ef4444" },
+  statusText: { fontFamily: T.mono, fontSize: 12, color: T.accent },
+  statusTextDark: { fontFamily: T.mono, color: T.accent },
+  statusError: { fontFamily: T.mono, color: T.ink2 },
 })

@@ -2,6 +2,7 @@ import { useMemo } from "react"
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Keyboard, Platform } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
+import { T } from "../../theme/tokens"
 
 export interface SlashCommand {
   trigger: string
@@ -35,7 +36,7 @@ export function SlashPopover({ query, commands, isDark, onSelect }: Props) {
             <Ionicons
               name={cmd.icon as any}
               size={18}
-              color={cmd.type === "custom" ? "#8b5cf6" : isDark ? "#888888" : "#666666"}
+              color={cmd.type === "custom" ? T.accent : T.muted}
             />
             <View style={s.textCol}>
               <Text style={[s.trigger, isDark && s.textWhite]}>/{cmd.trigger}</Text>
@@ -59,12 +60,12 @@ export function SlashPopover({ query, commands, isDark, onSelect }: Props) {
 
 const s = StyleSheet.create({
   popover: {
-    backgroundColor: "#ffffff",
+    backgroundColor: T.paper,
     borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
+    borderTopColor: T.rule,
     maxHeight: 220,
   },
-  popoverDark: { backgroundColor: "#1a1a1a", borderTopColor: "#2a2a2a" },
+  popoverDark: { backgroundColor: T.paper2, borderTopColor: T.rule },
   scroll: { paddingVertical: 4 },
   item: {
     flexDirection: "row",
@@ -75,16 +76,16 @@ const s = StyleSheet.create({
   },
   itemDark: {},
   textCol: { flex: 1 },
-  trigger: { fontSize: 14, fontWeight: "600", color: "#0a0a0a" },
-  textWhite: { color: "#ffffff" },
-  desc: { fontSize: 12, color: "#999999", marginTop: 1 },
-  metaDark: { color: "#666666" },
+  trigger: { fontFamily: T.mono, fontSize: 14, fontWeight: "600", color: T.ink },
+  textWhite: { fontFamily: T.mono, color: T.ink },
+  desc: { fontFamily: T.mono, fontSize: 12, color: T.muted, marginTop: 1 },
+  metaDark: { fontFamily: T.mono, color: T.muted },
   badge: {
-    backgroundColor: "#f3e8ff",
+    backgroundColor: T.paper2,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 0,
   },
-  badgeDark: { backgroundColor: "#2a1a3e" },
-  badgeText: { fontSize: 10, color: "#8b5cf6", fontWeight: "600" },
+  badgeDark: { backgroundColor: T.paper2 },
+  badgeText: { fontFamily: T.mono, fontSize: 10, color: T.accent, fontWeight: "600" },
 })

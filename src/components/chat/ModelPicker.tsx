@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons"
 import BottomSheet, { BottomSheetBackdrop, BottomSheetSectionList, BottomSheetTextInput } from "@gorhom/bottom-sheet"
 import { useTranslation } from "react-i18next"
 import { buildModelPickerSections, type ModelPickerItem } from "../../lib/model-picker-filter"
+import { T } from "../../theme/tokens"
 
 import { useHiddenModels } from "../../stores/model-visibility"
 
@@ -60,8 +61,8 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, o
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
-      backgroundStyle={isDark ? s.sheetDark : s.sheet}
-      handleIndicatorStyle={{ backgroundColor: isDark ? "#666666" : "#cccccc" }}
+      backgroundStyle={s.sheet}
+      handleIndicatorStyle={{ backgroundColor: T.rule2 }}
       backdropComponent={(props) => (
         <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
       )}
@@ -74,7 +75,7 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, o
         <BottomSheetTextInput
           style={[s.search, isDark && s.searchDark]}
           placeholder={t("chat.modelPicker.searchPlaceholder")}
-          placeholderTextColor={isDark ? "#666666" : "#999999"}
+          placeholderTextColor={T.muted}
           value={search}
           onChangeText={setSearch}
           autoCorrect={false}
@@ -113,7 +114,7 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, o
                 </View>
                 <Text style={[s.rowProvider, isDark && s.metaDark]}>{item.providerName || item.providerID}</Text>
               </View>
-              {active && <Ionicons name="checkmark-circle" size={20} color="#8b5cf6" />}
+              {active && <Ionicons name="checkmark-circle" size={20} color={T.accent} />}
             </TouchableOpacity>
           )
         }}
@@ -124,7 +125,7 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, o
               onPress={handleManage}
               testID="model-picker-manage"
             >
-              <Ionicons name="options-outline" size={18} color={isDark ? "#cccccc" : "#444444"} />
+              <Ionicons name="options-outline" size={18} color={T.ink} />
               <Text style={[s.manageText, isDark && s.textWhite]}>{t("chat.modelPicker.manageModels")}</Text>
             </TouchableOpacity>
           ) : null
@@ -137,59 +138,60 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, o
 }
 
 const s = StyleSheet.create({
-  sheet: { backgroundColor: "#ffffff" },
-  sheetDark: { backgroundColor: "#1a1a1a" },
+  sheet: { backgroundColor: T.paper2, borderTopWidth: 1, borderTopColor: T.rule2 },
+  sheetDark: { backgroundColor: T.paper2 },
   header: { paddingHorizontal: 16, paddingBottom: 12, gap: 10 },
-  title: { fontSize: 18, fontWeight: "700", color: "#0a0a0a" },
-  textWhite: { color: "#ffffff" },
+  title: { fontFamily: T.mono, fontSize: 18, fontWeight: "700", color: T.ink },
+  textWhite: { fontFamily: T.mono, color: T.ink },
   search: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 10,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
-    color: "#0a0a0a",
+    color: T.ink,
   },
-  searchDark: { backgroundColor: "#2a2a2a", color: "#ffffff" },
+  searchDark: { fontFamily: T.mono, backgroundColor: T.paper3, color: T.ink },
   content: { paddingBottom: 40 },
   sectionHeader: {
-    backgroundColor: "#f5f5f5",
+    backgroundColor: T.paper2,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  sectionHeaderDark: { backgroundColor: "#111111" },
+  sectionHeaderDark: { backgroundColor: T.paper },
   sectionTitle: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#999999",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    color: T.muted,
+
+
+    fontFamily: T.mono,
   },
-  metaDark: { color: "#666666" },
+  metaDark: { fontFamily: T.mono, color: T.muted },
   row: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#e5e5e5",
+    borderBottomColor: T.rule,
   },
-  rowDark: { borderBottomColor: "#2a2a2a" },
-  rowSelected: { backgroundColor: "#f5f3ff" },
-  rowSelectedDark: { backgroundColor: "#1f1a2e" },
+  rowDark: { borderBottomColor: T.rule },
+  rowSelected: { backgroundColor: T.accentWash },
+  rowSelectedDark: { backgroundColor: T.accentWash },
   rowText: { flex: 1 },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  rowName: { fontSize: 15, fontWeight: "500", color: "#0a0a0a", flexShrink: 1 },
-  rowProvider: { fontSize: 12, color: "#999999", marginTop: 1 },
+  rowName: { fontFamily: T.mono, fontSize: 15, fontWeight: "500", color: T.ink, flexShrink: 1 },
+  rowProvider: { fontFamily: T.mono, fontSize: 12, color: T.muted, marginTop: 1 },
   freeBadge: {
-    backgroundColor: "#e8e8e8",
-    borderRadius: 999,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
-  freeBadgeDark: { backgroundColor: "#2a2a2a" },
-  freeBadgeText: { fontSize: 11, fontWeight: "600", color: "#555555" },
-  freeBadgeTextDark: { color: "#bbbbbb" },
+  freeBadgeDark: { backgroundColor: T.paper3 },
+  freeBadgeText: { fontFamily: T.mono, fontSize: 11, fontWeight: "600", color: T.muted },
+  freeBadgeTextDark: { fontFamily: T.mono, color: T.muted },
   manageRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -197,9 +199,9 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#e5e5e5",
+    borderTopColor: T.rule,
     marginTop: 4,
   },
-  manageRowDark: { borderTopColor: "#2a2a2a" },
-  manageText: { fontSize: 15, fontWeight: "500", color: "#0a0a0a" },
+  manageRowDark: { borderTopColor: T.rule },
+  manageText: { fontFamily: T.mono, fontSize: 15, fontWeight: "500", color: T.ink },
 })

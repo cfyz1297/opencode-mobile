@@ -2,6 +2,7 @@ import { useMemo, type ReactNode } from "react"
 import { View, Text, useColorScheme, Platform, type StyleProp, type ViewStyle, type TextStyle } from "react-native"
 import { useMarkdown, Renderer } from "react-native-marked"
 import { CodeBlock } from "./CodeBlock"
+import { T } from "../../theme/tokens"
 
 // react-native-marked's base Renderer hardcodes `selectable` on every plain
 // text node it produces (text/strong/em/del/heading/codespan). On Android,
@@ -59,69 +60,71 @@ class CustomRenderer extends Renderer {
 const mono = Platform.OS === "ios" ? "Menlo" : "monospace"
 
 const lightTheme = {
-  text: { color: "#0a0a0a", fontSize: 15, lineHeight: 22 },
+  text: { fontFamily: T.mono, color: T.ink, fontSize: 15, lineHeight: 22 },
   paragraph: { marginTop: 0, marginBottom: 8 },
-  h1: { fontSize: 22, fontWeight: "700" as const, color: "#0a0a0a", marginBottom: 8, marginTop: 12 },
-  h2: { fontSize: 19, fontWeight: "600" as const, color: "#0a0a0a", marginBottom: 6, marginTop: 10 },
-  h3: { fontSize: 16, fontWeight: "600" as const, color: "#0a0a0a", marginBottom: 4, marginTop: 8 },
-  link: { color: "#8b5cf6" },
+  h1: { fontFamily: T.mono, fontSize: 22, fontWeight: "700" as const, color: T.ink, marginBottom: 8, marginTop: 12 },
+  h2: { fontFamily: T.mono, fontSize: 19, fontWeight: "600" as const, color: T.ink, marginBottom: 6, marginTop: 10 },
+  h3: { fontFamily: T.mono, fontSize: 16, fontWeight: "600" as const, color: T.ink, marginBottom: 4, marginTop: 8 },
+  link: { fontFamily: T.mono, color: T.accent },
   blockquote: {
     backgroundColor: "transparent",
     borderLeftWidth: 3,
-    borderLeftColor: "#d1d5db",
+    borderLeftColor: T.rule,
     paddingLeft: 12,
     paddingVertical: 2,
     marginVertical: 4,
   },
   code: {
-    backgroundColor: "#e8e5f0",
-    color: "#6d28d9",
+    backgroundColor: T.accentWash,
+    color: T.accent,
     fontFamily: mono,
     fontSize: 13,
     paddingHorizontal: 5,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 0,
   },
   codespan: {
-    backgroundColor: "#e8e5f0",
-    color: "#6d28d9",
+    backgroundColor: T.accentWash,
+    color: T.accent,
     fontFamily: mono,
     fontSize: 13,
     paddingHorizontal: 4,
     paddingVertical: 1,
-    borderRadius: 3,
+    borderRadius: 0,
   },
   list: { marginBottom: 4 },
   li: { marginBottom: 2 },
-  hr: { backgroundColor: "#e5e5e5", height: 1, marginVertical: 12 },
-  strong: { fontWeight: "700" as const },
+  hr: { backgroundColor: T.paper, height: 1, marginVertical: 12 },
+  strong: { fontFamily: T.mono, fontWeight: "700" as const },
   em: { fontStyle: "italic" as const },
   strikethrough: { textDecorationLine: "line-through" as const },
-  image: { borderRadius: 8 },
+  image: { borderRadius: 0, },
 }
 
 const darkTheme = {
   ...lightTheme,
-  text: { ...lightTheme.text, color: "#e5e5e5" },
-  h1: { ...lightTheme.h1, color: "#ffffff" },
-  h2: { ...lightTheme.h2, color: "#ffffff" },
-  h3: { ...lightTheme.h3, color: "#ffffff" },
-  link: { color: "#a78bfa" },
+  text: { ...lightTheme.text, color: T.ink2 },
+  h1: { ...lightTheme.h1, color: T.ink },
+  h2: { ...lightTheme.h2, color: T.ink },
+  h3: { ...lightTheme.h3, color: T.ink },
+  link: { fontFamily: T.mono, color: T.accent },
   blockquote: {
     ...lightTheme.blockquote,
-    borderLeftColor: "#4a4a5a",
+    borderLeftColor: T.rule,
   },
   code: {
     ...lightTheme.code,
-    backgroundColor: "#2a2040",
-    color: "#c4b5fd",
+    backgroundColor: T.accentWash,
+    color: T.accent,
+    fontFamily: T.mono,
   },
   codespan: {
     ...lightTheme.codespan,
-    backgroundColor: "#2a2040",
-    color: "#c4b5fd",
+    backgroundColor: T.accentWash,
+    color: T.accent,
+    fontFamily: T.mono,
   },
-  hr: { ...lightTheme.hr, backgroundColor: "#2a2a2a" },
+  hr: { ...lightTheme.hr, backgroundColor: T.paper3 },
 }
 
 interface Props {

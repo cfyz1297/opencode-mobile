@@ -7,6 +7,7 @@ import { MessageBubble, PermissionPrompt } from "../src/components/chat"
 import { buildDemoScript, buildDemoCompletionMessage, buildDemoDenialMessage } from "../src/lib/demo-script"
 import { SETUP_GUIDE_URL } from "../src/lib/links"
 import { type DemoPermissionReply } from "../src/lib/demo-analytics"
+import { T } from "../src/theme/tokens"
 
 // Fully offline, scripted walkthrough for installers with no self-hosted
 // opencode server. ISOLATION: every message/part below is hardcoded local
@@ -45,7 +46,7 @@ export default function DemoScreen() {
       <Stack.Screen options={{ title: t("demo.title"), presentation: "card" }} />
       <View style={[s.container, isDark && s.containerDark]} testID="demo-screen">
         <View style={[s.banner, isDark && s.bannerDark]} testID="demo-banner">
-          <Ionicons name="play-circle-outline" size={16} color="#8b5cf6" />
+          <Ionicons name="play-circle-outline" size={16} color={T.accent} />
           <Text style={s.bannerText}>{t("demo.banner")}</Text>
         </View>
 
@@ -91,10 +92,10 @@ export default function DemoScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#ffffff" },
-  containerDark: { backgroundColor: "#0a0a0a" },
-  textWhite: { color: "#ffffff" },
-  metaDark: { color: "#888888" },
+  container: { flex: 1, backgroundColor: T.paper },
+  containerDark: { backgroundColor: T.paper },
+  textWhite: { fontFamily: T.mono, color: T.ink },
+  metaDark: { fontFamily: T.mono, color: T.muted },
 
   banner: {
     flexDirection: "row",
@@ -102,37 +103,37 @@ const s = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: "#f5f3ff",
+    backgroundColor: T.accentWash,
     borderBottomWidth: 1,
-    borderBottomColor: "#e9d5ff",
+    borderBottomColor: T.rule,
   },
-  bannerDark: { backgroundColor: "#1a1030", borderBottomColor: "#2a1a4a" },
-  bannerText: { fontSize: 13, fontWeight: "600", color: "#6d28d9", flex: 1 },
+  bannerDark: { backgroundColor: T.paper2, borderBottomColor: T.rule },
+  bannerText: { fontFamily: T.mono, fontSize: 13, fontWeight: "600", color: T.accent, flex: 1 },
 
   scrollContent: { padding: 16, paddingBottom: 40 },
 
   ctaCard: {
     marginTop: 8,
     padding: 20,
-    borderRadius: 16,
-    backgroundColor: "#f5f5f5",
+    borderRadius: 0,
+    backgroundColor: T.accentWash,
     alignItems: "center",
   },
-  ctaCardDark: { backgroundColor: "#1a1a1a" },
-  ctaTitle: { fontSize: 17, fontWeight: "700", color: "#0a0a0a", textAlign: "center" },
-  ctaSubtitle: { fontSize: 13, color: "#666666", marginTop: 6, textAlign: "center", lineHeight: 18 },
+  ctaCardDark: { backgroundColor: T.accentWash },
+  ctaTitle: { fontFamily: T.mono, fontSize: 17, fontWeight: "700", color: T.accent, textAlign: "center" },
+  ctaSubtitle: { fontFamily: T.mono, fontSize: 13, color: T.muted, marginTop: 6, textAlign: "center", lineHeight: 18 },
   connectButton: {
     marginTop: 16,
-    backgroundColor: "#0a0a0a",
+    backgroundColor: T.accent,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 0,
     width: "100%",
     alignItems: "center",
   },
-  connectButtonText: { color: "#ffffff", fontWeight: "600", fontSize: 15 },
+  connectButtonText: { fontFamily: T.mono, color: T.accentInk, fontWeight: "600", fontSize: 15 },
   hostedCtaLink: { marginTop: 14 },
-  hostedCtaLinkText: { fontSize: 14, fontWeight: "600", color: "#8b5cf6", textAlign: "center" },
+  hostedCtaLinkText: { fontFamily: T.mono, fontSize: 14, fontWeight: "600", color: T.accent, textAlign: "center" },
   setupGuideLink: { marginTop: 14 },
-  setupGuideLinkText: { fontSize: 14, fontWeight: "600", color: "#6366f1" },
+  setupGuideLinkText: { fontFamily: T.mono, fontSize: 14, fontWeight: "600", color: T.accent },
 })

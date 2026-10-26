@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, useColorScheme } from "react-
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../stores/auth"
+import { T } from "../theme/tokens"
 
 interface Props {
   children: ReactNode
@@ -47,14 +48,14 @@ export function AuthGate({ children }: Props) {
   return (
     <View style={[styles.container, isDark && styles.containerDark]}>
       <View style={styles.content}>
-        <Ionicons name={iconName} size={64} color={isDark ? "#ffffff" : "#0a0a0a"} />
+        <Ionicons name={iconName} size={64} color={T.ink} />
         <Text style={[styles.title, isDark && styles.textDark]}>{t("authGate.title")}</Text>
         <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>{t("authGate.subtitle")}</Text>
 
         {error && <Text style={styles.error}>{error}</Text>}
 
         <TouchableOpacity style={[styles.button, isDark && styles.buttonDark]} onPress={authenticate}>
-          <Ionicons name={iconName} size={24} color={isDark ? "#0a0a0a" : "#ffffff"} />
+          <Ionicons name={iconName} size={24} color={T.ink} />
           <Text style={[styles.buttonText, isDark && styles.buttonTextDark]}>{t("authGate.unlockButton")}</Text>
         </TouchableOpacity>
       </View>
@@ -65,12 +66,12 @@ export function AuthGate({ children }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: T.paper,
     justifyContent: "center",
     alignItems: "center",
   },
   containerDark: {
-    backgroundColor: "#0a0a0a",
+    backgroundColor: T.paper,
   },
   content: {
     alignItems: "center",
@@ -80,44 +81,51 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "600",
     marginTop: 24,
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   textDark: {
-    color: "#ffffff",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   subtitle: {
     fontSize: 16,
-    color: "#666666",
+    color: T.muted,
     marginTop: 8,
     textAlign: "center",
+    fontFamily: T.mono,
   },
   subtitleDark: {
-    color: "#888888",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   error: {
-    color: "#ef4444",
+    color: T.ink2,
     marginTop: 16,
     fontSize: 14,
+    fontFamily: T.mono,
   },
   button: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#0a0a0a",
+    backgroundColor: T.accent,
     paddingHorizontal: 32,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 0,
     marginTop: 32,
     gap: 12,
   },
   buttonDark: {
-    backgroundColor: "#ffffff",
+    backgroundColor: T.accent,
   },
   buttonText: {
-    color: "#ffffff",
+    color: T.accentInk,
     fontSize: 18,
     fontWeight: "600",
+    fontFamily: T.mono,
   },
   buttonTextDark: {
-    color: "#0a0a0a",
+    color: T.accentInk,
+    fontFamily: T.mono,
   },
 })

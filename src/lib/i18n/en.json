@@ -301,7 +301,9 @@
     },
     "renameModal": {
       "title": "Rename Session"
-    }
+    },
+    "statSessions": "sessions",
+    "statProjects": "projects"
   },
   "notifications": {
     "categories": {

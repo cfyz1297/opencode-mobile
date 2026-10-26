@@ -8,6 +8,7 @@ import { ToolCallCard } from "./ToolCallCard"
 import { ReasoningBlock } from "./ReasoningBlock"
 import { CompactionCard } from "./CompactionCard"
 import type { Message, Part } from "../../lib/sdk"
+import { T } from "../../theme/tokens"
 
 const SCREEN_WIDTH = Dimensions.get("window").width
 
@@ -79,14 +80,10 @@ export const MessageBubble = memo(
         ]}
         testID={`chat-bubble-${message.role}`}
       >
-        {/* Role indicator */}
+        {/* The transcript is a shell session: the prompt is yours, the output is the agent's */}
         <View style={s.header}>
-          <Ionicons
-            name={isUser ? "person" : "sparkles"}
-            size={14}
-            color={isUser ? (isDark ? "#ffffff" : "#0a0a0a") : "#8b5cf6"}
-          />
-          <Text style={[s.role, isUser && s.roleUser, isDark && s.textWhite]}>
+          {isUser && <Text style={s.prompt}>&gt;</Text>}
+          <Text style={[s.role, isUser && s.roleUser]}>
             {isUser ? "You" : "Assistant"}
           </Text>
           {message.model && <Text style={[s.modelTag, isDark && s.modelTagDark]}>{message.model.modelID}</Text>}
@@ -149,7 +146,7 @@ export const MessageBubble = memo(
                 <Ionicons
                   name={copied ? "checkmark" : "copy-outline"}
                   size={12}
-                  color={isDark ? "#888888" : "#777777"}
+                  color={T.muted}
                 />
                 <Text style={[s.actionText, isDark && s.actionTextDark]}>{copied ? t("chat.message.copied") : t("chat.message.copy")}</Text>
               </TouchableOpacity>
@@ -162,7 +159,7 @@ export const MessageBubble = memo(
                 accessibilityLabel={t("chat.message.revertHere")}
                 testID="message-revert"
               >
-                <Ionicons name="arrow-undo-outline" size={12} color={isDark ? "#888888" : "#777777"} />
+                <Ionicons name="arrow-undo-outline" size={12} color={T.muted} />
                 <Text style={[s.actionText, isDark && s.actionTextDark]}>{t("chat.message.revertHere")}</Text>
               </TouchableOpacity>
             )}
@@ -199,39 +196,33 @@ export const MessageBubble = memo(
 )
 
 const s = StyleSheet.create({
-  bubble: { marginBottom: 16, padding: 12, borderRadius: 12, maxWidth: "100%" },
-  user: { backgroundColor: "#f5f5f5", marginLeft: 32 },
-  userDark: { backgroundColor: "#1a1a1a" },
-  assistant: { backgroundColor: "#f0f0ff" },
-  assistantDark: { backgroundColor: "#1a1a2e" },
+  // A command block and its output: one hairline on the left, no fill that shouts
+  bubble: { marginBottom: 20, paddingVertical: 2, paddingLeft: 12, borderLeftWidth: 2, maxWidth: "100%" },
+  user: { borderLeftColor: T.accent },
+  userDark: { borderLeftColor: T.accent },
+  assistant: { borderLeftColor: T.rule2 },
+  assistantDark: { borderLeftColor: T.rule2 },
 
-  header: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
-  role: { fontSize: 13, fontWeight: "600", color: "#666666" },
-  roleUser: { color: "#0a0a0a" },
-  textWhite: { color: "#ffffff" },
+  header: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 },
+  prompt: { fontFamily: T.mono, fontSize: 15, fontWeight: "700", color: T.accent },
+  role: { fontFamily: T.mono, fontSize: 12, color: T.muted },
+  roleUser: { fontFamily: T.mono, color: T.ink2 },
+  textWhite: { fontFamily: T.mono, color: T.ink },
 
-  modelTag: {
-    fontSize: 11,
-    color: "#999999",
-    backgroundColor: "#e5e5e5",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  modelTagDark: { backgroundColor: "#2a2a2a", color: "#888888" },
+  modelTag: { fontFamily: T.mono, fontSize: 11, color: T.muted },
+  modelTagDark: { fontFamily: T.mono, color: T.muted },
 
-  messageText: { fontSize: 15, lineHeight: 22, color: "#0a0a0a" },
+  messageText: { fontFamily: T.mono, fontSize: 15, lineHeight: 22, color: T.ink },
   markdownWrap: { marginHorizontal: -4 },
 
-  tokens: { fontSize: 11, color: "#999999", marginTop: 8 },
-  tokensDark: { color: "#666666" },
+  tokens: { fontFamily: T.mono, fontSize: 11, color: T.muted, marginTop: 8 },
+  tokensDark: { fontFamily: T.mono, color: T.muted },
 
   // Per-message action buttons (copy / reset-to-this-point), desktop parity.
   actionRow: { flexDirection: "row", flexWrap: "wrap", gap: 14, marginTop: 8 },
   actionBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 2 },
-  actionText: { fontSize: 11, color: "#777777" },
-  actionTextDark: { color: "#888888" },
+  actionText: { fontFamily: T.mono, fontSize: 11, color: T.muted },
+  actionTextDark: { fontFamily: T.mono, color: T.muted },
 
   // Images
   imageScroll: { marginBottom: 8 },
@@ -240,9 +231,9 @@ const s = StyleSheet.create({
   attachedImage: {
     width: Math.min(200, SCREEN_WIDTH * 0.5),
     height: Math.min(200, SCREEN_WIDTH * 0.5),
-    borderRadius: 8,
-    backgroundColor: "#e5e5e5",
+    borderRadius: 0,
+    backgroundColor: T.paper,
   },
-  imageLabel: { fontSize: 10, color: "#666666", marginTop: 2, maxWidth: 200 },
-  imageLabelDark: { color: "#888888" },
+  imageLabel: { fontFamily: T.mono, fontSize: 10, color: T.muted, marginTop: 2, maxWidth: 200 },
+  imageLabelDark: { fontFamily: T.mono, color: T.muted },
 })

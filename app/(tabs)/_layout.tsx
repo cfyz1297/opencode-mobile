@@ -1,12 +1,11 @@
 import { Tabs } from "expo-router"
-import { useColorScheme, useWindowDimensions } from "react-native"
+import { useWindowDimensions } from "react-native"
 import { adaptiveLayout } from '../../src/lib/adaptive-layout'
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
+import { T } from "../../src/theme/tokens"
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme()
-  const isDark = colorScheme === "dark"
   const { t } = useTranslation()
   const layout = adaptiveLayout(useWindowDimensions().width)
 
@@ -15,23 +14,36 @@ export default function TabLayout() {
       screenOptions={{
         tabBarPosition: layout.tablet ? 'left' : 'bottom',
         tabBarLabelPosition: layout.tablet ? 'beside-icon' : 'below-icon',
-        tabBarActiveTintColor: isDark ? "#ffffff" : "#0a0a0a",
-        tabBarInactiveTintColor: isDark ? "#666666" : "#999999",
+        tabBarActiveTintColor: T.accent,
+        tabBarInactiveTintColor: T.muted,
         tabBarStyle: {
-          backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
-          borderTopColor: isDark ? "#1a1a1a" : "#e5e5e5",
+          backgroundColor: T.paper2,
+          borderTopColor: T.rule,
+          borderTopWidth: T.hair,
+        },
+        tabBarLabelStyle: {
+          fontFamily: T.mono,
+          fontSize: 11,
         },
         headerStyle: {
-          backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+          backgroundColor: T.paper,
+          borderBottomColor: T.rule,
+          borderBottomWidth: T.hair,
         },
-        headerTintColor: isDark ? "#ffffff" : "#0a0a0a",
+        headerTitleStyle: {
+          fontFamily: T.mono,
+          fontSize: 15,
+          fontWeight: "500",
+        },
+        headerTintColor: T.ink,
+        headerShadowVisible: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: t("nav.sessionsTab"),
-          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubbles-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="terminal-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -45,7 +57,7 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: t("nav.settingsTab"),
-          tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="options-outline" size={size} color={color} />,
         }}
       />
     </Tabs>

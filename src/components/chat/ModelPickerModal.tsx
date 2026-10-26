@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, TextInput 
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { buildModelPickerSections } from "../../lib/model-picker-filter"
+import { T } from "../../theme/tokens"
 
 // A model chooser rendered as a plain RN Modal. The New Session modal on the
 // sessions screen is itself a native RN Modal, and RN Modals layer above every
@@ -61,14 +62,14 @@ export function ModelPickerModal({ visible, providers, selected, isDark, onClose
           <View style={styles.header}>
             <Text style={[styles.title, isDark && styles.textWhite]}>{t("chat.modelPicker.title")}</Text>
             <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="close" size={22} color={isDark ? "#ffffff" : "#0a0a0a"} />
+              <Ionicons name="close" size={22} color={T.ink} />
             </TouchableOpacity>
           </View>
 
           <TextInput
             style={[styles.search, isDark && styles.searchDark]}
             placeholder={t("chat.modelPicker.searchPlaceholder")}
-            placeholderTextColor={isDark ? "#666666" : "#999999"}
+            placeholderTextColor={T.muted}
             value={search}
             onChangeText={setSearch}
             autoCorrect={false}
@@ -79,7 +80,7 @@ export function ModelPickerModal({ visible, providers, selected, isDark, onClose
           <ScrollView style={styles.list} keyboardShouldPersistTaps="handled">
             {hasSelection && (
               <TouchableOpacity style={[styles.row, isDark && styles.rowDark]} onPress={onClear}>
-                <Ionicons name="refresh" size={16} color={isDark ? "#888888" : "#666666"} />
+                <Ionicons name="refresh" size={16} color={T.muted} />
                 <Text style={[styles.rowNameMuted, isDark && styles.textDim, { marginLeft: 10 }]} numberOfLines={1}>
                   {t("chat.modelPicker.serverDefault")}
                 </Text>
@@ -116,7 +117,7 @@ export function ModelPickerModal({ visible, providers, selected, isDark, onClose
                           {model.providerName}
                         </Text>
                       </View>
-                      {active && <Ionicons name="checkmark-circle" size={20} color="#8b5cf6" />}
+                      {active && <Ionicons name="checkmark-circle" size={20} color={T.accent} />}
                     </TouchableOpacity>
                   )
                 })}
@@ -133,14 +134,14 @@ export function ModelPickerModal({ visible, providers, selected, isDark, onClose
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(0, 0, 0, 0.5)", justifyContent: "center", paddingHorizontal: 24 },
+  overlay: { flex: 1, backgroundColor: T.overlay, justifyContent: "center", paddingHorizontal: 24 },
   panel: {
-    backgroundColor: "#ffffff",
-    borderRadius: 14,
+    backgroundColor: T.paper,
+    borderRadius: 0,
     maxHeight: "75%",
     paddingTop: 14,
   },
-  panelDark: { backgroundColor: "#1a1a1a" },
+  panelDark: { backgroundColor: T.paper2 },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -148,59 +149,60 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 10,
   },
-  title: { fontSize: 17, fontWeight: "700", color: "#0a0a0a" },
-  textWhite: { color: "#ffffff" },
-  textDim: { color: "#888888" },
+  title: { fontFamily: T.mono, fontSize: 17, fontWeight: "700", color: T.ink },
+  textWhite: { fontFamily: T.mono, color: T.ink },
+  textDim: { fontFamily: T.mono, color: T.muted },
   search: {
     marginHorizontal: 16,
     marginBottom: 8,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 10,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
-    color: "#0a0a0a",
+    color: T.ink,
   },
-  searchDark: { backgroundColor: "#2a2a2a", color: "#ffffff" },
+  searchDark: { fontFamily: T.mono, backgroundColor: T.paper3, color: T.ink },
   list: { paddingBottom: 8 },
   sectionHeader: {
-    backgroundColor: "#f5f5f5",
+    backgroundColor: T.paper2,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  sectionHeaderDark: { backgroundColor: "#111111" },
+  sectionHeaderDark: { backgroundColor: T.paper },
   sectionTitle: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#999999",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    color: T.muted,
+
+
+    fontFamily: T.mono,
   },
-  metaDark: { color: "#666666" },
+  metaDark: { fontFamily: T.mono, color: T.muted },
   row: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#e5e5e5",
+    borderBottomColor: T.rule,
   },
-  rowDark: { borderBottomColor: "#2a2a2a" },
-  rowSelected: { backgroundColor: "#f5f3ff" },
-  rowSelectedDark: { backgroundColor: "#1f1a2e" },
+  rowDark: { borderBottomColor: T.rule },
+  rowSelected: { backgroundColor: T.accentWash },
+  rowSelectedDark: { backgroundColor: T.accentWash },
   rowText: { flex: 1 },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  rowName: { fontSize: 15, fontWeight: "500", color: "#0a0a0a", flexShrink: 1 },
-  rowNameMuted: { fontSize: 15, fontWeight: "500", color: "#666666" },
-  rowProvider: { fontSize: 12, color: "#999999", marginTop: 1 },
+  rowName: { fontFamily: T.mono, fontSize: 15, fontWeight: "500", color: T.ink, flexShrink: 1 },
+  rowNameMuted: { fontFamily: T.mono, fontSize: 15, fontWeight: "500", color: T.muted },
+  rowProvider: { fontFamily: T.mono, fontSize: 12, color: T.muted, marginTop: 1 },
   freeBadge: {
-    backgroundColor: "#e8e8e8",
-    borderRadius: 999,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
-  freeBadgeDark: { backgroundColor: "#2a2a2a" },
-  freeBadgeText: { fontSize: 11, fontWeight: "600", color: "#555555" },
-  freeBadgeTextDark: { color: "#bbbbbb" },
-  empty: { padding: 24, textAlign: "center", fontSize: 14, color: "#999999" },
+  freeBadgeDark: { backgroundColor: T.paper3 },
+  freeBadgeText: { fontFamily: T.mono, fontSize: 11, fontWeight: "600", color: T.muted },
+  freeBadgeTextDark: { fontFamily: T.mono, color: T.muted },
+  empty: { fontFamily: T.mono, padding: 24, textAlign: "center", fontSize: 14, color: T.muted },
 })

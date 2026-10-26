@@ -15,6 +15,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Linking } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { checkForUpdate, dismissUpdate, CURRENT_VERSION, type AvailableUpdate } from "../lib/update-check"
+import { T } from "../theme/tokens"
 
 export function UpdateBanner({ isDark }: { isDark: boolean }) {
   const { t } = useTranslation()
@@ -50,7 +51,7 @@ export function UpdateBanner({ isDark }: { isDark: boolean }) {
 
   return (
     <View style={[styles.banner, isDark && styles.bannerDark]} testID="update-banner">
-      <Ionicons name="arrow-up-circle" size={20} color={isDark ? "#7dd3fc" : "#0369a1"} />
+      <Ionicons name="arrow-up-circle" size={20} color={T.ink2} />
       <View style={styles.text}>
         <Text style={[styles.title, isDark && styles.titleDark]}>{t("update.available")}</Text>
         <Text style={[styles.body, isDark && styles.bodyDark]} numberOfLines={1}>
@@ -61,7 +62,7 @@ export function UpdateBanner({ isDark }: { isDark: boolean }) {
         <Text style={[styles.action, isDark && styles.actionDark]}>{t("update.action")}</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={onDismiss} testID="update-banner-dismiss" hitSlop={8}>
-        <Ionicons name="close" size={18} color={isDark ? "#94a3b8" : "#64748b"} />
+        <Ionicons name="close" size={18} color={T.ink} />
       </TouchableOpacity>
     </View>
   )
@@ -74,10 +75,10 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: "#e0f2fe",
+    backgroundColor: T.paper2,
   },
   bannerDark: {
-    backgroundColor: "#0c2b3d",
+    backgroundColor: T.paper2,
   },
   text: {
     flex: 1,
@@ -85,24 +86,30 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#0c4a6e",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   titleDark: {
-    color: "#e0f2fe",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   body: {
     fontSize: 12,
-    color: "#0369a1",
+    color: T.ink2,
+    fontFamily: T.mono,
   },
   bodyDark: {
-    color: "#94a3b8",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   action: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#0369a1",
+    color: T.ink2,
+    fontFamily: T.mono,
   },
   actionDark: {
-    color: "#7dd3fc",
+    color: T.ink2,
+    fontFamily: T.mono,
   },
 })

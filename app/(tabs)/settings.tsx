@@ -26,6 +26,7 @@ import type { Category } from "../../src/lib/notifications"
 import { ORIGINAL_REPO_URL, PRIVACY_POLICY_URL, PROJECT_REPO_URL } from "../../src/lib/links"
 import { CURRENT_VERSION, checkForUpdate, type AvailableUpdate } from "../../src/lib/update-check"
 import type { LocalePreference } from "../../src/lib/i18n/locale-resolve"
+import { T } from "../../src/theme/tokens"
 
 function SettingRow({
   icon,
@@ -45,7 +46,7 @@ function SettingRow({
   const content = (
     <View style={[styles.settingRow, isDark && styles.settingRowDark]}>
       <View style={[styles.settingIcon, isDark && styles.settingIconDark]}>
-        <Ionicons name={icon} size={22} color={isDark ? "#ffffff" : "#0a0a0a"} />
+        <Ionicons name={icon} size={22} color={T.ink} />
       </View>
       <View style={styles.settingContent}>
         <Text style={[styles.settingLabel, isDark && styles.textDark]}>{label}</Text>
@@ -155,7 +156,7 @@ export default function SettingsScreen() {
               value={settings.requireBiometric}
               onValueChange={(value) => updateSettings({ requireBiometric: value })}
               disabled={!hasBiometrics}
-              trackColor={{ false: "#767577", true: "#22c55e" }}
+              trackColor={{ false: T.paper3, true: T.accent }}
             />
           }
         />
@@ -169,7 +170,7 @@ export default function SettingsScreen() {
               value={settings.requireBiometricForMessages}
               onValueChange={(value) => updateSettings({ requireBiometricForMessages: value })}
               disabled={!hasBiometrics || !settings.requireBiometric}
-              trackColor={{ false: "#767577", true: "#22c55e" }}
+              trackColor={{ false: T.paper3, true: T.accent }}
             />
           }
         />
@@ -180,7 +181,7 @@ export default function SettingsScreen() {
             description={t("settings.security.lockNow.description")}
             isDark={isDark}
             onPress={lock}
-            right={<Ionicons name="chevron-forward" size={20} color={isDark ? "#666666" : "#999999"} />}
+            right={<Ionicons name="chevron-forward" size={20} color={T.muted} />}
           />
         )}
       </SettingSection>
@@ -199,7 +200,7 @@ export default function SettingsScreen() {
                 <Switch
                   value={notifications[category]}
                   onValueChange={(value) => handleToggle(category, value)}
-                  trackColor={{ false: "#767577", true: "#22c55e" }}
+                  trackColor={{ false: T.paper3, true: T.accent }}
                 />
               }
             />
@@ -207,7 +208,7 @@ export default function SettingsScreen() {
         })}
         {osGranted === false && (
           <View style={[styles.settingRow, isDark && styles.settingRowDark]}>
-            <Text style={[styles.settingDescription, { color: "#ef4444", paddingLeft: 48 }]}>
+            <Text style={[styles.settingDescription, { color: T.ink2, paddingLeft: 48 }]}>
               {t("settings.notifications.disabledNotice")}
             </Text>
           </View>
@@ -221,7 +222,7 @@ export default function SettingsScreen() {
           description={t("settings.privacy.privacyPolicy.description")}
           isDark={isDark}
           onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
-          right={<Ionicons name="open-outline" size={20} color={isDark ? "#666666" : "#999999"} />}
+          right={<Ionicons name="open-outline" size={20} color={T.muted} />}
         />
       </SettingSection>
 
@@ -232,7 +233,7 @@ export default function SettingsScreen() {
           description={t("settings.providers.row.description")}
           isDark={isDark}
           onPress={() => router.push(PROVIDERS_ROUTE)}
-          right={<Ionicons name="chevron-forward" size={20} color={isDark ? "#666666" : "#999999"} />}
+          right={<Ionicons name="chevron-forward" size={20} color={T.muted} />}
         />
         <SettingRow
           icon="options-outline"
@@ -240,7 +241,7 @@ export default function SettingsScreen() {
           description={t("models.settingsDescription")}
           isDark={isDark}
           onPress={() => router.push("/models")}
-          right={<Ionicons name="chevron-forward" size={20} color={isDark ? "#666666" : "#999999"} />}
+          right={<Ionicons name="chevron-forward" size={20} color={T.muted} />}
         />
       </SettingSection>
 
@@ -251,7 +252,7 @@ export default function SettingsScreen() {
           description={localeLabels[locale]}
           isDark={isDark}
           onPress={handleLanguagePress}
-          right={<Ionicons name="chevron-forward" size={20} color={isDark ? "#666666" : "#999999"} />}
+          right={<Ionicons name="chevron-forward" size={20} color={T.muted} />}
         />
         <SettingRow
           icon="information-circle"
@@ -268,7 +269,7 @@ export default function SettingsScreen() {
           onPress={updateAvailable ? () => Linking.openURL(updateAvailable.url) : undefined}
           right={
             updateAvailable ? (
-              <Ionicons name="arrow-up-circle" size={20} color={isDark ? "#7dd3fc" : "#0369a1"} />
+              <Ionicons name="arrow-up-circle" size={20} color={T.ink2} />
             ) : undefined
           }
         />
@@ -278,7 +279,7 @@ export default function SettingsScreen() {
           description={t("settings.about.github.description")}
           isDark={isDark}
           onPress={() => Linking.openURL(PROJECT_REPO_URL)}
-          right={<Ionicons name="open-outline" size={20} color={isDark ? "#666666" : "#999999"} />}
+          right={<Ionicons name="open-outline" size={20} color={T.muted} />}
         />
         <SettingRow
           icon="git-branch-outline"
@@ -286,7 +287,7 @@ export default function SettingsScreen() {
           description={t("settings.about.upstream.description")}
           isDark={isDark}
           onPress={() => Linking.openURL(ORIGINAL_REPO_URL)}
-          right={<Ionicons name="open-outline" size={20} color={isDark ? "#666666" : "#999999"} />}
+          right={<Ionicons name="open-outline" size={20} color={T.muted} />}
         />
         <SettingRow
           icon="document-text"
@@ -294,7 +295,7 @@ export default function SettingsScreen() {
           description={t("settings.about.docs.description")}
           isDark={isDark}
           onPress={() => Linking.openURL("https://opencode.ai/docs")}
-          right={<Ionicons name="open-outline" size={20} color={isDark ? "#666666" : "#999999"} />}
+          right={<Ionicons name="open-outline" size={20} color={T.muted} />}
         />
       </SettingSection>
 
@@ -309,10 +310,10 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: T.paper2,
   },
   containerDark: {
-    backgroundColor: "#0a0a0a",
+    backgroundColor: T.paper,
   },
   content: {
     paddingBottom: 32,
@@ -323,23 +324,25 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#666666",
+    color: T.muted,
     marginLeft: 16,
     marginBottom: 8,
-    textTransform: "uppercase",
+
+    fontFamily: T.mono,
   },
   sectionTitleDark: {
-    color: "#888888",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   sectionContent: {
-    backgroundColor: "#ffffff",
+    backgroundColor: T.paper,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "#e5e5e5",
+    borderColor: T.rule,
   },
   sectionContentDark: {
-    backgroundColor: "#1a1a1a",
-    borderColor: "#2a2a2a",
+    backgroundColor: T.paper2,
+    borderColor: T.rule,
   },
   settingRow: {
     flexDirection: "row",
@@ -347,40 +350,44 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
+    borderBottomColor: T.rule,
   },
   settingRowDark: {
-    borderBottomColor: "#2a2a2a",
+    borderBottomColor: T.rule,
   },
   settingIcon: {
     width: 36,
     height: 36,
-    borderRadius: 8,
-    backgroundColor: "#f5f5f5",
+    borderRadius: 0,
+    backgroundColor: T.accentWash,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
   settingIconDark: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: T.paper3,
   },
   settingContent: {
     flex: 1,
   },
   settingLabel: {
     fontSize: 16,
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   textDark: {
-    color: "#ffffff",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   settingDescription: {
     fontSize: 13,
-    color: "#666666",
+    color: T.muted,
     marginTop: 2,
+    fontFamily: T.mono,
   },
   metaDark: {
-    color: "#888888",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   footer: {
     alignItems: "center",
@@ -388,7 +395,8 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 13,
-    color: "#999999",
+    color: T.muted,
     textAlign: "center",
+    fontFamily: T.mono,
   },
 })

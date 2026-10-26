@@ -5,12 +5,12 @@
     "version": "0.2.22",
     "orientation": "default",
     "scheme": "opencode",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0F172A"
+      "backgroundColor": "#040805"
     },
     "ios": {
       "supportsTablet": true,
@@ -40,7 +40,7 @@
       "blockedPermissions": ["android.permission.SYSTEM_ALERT_WINDOW"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0F172A"
+        "backgroundColor": "#040805"
       }
     },
     "web": {

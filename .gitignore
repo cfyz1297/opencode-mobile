@@ -23,3 +23,6 @@ expo-env.d.ts
 # Local APK builds and ad-hoc artifacts
 dist/
 tmp/
+
+# Hallmark design runs
+.hallmark/

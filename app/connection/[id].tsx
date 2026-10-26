@@ -21,6 +21,7 @@ import { probeConnection, shareReport } from "../../src/lib/diagnostics"
 import { parseUrl } from "../../src/lib/diagnostics-classify"
 import { buildAuth } from "../../src/lib/auth"
 import { sendsPasswordInClearText } from "../../src/lib/connection-security"
+import { T } from "../../src/theme/tokens"
 
 // labelKey (not literal text): this is a module-level constant evaluated
 // before i18next is guaranteed ready, so the label is resolved with t() at
@@ -207,7 +208,7 @@ export default function EditConnectionScreen() {
             <Ionicons
               name={opt.icon}
               size={20}
-              color={type === opt.type ? (isDark ? "#0a0a0a" : "#ffffff") : isDark ? "#888888" : "#666666"}
+              color={type === opt.type ? (T.ink) : T.muted}
             />
             <Text
               style={[
@@ -228,7 +229,7 @@ export default function EditConnectionScreen() {
       <TextInput
         style={[styles.input, isDark && styles.inputDark]}
         placeholder={t("connection.shared.namePlaceholder")}
-        placeholderTextColor={isDark ? "#666666" : "#999999"}
+        placeholderTextColor={T.muted}
         value={name}
         onChangeText={setName}
       />
@@ -238,7 +239,7 @@ export default function EditConnectionScreen() {
       <TextInput
         style={[styles.input, isDark && styles.inputDark]}
         placeholder="http://192.168.1.100:4096"
-        placeholderTextColor={isDark ? "#666666" : "#999999"}
+        placeholderTextColor={T.muted}
         value={url}
         onChangeText={setUrl}
         autoCapitalize="none"
@@ -251,7 +252,7 @@ export default function EditConnectionScreen() {
       <TextInput
         style={[styles.input, isDark && styles.inputDark]}
         placeholder="/path/to/project"
-        placeholderTextColor={isDark ? "#666666" : "#999999"}
+        placeholderTextColor={T.muted}
         value={directory}
         onChangeText={setDirectory}
         autoCapitalize="none"
@@ -266,7 +267,7 @@ export default function EditConnectionScreen() {
       <TextInput
         style={[styles.input, isDark && styles.inputDark]}
         placeholder="admin"
-        placeholderTextColor={isDark ? "#666666" : "#999999"}
+        placeholderTextColor={T.muted}
         value={username}
         onChangeText={setUsername}
         autoCapitalize="none"
@@ -277,7 +278,7 @@ export default function EditConnectionScreen() {
       <TextInput
         style={[styles.input, isDark && styles.inputDark]}
         placeholder="••••••••"
-        placeholderTextColor={isDark ? "#666666" : "#999999"}
+        placeholderTextColor={T.muted}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -296,10 +297,10 @@ export default function EditConnectionScreen() {
           disabled={isTesting}
         >
           {isTesting ? (
-            <ActivityIndicator size="small" color={isDark ? "#ffffff" : "#0a0a0a"} />
+            <ActivityIndicator size="small" color={T.ink} />
           ) : (
             <>
-              <Ionicons name="pulse" size={20} color={isDark ? "#ffffff" : "#0a0a0a"} />
+              <Ionicons name="pulse" size={20} color={T.ink} />
               <Text style={[styles.testButtonText, isDark && styles.textDark]}>{t("connection.edit.testButton")}</Text>
             </>
           )}
@@ -311,7 +312,7 @@ export default function EditConnectionScreen() {
           disabled={isSaving}
         >
           {isSaving ? (
-            <ActivityIndicator size="small" color={isDark ? "#0a0a0a" : "#ffffff"} />
+            <ActivityIndicator size="small" color={T.ink} />
           ) : (
             <Text style={[styles.saveButtonText, isDark && styles.saveButtonTextDark]}>
               {t("connection.edit.saveButton")}
@@ -320,7 +321,7 @@ export default function EditConnectionScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-          <Ionicons name="trash-outline" size={20} color="#ef4444" />
+          <Ionicons name="trash-outline" size={20} color={T.ink2} />
           <Text style={styles.deleteButtonText}>{t("connection.edit.deleteButton")}</Text>
         </TouchableOpacity>
       </View>
@@ -332,10 +333,10 @@ export default function EditConnectionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: T.paper,
   },
   containerDark: {
-    backgroundColor: "#0a0a0a",
+    backgroundColor: T.paper,
   },
   center: {
     justifyContent: "center",
@@ -347,17 +348,20 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: "#666666",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   label: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#0a0a0a",
+    color: T.ink,
     marginTop: 16,
     marginBottom: 8,
+    fontFamily: T.mono,
   },
   labelDark: {
-    color: "#ffffff",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   typeContainer: {
     flexDirection: "row",
@@ -369,67 +373,78 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 12,
-    borderRadius: 8,
-    backgroundColor: "#f5f5f5",
+    borderRadius: 0,
+    backgroundColor: T.accentWash,
     gap: 6,
   },
   typeOptionDark: {
-    backgroundColor: "#1a1a1a",
+    backgroundColor: T.paper2,
   },
   typeOptionSelected: {
-    backgroundColor: "#0a0a0a",
+    backgroundColor: T.paper,
   },
   typeOptionSelectedDark: {
-    backgroundColor: "#ffffff",
+    backgroundColor: T.paper,
   },
   typeLabel: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#666666",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   textDark: {
-    color: "#ffffff",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   typeLabelSelected: {
-    color: "#ffffff",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   typeLabelSelectedDark: {
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   input: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   inputDark: {
-    backgroundColor: "#1a1a1a",
-    color: "#ffffff",
+    backgroundColor: T.paper2,
+    color: T.ink,
+    fontFamily: T.mono,
   },
   hint: {
     fontSize: 13,
-    color: "#666666",
+    color: T.muted,
     marginTop: 6,
+    fontFamily: T.mono,
   },
   hintDark: {
-    color: "#888888",
+    color: T.muted,
+    fontFamily: T.mono,
   },
   securityHint: {
     fontSize: 13,
-    color: "#b45309",
+    color: T.ink2,
     marginTop: 8,
+    fontFamily: T.mono,
   },
   securityHintDark: {
-    color: "#fbbf24",
+    color: T.ink2,
+    fontFamily: T.mono,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#0a0a0a",
+    color: T.ink,
     marginTop: 32,
     marginBottom: 8,
+    fontFamily: T.mono,
   },
   actions: {
     marginTop: 32,
@@ -441,35 +456,38 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 0,
     borderWidth: 1,
-    borderColor: "#e5e5e5",
+    borderColor: T.rule,
   },
   testButtonDark: {
-    borderColor: "#333333",
+    borderColor: T.rule,
   },
   testButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
   saveButton: {
     alignItems: "center",
     justifyContent: "center",
     padding: 16,
-    borderRadius: 12,
-    backgroundColor: "#0a0a0a",
+    borderRadius: 0,
+    backgroundColor: T.accent,
   },
   saveButtonDark: {
-    backgroundColor: "#ffffff",
+    backgroundColor: T.accent,
   },
   saveButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#ffffff",
+    color: T.accentInk,
+    fontFamily: T.mono,
   },
   saveButtonTextDark: {
-    color: "#0a0a0a",
+    color: T.accentInk,
+    fontFamily: T.mono,
   },
   deleteButton: {
     flexDirection: "row",
@@ -477,12 +495,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     padding: 16,
-    borderRadius: 12,
-    backgroundColor: "#fef2f2",
+    borderRadius: 0,
+    backgroundColor: T.accentWash,
   },
   deleteButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#ef4444",
+    color: T.ink2,
+    fontFamily: T.mono,
   },
 })

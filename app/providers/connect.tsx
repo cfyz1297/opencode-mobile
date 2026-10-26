@@ -21,6 +21,7 @@ import {
   validateConnectProviderId,
 } from "../../src/lib/provider-auth"
 import { ApiError, isAuthError } from "../../src/lib/sdk"
+import { T } from "../../src/theme/tokens"
 
 export default function ConnectProviderScreen() {
   const colorScheme = useColorScheme()
@@ -103,7 +104,7 @@ export default function ConnectProviderScreen() {
           value={apiKey}
           onChangeText={setApiKey}
           placeholder={t("providers.connect.apiKeyPlaceholder")}
-          placeholderTextColor={isDark ? "#666666" : "#999999"}
+          placeholderTextColor={T.muted}
           autoCapitalize="none"
           autoCorrect={false}
           autoComplete="off"
@@ -125,7 +126,7 @@ export default function ConnectProviderScreen() {
           testID="provider-connect-submit"
         >
           {busy ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={T.ink} />
           ) : (
             <Text style={styles.primaryBtnText}>{t("providers.connect.submit")}</Text>
           )}
@@ -136,30 +137,30 @@ export default function ConnectProviderScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#ffffff" },
-  containerDark: { backgroundColor: "#0a0a0a" },
+  container: { flex: 1, backgroundColor: T.paper },
+  containerDark: { backgroundColor: T.paper },
   content: { padding: 16, paddingBottom: 40, gap: 10 },
-  lead: { fontSize: 14, color: "#444444", lineHeight: 20 },
-  securityNote: { fontSize: 13, color: "#666666", lineHeight: 18, marginBottom: 8 },
-  metaDark: { color: "#888888" },
-  label: { fontSize: 13, fontWeight: "600", color: "#555555", marginTop: 4 },
+  lead: { fontFamily: T.mono, fontSize: 14, color: T.ink, lineHeight: 20 },
+  securityNote: { fontFamily: T.mono, fontSize: 13, color: T.muted, lineHeight: 18, marginBottom: 8 },
+  metaDark: { fontFamily: T.mono, color: T.muted },
+  label: { fontFamily: T.mono, fontSize: 13, fontWeight: "600", color: T.muted, marginTop: 4 },
   input: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 10,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: "#0a0a0a",
+    color: T.ink,
   },
-  inputDark: { backgroundColor: "#2a2a2a", color: "#ffffff" },
-  toggle: { fontSize: 13, color: "#666666", marginBottom: 8 },
+  inputDark: { fontFamily: T.mono, backgroundColor: T.paper3, color: T.ink },
+  toggle: { fontFamily: T.mono, fontSize: 13, color: T.muted, marginBottom: 8 },
   primaryBtn: {
     marginTop: 8,
-    backgroundColor: "#0a0a0a",
-    borderRadius: 10,
+    backgroundColor: T.accent,
+    borderRadius: 0,
     paddingVertical: 14,
     alignItems: "center",
   },
   primaryBtnDisabled: { opacity: 0.4 },
-  primaryBtnText: { color: "#ffffff", fontWeight: "700", fontSize: 15 },
+  primaryBtnText: { fontFamily: T.mono, color: T.accentInk, fontWeight: "700", fontSize: 15 },
 })

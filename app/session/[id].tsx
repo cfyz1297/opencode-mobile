@@ -44,6 +44,7 @@ import { useCatalog } from "../../src/stores/catalog"
 import { useSpeech } from "../../src/lib/speech"
 import { adaptiveLayout } from '../../src/lib/adaptive-layout'
 import { TabletSessions } from '../../src/components/TabletSessions'
+import { T } from "../../src/theme/tokens"
 
 
 // --- Builtin slash commands ---
@@ -781,7 +782,6 @@ export default function SessionScreen() {
 
   // Current agent display (state stores the API id; `name` is display case)
   const currentAgent = agents.find((a) => (a.id ?? a.name) === agent || a.name === agent)
-  const agentColor = currentAgent?.color || "#8b5cf6"
   const modelLabel = model?.modelID ? model.modelID.split("/").pop() || model.modelID : "default"
 
   // Variants for current model (for reasoning effort picker)
@@ -801,7 +801,7 @@ export default function SessionScreen() {
             <View style={s.headerRight}>
               {shortDir && (
                 <View style={[s.dirBadge, isDark && s.dirBadgeDark]}>
-                  <Ionicons name="folder-outline" size={14} color={isDark ? "#888888" : "#666666"} />
+                  <Ionicons name="folder-outline" size={14} color={T.muted} />
                   <Text style={[s.dirText, isDark && s.dirTextDark]}>{shortDir}</Text>
                 </View>
               )}
@@ -809,7 +809,7 @@ export default function SessionScreen() {
                 <Ionicons
                   name={showInfo ? "stats-chart" : "stats-chart-outline"}
                   size={20}
-                  color={showInfo ? "#3b82f6" : isDark ? "#888888" : "#666666"}
+                  color={showInfo ? T.ink2 : T.muted}
                 />
               </TouchableOpacity>
             </View>
@@ -883,7 +883,7 @@ export default function SessionScreen() {
 
         {isLoading ? (
           <View style={s.loading}>
-            <ActivityIndicator size="large" color={isDark ? "#ffffff" : "#0a0a0a"} />
+            <ActivityIndicator size="large" color={T.ink} />
           </View>
         ) : (
           <View style={s.listWrap}>
@@ -916,7 +916,7 @@ export default function SessionScreen() {
               ListFooterComponent={
                 loadingMore ? (
                   <View style={s.loadingMore}>
-                    <ActivityIndicator size="small" color={isDark ? "#888888" : "#666666"} />
+                    <ActivityIndicator size="small" color={T.muted} />
                     <Text style={[s.loadingMoreText, isDark && s.metaDark]}>{t("session.loadingOlder")}</Text>
                   </View>
                 ) : null
@@ -926,14 +926,14 @@ export default function SessionScreen() {
                 inverted transform mirroring its text/icon (see #ui-mirror). */}
             {messageData.length === 0 && (
               <View style={s.emptyOverlay} pointerEvents="none">
-                <Ionicons name="chatbubble-outline" size={48} color={isDark ? "#444444" : "#cccccc"} />
+                <Ionicons name="chatbubble-outline" size={48} color={T.ink} />
                 <Text style={[s.emptyText, isDark && s.metaDark]}>{t("session.empty.title")}</Text>
                 <Text style={[s.emptyHint, isDark && s.metaDark]}>{t("session.empty.hint")}</Text>
               </View>
             )}
             {showScrollButton && (
               <TouchableOpacity style={[s.scrollBtn, isDark && s.scrollBtnDark]} onPress={() => scrollToBottom(true)}>
-                <Ionicons name="chevron-down" size={24} color={isDark ? "#ffffff" : "#0a0a0a"} />
+                <Ionicons name="chevron-down" size={24} color={T.ink} />
               </TouchableOpacity>
             )}
           </View>
@@ -955,7 +955,7 @@ export default function SessionScreen() {
         {/* Question reply confirmation — survives the prompt's removal */}
         {questionSentText !== null && (
           <View style={[s.questionSent, isDark && s.questionSentDark]}>
-            <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
+            <Ionicons name="checkmark-circle" size={18} color={T.accent} />
             <View style={s.questionSentBody}>
               <Text style={[s.questionSentTitle, isDark && s.questionSentTitleDark]}>
                 {t("chat.questionPrompt.sent")}
@@ -988,13 +988,13 @@ export default function SessionScreen() {
         {/* Agent/model toolbar */}
         <View style={[s.toolbar, isDark && s.toolbarDark]}>
           <TouchableOpacity
-            style={[s.agentChip, { borderColor: agentColor }]}
+            style={s.agentChip}
             onPress={() => cycleAgent()}
             onLongPress={() => cycleAgent(-1)}
           >
-            <View style={[s.agentDot, { backgroundColor: agentColor }]} />
+            <View style={s.agentDot} />
             <Text style={[s.agentLabel, isDark && s.textWhite]}>{(currentAgent?.name ?? agent) || "build"}</Text>
-            <Ionicons name="swap-horizontal-outline" size={12} color={isDark ? "#888888" : "#666666"} />
+            <Ionicons name="swap-horizontal-outline" size={12} color={T.muted} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -1002,7 +1002,7 @@ export default function SessionScreen() {
             onPress={() => modelSheetRef.current?.expand()}
             testID="model-chip"
           >
-            <Ionicons name="hardware-chip-outline" size={14} color={isDark ? "#888888" : "#666666"} />
+            <Ionicons name="hardware-chip-outline" size={14} color={T.muted} />
             <Text style={[s.modelLabel, isDark && s.metaDark]} numberOfLines={1}>
               {modelLabel}
             </Text>
@@ -1014,7 +1014,7 @@ export default function SessionScreen() {
               onPress={() => variantSheetRef.current?.expand()}
               testID="variant-chip"
             >
-              <Ionicons name="flash-outline" size={14} color={variant ? "#8b5cf6" : isDark ? "#888888" : "#666666"} />
+              <Ionicons name="flash-outline" size={14} color={variant ? T.accent : T.muted} />
               <Text style={[s.variantLabel, isDark && s.metaDark, variant && s.variantLabelActive]} numberOfLines={1}>
                 {variant ? variant.charAt(0).toUpperCase() + variant.slice(1) : t("session.toolbar.auto")}
               </Text>
@@ -1041,12 +1041,12 @@ export default function SessionScreen() {
           <View style={s.inputRow}>
             {/* Attach button */}
             <TouchableOpacity style={s.attachBtn} onPress={pickFromLibrary} onLongPress={pickFromCamera}>
-              <Ionicons name="add-circle-outline" size={26} color={isDark ? "#888888" : "#666666"} />
+              <Ionicons name="add-circle-outline" size={26} color={T.muted} />
             </TouchableOpacity>
 
             {/* Clipboard paste button */}
             <TouchableOpacity style={s.attachBtn} onPress={pasteFromClipboard}>
-              <Ionicons name="clipboard-outline" size={22} color={isDark ? "#888888" : "#666666"} />
+              <Ionicons name="clipboard-outline" size={22} color={T.muted} />
             </TouchableOpacity>
 
             <TextInput
@@ -1058,7 +1058,7 @@ export default function SessionScreen() {
                     ? t("session.input.placeholderFollowUp")
                     : t("session.input.placeholderDefault")
               }
-              placeholderTextColor={speech.listening ? "#ef4444" : isDark ? "#666666" : "#999999"}
+              placeholderTextColor={speech.listening ? T.ink2 : T.muted}
               value={speech.listening ? speech.transcript : input}
               onChangeText={speech.listening ? undefined : setInput}
               editable={!speech.listening}
@@ -1070,25 +1070,25 @@ export default function SessionScreen() {
                 typed mid-run can still be aborted (BUG-022). */}
             {isSending && !speech.listening && (
               <TouchableOpacity style={s.stopBtn} onPress={abortSession}>
-                <Ionicons name="stop" size={20} color="#ffffff" />
+                <Ionicons name="stop" size={20} color={T.ink} />
               </TouchableOpacity>
             )}
             {/* Mic button: when no input, not sending, and not listening */}
             {!isSending && !input.trim() && attachments.length === 0 && !speech.listening && (
               <TouchableOpacity style={s.micBtn} onPress={speech.start}>
-                <Ionicons name="mic" size={22} color={isDark ? "#888888" : "#666666"} />
+                <Ionicons name="mic" size={22} color={T.muted} />
               </TouchableOpacity>
             )}
             {/* Listening indicator: tap to stop */}
             {speech.listening && (
               <TouchableOpacity style={s.micBtnActive} onPress={speech.stop}>
-                <Ionicons name="mic" size={22} color="#ffffff" />
+                <Ionicons name="mic" size={22} color={T.ink} />
               </TouchableOpacity>
             )}
             {/* Send button: when there's input */}
             {!speech.listening && (input.trim() || attachments.length > 0) && (
               <TouchableOpacity style={s.sendBtn} onPress={handleSend} testID="chat-send-button">
-                <Ionicons name="send" size={20} color="#ffffff" />
+                <Ionicons name="arrow-forward" size={20} color={T.accentInk} />
               </TouchableOpacity>
             )}
           </View>
@@ -1119,8 +1119,8 @@ export default function SessionScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#ffffff" },
-  containerDark: { backgroundColor: "#0a0a0a" },
+  container: { flex: 1, backgroundColor: T.paper },
+  containerDark: { backgroundColor: T.paper },
   loading: { flex: 1, justifyContent: "center", alignItems: "center" },
   listWrap: { flex: 1, position: "relative" },
 
@@ -1134,17 +1134,12 @@ const s = StyleSheet.create({
     right: 16,
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: "#ffffff",
+    borderRadius: 0,
+    backgroundColor: T.paper3,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
   },
-  scrollBtnDark: { backgroundColor: "#2a2a2a" },
+  scrollBtnDark: { backgroundColor: T.paper3 },
 
   // Loading more (appears at top in inverted list = ListFooterComponent)
   loadingMore: {
@@ -1154,7 +1149,7 @@ const s = StyleSheet.create({
     gap: 8,
     paddingVertical: 16,
   },
-  loadingMoreText: { fontSize: 13, color: "#999999" },
+  loadingMoreText: { fontFamily: T.mono, fontSize: 13, color: T.muted },
 
   // Empty state overlay — sits on top of the (empty) inverted list, untransformed,
   // so its text/icon render upright and un-mirrored on Android.
@@ -1167,10 +1162,10 @@ const s = StyleSheet.create({
 
   // Empty
   empty: { flex: 1, justifyContent: "center", alignItems: "center", paddingVertical: 64 },
-  emptyText: { fontSize: 16, color: "#999999", marginTop: 12 },
-  emptyHint: { fontSize: 13, color: "#bbbbbb", marginTop: 4 },
-  metaDark: { color: "#666666" },
-  textWhite: { color: "#ffffff" },
+  emptyText: { fontFamily: T.mono, fontSize: 16, color: T.muted, marginTop: 12 },
+  emptyHint: { fontFamily: T.mono, fontSize: 13, color: T.muted, marginTop: 4 },
+  metaDark: { fontFamily: T.mono, color: T.muted },
+  textWhite: { fontFamily: T.mono, color: T.ink },
 
   // Question reply confirmation (survives prompt removal)
   questionSent: {
@@ -1180,16 +1175,16 @@ const s = StyleSheet.create({
     marginHorizontal: 12,
     marginTop: 8,
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 0,
     borderWidth: 1,
-    backgroundColor: "#ecfdf5",
-    borderColor: "#a7f3d0",
+    backgroundColor: T.paper2,
+    borderColor: T.rule,
   },
-  questionSentDark: { backgroundColor: "#052e16", borderColor: "#166534" },
+  questionSentDark: { backgroundColor: T.accentWash, borderColor: T.rule },
   questionSentBody: { flex: 1 },
-  questionSentTitle: { fontSize: 13, fontWeight: "600", color: "#166534" },
-  questionSentTitleDark: { color: "#86efac" },
-  questionSentAnswer: { fontSize: 12, color: "#374151", marginTop: 2 },
+  questionSentTitle: { fontFamily: T.mono, fontSize: 13, fontWeight: "600", color: T.ink },
+  questionSentTitleDark: { fontFamily: T.mono, color: T.ink },
+  questionSentAnswer: { fontFamily: T.mono, fontSize: 12, color: T.ink, marginTop: 2 },
 
   // Toolbar
   toolbar: {
@@ -1199,56 +1194,56 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
-    backgroundColor: "#ffffff",
+    borderTopColor: T.rule,
+    backgroundColor: T.paper,
   },
-  toolbarDark: { borderTopColor: "#1a1a1a", backgroundColor: "#0a0a0a" },
+  toolbarDark: { borderTopColor: T.rule, backgroundColor: T.paper },
   agentChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
     borderWidth: 1,
-    borderRadius: 12,
+    borderColor: T.rule2,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  agentDot: { width: 8, height: 8, borderRadius: 4 },
-  agentLabel: { fontSize: 12, fontWeight: "600", color: "#0a0a0a" },
+  agentDot: { width: 6, height: 6, backgroundColor: T.accent },
+  agentLabel: { fontFamily: T.mono, fontSize: 12, fontWeight: "600", color: T.ink },
   modelChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 12,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  modelChipDark: { backgroundColor: "#1a1a1a" },
-  modelLabel: { fontSize: 12, color: "#666666", maxWidth: 160 },
+  modelChipDark: { backgroundColor: T.paper2 },
+  modelLabel: { fontFamily: T.mono, fontSize: 12, color: T.muted, maxWidth: 160 },
 
   // Variant (reasoning effort) chip
   variantChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 12,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  variantChipDark: { backgroundColor: "#1a1a1a" },
-  variantChipActive: { backgroundColor: "#f5f3ff" },
-  variantLabel: { fontSize: 12, color: "#666666" },
-  variantLabelActive: { color: "#8b5cf6" },
+  variantChipDark: { backgroundColor: T.paper2 },
+  variantChipActive: { backgroundColor: T.accentWash },
+  variantLabel: { fontFamily: T.mono, fontSize: 12, color: T.muted },
+  variantLabelActive: { fontFamily: T.mono, color: T.accent },
 
   // Input
   inputContainer: {
     padding: 12,
     borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
-    backgroundColor: "#ffffff",
+    borderTopColor: T.rule,
+    backgroundColor: T.paper,
   },
-  inputContainerDark: { borderTopColor: "#1a1a1a", backgroundColor: "#0a0a0a" },
+  inputContainerDark: { borderTopColor: T.rule, backgroundColor: T.paper },
   inputRow: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -1261,30 +1256,31 @@ const s = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 20,
+    backgroundColor: T.paper2,
+    borderRadius: 0,
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 16,
     maxHeight: 120,
-    color: "#0a0a0a",
+    color: T.ink,
+    fontFamily: T.mono,
   },
-  inputDark: { backgroundColor: "#1a1a1a", color: "#ffffff" },
-  inputListening: { borderWidth: 1, borderColor: "#ef4444" },
+  inputDark: { fontFamily: T.mono, backgroundColor: T.paper2, color: T.ink },
+  inputListening: { borderWidth: 1, borderColor: T.rule },
   sendBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: "#0a0a0a",
+    borderRadius: 0,
+    backgroundColor: T.accent,
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 8,
   },
-  sendBtnDisabled: { backgroundColor: "#cccccc" },
+  sendBtnDisabled: { backgroundColor: T.paper3 },
   micBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 0,
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 8,
@@ -1292,8 +1288,8 @@ const s = StyleSheet.create({
   micBtnActive: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: "#ef4444",
+    borderRadius: 0,
+    backgroundColor: T.paper3,
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 8,
@@ -1301,8 +1297,8 @@ const s = StyleSheet.create({
   stopBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: "#ef4444",
+    borderRadius: 0,
+    backgroundColor: T.paper3,
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 8,
@@ -1314,14 +1310,14 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: T.accentWash,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 0,
   },
-  dirBadgeDark: { backgroundColor: "#1a1a1a" },
-  dirText: { fontSize: 12, color: "#666666", fontWeight: "500" },
-  dirTextDark: { color: "#888888" },
+  dirBadgeDark: { backgroundColor: T.accentWash },
+  dirText: { fontFamily: T.mono, fontSize: 12, color: T.muted, fontWeight: "500" },
+  dirTextDark: { fontFamily: T.mono, color: T.muted },
 
   // SSE reconnect/connected banner
   banner: {
@@ -1329,13 +1325,13 @@ const s = StyleSheet.create({
     paddingVertical: 6,
     alignItems: "center",
   },
-  bannerReconnecting: { backgroundColor: "#92400e" },
-  bannerConnected: { backgroundColor: "#065f46" },
-  bannerText: { color: "#ffffff", fontSize: 13, fontWeight: "500", flexShrink: 1 },
+  bannerReconnecting: { backgroundColor: T.paper2 },
+  bannerConnected: { backgroundColor: T.paper2 },
+  bannerText: { fontFamily: T.mono, color: T.ink, fontSize: 13, fontWeight: "500", flexShrink: 1 },
 
   // Pending revert (edit message) banner
   bannerRevert: {
-    backgroundColor: "#1e3a8a",
+    backgroundColor: T.paper2,
     flexDirection: "row",
     justifyContent: "space-between",
     // The reverted message text is user-length (campaigns of paragraphs);
@@ -1343,5 +1339,5 @@ const s = StyleSheet.create({
     // it past the screen edge.
     gap: 12,
   },
-  bannerAction: { color: "#93c5fd", fontSize: 13, fontWeight: "700" },
+  bannerAction: { fontFamily: T.mono, color: T.ink, fontSize: 13, fontWeight: "700" },
 })

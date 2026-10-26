@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Platform, ScrollView } from "react-native"
 import { WIDE_CONTENT_SCROLL_CONFIG } from "../../lib/scroll-config"
 import { computeDiff } from "./diff-compute"
+import { T } from "../../theme/tokens"
 
 const mono = Platform.OS === "ios" ? "Menlo" : "monospace"
 
@@ -52,39 +53,39 @@ export function DiffView({ before, after, isDark }: Props) {
 
 const s = StyleSheet.create({
   container: {
-    borderRadius: 6,
+    borderRadius: 0,
     overflow: "hidden",
-    backgroundColor: "#f8f8f8",
+    backgroundColor: T.paper2,
     marginTop: 6,
   },
-  containerDark: { backgroundColor: "#1a1a1a" },
+  containerDark: { backgroundColor: T.paper2 },
 
   line: {
     flexDirection: "row",
     paddingHorizontal: 8,
     paddingVertical: 1,
   },
-  add: { backgroundColor: "#dcfce7" },
-  addDark: { backgroundColor: "#052e16" },
-  remove: { backgroundColor: "#fee2e2" },
-  removeDark: { backgroundColor: "#2a0a0a" },
+  add: { backgroundColor: T.paper2 },
+  addDark: { backgroundColor: T.accentWash },
+  remove: { backgroundColor: T.paper2 },
+  removeDark: { backgroundColor: T.paper2 },
 
   prefix: {
     width: 16,
     fontSize: 12,
     fontFamily: mono,
-    color: "#999999",
+    color: T.muted,
     lineHeight: 20,
   },
-  prefixDark: { color: "#666666" },
+  prefixDark: { fontFamily: T.mono, color: T.muted },
 
   text: {
     fontSize: 12,
     fontFamily: mono,
-    color: "#0a0a0a",
+    color: T.ink,
     lineHeight: 20,
   },
-  textDark: { color: "#e5e5e5" },
-  addText: { color: "#16a34a" },
-  removeText: { color: "#dc2626" },
+  textDark: { fontFamily: T.mono, color: T.ink2 },
+  addText: { fontFamily: T.mono, color: T.accent },
+  removeText: { fontFamily: T.mono, color: T.ink2 },
 })

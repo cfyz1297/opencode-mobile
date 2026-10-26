@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Stack, router } from "expo-router"
 import { StatusBar } from "expo-status-bar"
-import { useColorScheme, View, ActivityIndicator, AppState } from "react-native"
+import { View, ActivityIndicator, AppState } from "react-native"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet"
@@ -19,12 +19,11 @@ import { AuthGate } from "../src/components/AuthGate"
 import { ErrorBoundary } from "../src/components/ErrorBoundary"
 import * as notifications from "../src/lib/notifications"
 import { flushPendingSignups } from "../src/lib/waitlist-queue-storage"
+import { T } from "../src/theme/tokens"
 
 const queryClient = new QueryClient()
 
 function RootLayout() {
-  const colorScheme = useColorScheme()
-  const isDark = colorScheme === "dark"
   const { t } = useTranslation()
 
   const { initialize: initAuth, isLoading: authLoading } = useAuth()
@@ -165,10 +164,10 @@ function RootLayout() {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+          backgroundColor: T.paper,
         }}
       >
-        <ActivityIndicator size="large" color={isDark ? "#ffffff" : "#0a0a0a"} />
+        <ActivityIndicator size="large" color={T.ink} />
       </View>
     )
   }
@@ -183,11 +182,17 @@ function RootLayout() {
             <Stack
               screenOptions={{
                 headerStyle: {
-                  backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+                  backgroundColor: T.paper,
                 },
-                headerTintColor: isDark ? "#ffffff" : "#0a0a0a",
+                headerTitleStyle: {
+                  fontFamily: T.mono,
+                  fontSize: 15,
+                  fontWeight: "500",
+                },
+                headerTintColor: T.ink,
+                headerShadowVisible: false,
                 contentStyle: {
-                  backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+                  backgroundColor: T.paper,
                 },
               }}
             >
@@ -236,7 +241,7 @@ function RootLayout() {
               />
               <Stack.Screen name="models" options={{ title: t("models.title") }} />
             </Stack>
-              <StatusBar style={isDark ? "light" : "dark"} />
+              <StatusBar style="light" />
             </AuthGate>
           </QueryClientProvider>
         </BottomSheetModalProvider>
