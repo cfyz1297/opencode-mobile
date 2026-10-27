@@ -156,6 +156,17 @@ export async function refreshPending(client: Client, sessionID: string) {
   }
 }
 
+// Which sessions the server is actually executing. `null` when it cannot say
+// (older server without /session/active, or unreachable) — callers then fall
+// back to the transcript-tail heuristic.
+async function activeSessionIDs(client: Client): Promise<Set<string> | null> {
+  try {
+    return new Set(await client.session.active())
+  } catch {
+    return null
+  }
+}
+
 // Re-sync any session currently marked "busy" against the server after an
 // SSE reconnect. sessionStatus/sending are SSE-driven and there is normally
 // no other path to idle — if the server's busy -> idle `session.status`
@@ -164,11 +175,12 @@ export async function refreshPending(client: Client, sessionID: string) {
 // flag would never clear and the UI would show a stuck 'processing' spinner
 // forever (issue #123).
 //
-// Only ever CLEARS a busy flag the server confirms is stale via
-// isSessionActuallyIdle — it never marks a session busy, so it can't
-// clobber a genuinely still-busy session. Also re-checks sessionStatus right
-// before writing, so a real session.status event that lands while the fetch
-// is in flight (e.g. the session went busy again) wins over this resync.
+// Only ever CLEARS a busy flag the server confirms is stale — via its
+// /session/active record, or (older servers) isSessionActuallyIdle on the
+// transcript — it never marks a session busy, so it can't clobber a genuinely
+// still-busy session. Also re-checks sessionStatus right before writing, so a
+// real session.status event that lands while the fetch is in flight (e.g. the
+// session went busy again) wins over this resync.
 async function resyncBusySessions(only?: ReadonlySet<string>) {
   const pendingSessionIDs = new Set(activeRunSessionIDs().filter((sessionID) => !only || only.has(sessionID)))
   if (pendingSessionIDs.size === 0) return
@@ -186,10 +198,19 @@ async function resyncBusySessions(only?: ReadonlySet<string>) {
           : connState.client
         if (!client) return
 
-        const response = await client.session.messages(sessionID)
+        const [response, active] = await Promise.all([
+          client.session.messages(sessionID),
+          activeSessionIDs(client),
+        ])
         const messages = (response || []).map((m) => m.info)
         const viewing = () => useSessions.getState().currentSession?.id === sessionID
-        if (!isSessionActuallyIdle(messages)) {
+        // The server's active list is authoritative: a session it no longer
+        // runs is idle even when its transcript ends on an unanswered prompt
+        // (the run was cancelled server-side and the idle event was lost).
+        // Without it such a run kept the spinner — and the sending flag that
+        // blocks the composer — forever.
+        const idle = active ? !active.has(sessionID) : isSessionActuallyIdle(messages)
+        if (!idle) {
           // Still running server-side, but this client may simply have missed
           // the streamed parts: show everything the server already has, from
           // the response we already paid for.
@@ -347,17 +368,18 @@ export const useEvents = create<EventsState>((set, get) => ({
       try {
         for await (const event of client.global.events(currentController.signal, () => {
           lastStreamActivityAt = Date.now()
-        })) {
-          if (currentController.signal.aborted) break
-
-          // The stream is genuinely live again (we're actually receiving
-          // data, not just optimistically marked "connected") — resync once
-          // per reconnect, not on every event.
+          // A live byte after a reconnect (heartbeat included) means the
+          // stream is back. Catch up on what was missed here, not on the
+          // first parsed event: a server with nothing new to say sends only
+          // heartbeats, which never reach the loop below, and the client
+          // would stay stale after an outage that ended the run.
           if (isReconnect && !resyncedAfterReconnect) {
             resyncedAfterReconnect = true
             void resyncBusySessions()
             void resyncCurrentSession()
           }
+        })) {
+          if (currentController.signal.aborted) break
 
           const payload = (event as any).payload || event
           const type = payload.type as string

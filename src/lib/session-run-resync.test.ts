@@ -34,21 +34,35 @@ function harness() {
   }
 
   // Controllable SSE source: `push()` delivers one event, `heartbeat()` wakes
-  // the sdk's onActivity callback without ever yielding an event.
+  // the sdk's onActivity callback without ever yielding an event, `fail()`
+  // rejects the pending read the way a dropped mobile socket does.
   let pending: ((value: { done: boolean; value?: unknown }) => void) | null = null
+  let pendingReject: ((error: Error) => void) | null = null
   const queue: unknown[] = []
   const sse = {
     push(event: unknown) {
       if (pending) {
         const resolve = pending
         pending = null
+        pendingReject = null
         resolve({ done: false, value: event })
       } else queue.push(event)
     },
+    fail(error: Error) {
+      if (!pendingReject) return
+      const reject = pendingReject
+      pending = null
+      pendingReject = null
+      // A dead socket cannot report activity; the next connect installs a new
+      // onActivity callback.
+      onActivity = null
+      reject(error)
+    },
     next(): Promise<{ done: boolean; value?: unknown }> {
       if (queue.length) return Promise.resolve({ done: false, value: queue.shift() })
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         pending = resolve
+        pendingReject = reject
       })
     },
   }
@@ -58,6 +72,9 @@ function harness() {
   let transcript: Array<{ info: Record<string, unknown>; parts: unknown[] }> | null = COMPLETED_TRANSCRIPT
   let failWith: { status: number } | null = null
   let onActivity: (() => void) | null = null
+  // GET /api/session/active: "ses_1" running. A missing session is inactive.
+  let activeIDs: string[] = []
+  let failActive: { status: number } | null = null
 
   const client = {
     session: {
@@ -65,6 +82,10 @@ function harness() {
         stats.messageCalls++
         if (failWith) throw failWith
         return transcript
+      },
+      active: async () => {
+        if (failActive) throw failActive
+        return activeIDs
       },
     },
     permission: {
@@ -231,6 +252,16 @@ function harness() {
     failNextFetch(error: { status: number } | null) {
       failWith = error
     },
+    setActive(ids: string[]) {
+      activeIDs = ids
+    },
+    failActiveFetch(error: { status: number } | null) {
+      failActive = error
+    },
+    breakStream() {
+      sse.fail(new Error("socket closed"))
+      return settle()
+    },
     setBusy: () => {
       sessions.setState({ sending: { [SESSION]: true } })
     },
@@ -265,6 +296,7 @@ test("a run whose events are lost still shows the answer without reopening the s
 test("a run that is still working shows its partial answer and stays busy", async () => {
   const app = harness()
   app.heartbeatEvery(15_000)
+  app.setActive([SESSION])
   app.setTranscript([
     { info: { id: "u1", sessionID: SESSION, role: "user", time: { created: 1 } }, parts: [] },
     { info: { id: "a1", sessionID: SESSION, role: "assistant", time: { created: 2 } }, parts: [] },
@@ -376,4 +408,70 @@ test("a completed run stops the watchdog so it cannot resurrect the spinner", as
   const callsAfterIdle = app.stats.messageCalls
   await app.advance(60_000)
   assert.equal(app.stats.messageCalls, callsAfterIdle, "no further transcript fetches once the run is over")
+})
+
+test("a run the server no longer executes stops blocking the session", async () => {
+  const app = harness()
+  app.heartbeatEvery(15_000)
+  // A run cancelled server-side (network loss, process restart) leaves the
+  // transcript ending with the user's prompt: no assistant reply, no error.
+  // The transcript tail alone cannot tell that from "model still thinking",
+  // so the client used to keep the spinner and the sending flag forever.
+  app.setTranscript([{ info: { id: "u1", sessionID: SESSION, role: "user", time: { created: 1 } }, parts: [] }])
+  app.setBusy()
+  app.connect()
+  await app.settle()
+  await app.push(busyEvent)
+
+  await app.advance(30_000)
+
+  assert.equal(app.events.getState().sessionStatus[SESSION].type, "idle")
+  assert.equal(app.sessions.getState().sending[SESSION], false, "the composer must be usable again")
+})
+
+test("a session the server still runs stays busy even before its next event", async () => {
+  const app = harness()
+  app.heartbeatEvery(15_000)
+  app.setActive([SESSION])
+  app.setBusy()
+  app.connect()
+  await app.settle()
+  await app.push(busyEvent)
+
+  await app.advance(40_000)
+
+  assert.equal(app.events.getState().sessionStatus[SESSION].type, "busy")
+  assert.equal(app.sessions.getState().sending[SESSION], true)
+})
+
+test("an older server without the active list still closes a finished run", async () => {
+  const app = harness()
+  app.heartbeatEvery(15_000)
+  app.failActiveFetch({ status: 404 })
+  app.setBusy()
+  app.connect()
+  await app.settle()
+  await app.push(busyEvent)
+
+  await app.advance(30_000)
+
+  assert.equal(app.events.getState().sessionStatus[SESSION].type, "idle")
+  assert.equal(app.sessions.getState().sending[SESSION], false)
+})
+
+test("a reconnect resyncs the open session even when the server has nothing to say", async () => {
+  const app = harness()
+  app.heartbeatEvery(15_000)
+  app.connect()
+  await app.settle()
+  assert.equal(app.stats.refreshCalls, 0)
+
+  await app.breakStream()
+  await app.advance(60_000)
+
+  assert.equal(app.events.getState().connected, true)
+  // Heartbeats never reach the event loop, so a resync gated on the first
+  // parsed event would never run: the client would stay stale after a drop
+  // whose busy -> idle transition happened while it was offline.
+  assert.ok(app.stats.refreshCalls >= 1, "a reconnected stream catches up on its own")
 })

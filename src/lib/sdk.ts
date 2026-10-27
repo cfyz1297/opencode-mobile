@@ -531,6 +531,15 @@ export function createClient(config: ClientConfig) {
         return mapMessages(raw, sessionID)
       },
 
+      // Which sessions this server is executing right now. Authoritative for
+      // busy/idle: a session missing from the record is not running, even when
+      // its transcript tail looks unfinished (the run died server-side).
+      // GET /api/session/active → { data: { <sessionID>: { type: "running" } } }.
+      active: async () => {
+        const raw = unwrapData<Record<string, unknown>>(await request(config, "/api/session/active"))
+        return Object.keys(raw ?? {})
+      },
+
       // Sends a message and returns the response
       // Fire-and-forget async prompt - SSE events drive all real-time updates
       prompt: async (
