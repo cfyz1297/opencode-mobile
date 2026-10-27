@@ -142,8 +142,8 @@ jobs:
           sed -n '1p' /tmp/full-apk.txt > /tmp/current-apk.txt
           cat /tmp/current-apk.txt
           grep -q "name='cc.agentlabs.opencode'" /tmp/current-apk.txt
-          grep -q "versionCode='57'" /tmp/current-apk.txt
-          grep -q "versionName='0.2.23'" /tmp/current-apk.txt
+          grep -q "versionCode='58'" /tmp/current-apk.txt
+          grep -q "versionName='0.2.24'" /tmp/current-apk.txt
           curl --fail --location --retry 2 -o /tmp/previous.apk https://github.com/cfyz1297/opencode-mobile/releases/latest/download/opencode-mobile-v2.apk
           "$SIGNER" verify --print-certs /tmp/previous.apk > /tmp/previous-signers.txt
           "$SIGNER" verify --print-certs "$APK" > /tmp/current-signers.txt
