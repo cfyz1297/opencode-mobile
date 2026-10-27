@@ -497,10 +497,16 @@ export function createClient(config: ClientConfig) {
       list: listSessionsShaped,
 
       create: async (params?: { title?: string }) => {
+        // V2 creates the session at the server's own cwd when `location` is
+        // absent — it ignores x-opencode-directory for this route, so the
+        // requested project has to travel in the body.
         const raw = unwrapData<V2SessionInfo>(
           await request(config, "/api/session", {
             method: "POST",
-            body: JSON.stringify(params || {}),
+            body: JSON.stringify({
+              ...(params || {}),
+              ...(config.directory ? { location: { directory: config.directory } } : {}),
+            }),
           }),
         )
         return mapSession(raw, config.directory)

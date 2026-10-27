@@ -119,6 +119,20 @@ test("SDK creates and renames sessions through the production routes", async () 
   assert.equal((await client.session.update("s", { title: "renamed" })).title, "renamed")
   assert.deepEqual(calls.map((c) => [c.method, c.path]), [["POST", "/api/session"], ["PATCH", "/api/session/s"], ["GET", "/api/session/s"]])
 })
+// V2 POST /api/session ignores x-opencode-directory and creates the session at
+// the server's own cwd unless the body carries {location:{directory}} — the
+// header alone silently produced "new session in home" for every project pick.
+test("SDK creates a session in the client's directory via the request body", async () => {
+  reply = { data: { id: "s", location: { directory: "/projects/daily" } } }
+  const created = await createClient({ baseUrl: base, directory: "/projects/daily" }).session.create({ title: "new" })
+  assert.deepEqual(calls[0].body, { title: "new", location: { directory: "/projects/daily" } })
+  assert.equal(created.directory, "/projects/daily")
+})
+test("SDK sends no location for a directory-less client", async () => {
+  reply = { data: { id: "s" } }
+  await createClient({ baseUrl: base }).session.create({})
+  assert.deepEqual(calls[0].body, {})
+})
 test("SDK file browsing retains the location envelope and encodes query paths", async () => {
   reply = { location: { directory: "/project" }, data: [{ path: "file.txt", type: "file" }] }
   const rows = await createClient({ baseUrl: base, directory: "/fallback" }).file.list({ path: "a & b" })
