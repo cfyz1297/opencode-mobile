@@ -1112,13 +1112,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
     backgroundColor: T.accentWash,
-    paddingHorizontal: 6,
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: T.radius,
+    borderRadius: T.radiusSm,
   },
   sessionDirText: {
     fontSize: 11,
-    color: T.muted,
+    color: T.accent,
     fontFamily: T.font,
   },
   metaDark: {

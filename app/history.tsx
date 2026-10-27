@@ -56,7 +56,7 @@ export default function HistoryScreen() {
     <Text style={{ color: T.ink, fontFamily: T.font }}>{t('history.privacy')}</Text>
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
       <Text style={{ color: T.ink, flex: 1, fontFamily: T.font }}>{t('history.enable')}</Text>
-      <Switch testID="history-enable" accessibilityLabel={t('history.enable')} value={enabled} onValueChange={value => {
+      <Switch testID="history-enable" trackColor={{ false: T.paper3, true: T.accent }} thumbColor={T.ink} accessibilityLabel={t('history.enable')} value={enabled} onValueChange={value => {
         void setHistoryEnabled(value).then(() => setEnabled(value)).catch(() => Alert.alert(t('common.error'), t('history.failed')))
       }} />
     </View>

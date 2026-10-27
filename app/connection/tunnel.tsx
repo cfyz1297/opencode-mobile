@@ -27,7 +27,25 @@ export default function TunnelScreen() {
   const fg = T.ink
   let commands: string[] = []
   try { commands = tunnelCommands(provider, port, platform) } catch { /* Invalid port is shown inline. */ }
-  const button = (label: string, action: () => void, id?: string) => <Pressable testID={id} accessibilityRole="button" disabled={busy} onPress={action} style={{ padding: 14, marginVertical: 6, borderWidth: 1, borderColor: T.rule2, minHeight: 48 }}><Text style={{ color: fg, fontFamily: T.font }}>{label}</Text></Pressable>
+  // The step's own action carries the accent; the choices above it stay outlined.
+  const button = (label: string, action: () => void, id?: string, primary?: boolean) => (
+    <Pressable
+      testID={id}
+      accessibilityRole="button"
+      disabled={busy}
+      onPress={action}
+      style={{
+        padding: 14,
+        marginVertical: 6,
+        minHeight: 48,
+        borderRadius: T.radiusSm,
+        alignItems: "center",
+        ...(primary ? { backgroundColor: T.accent } : { borderWidth: 1, borderColor: T.rule2 }),
+      }}
+    >
+      <Text style={{ color: primary ? T.accentInk : T.ink, fontFamily: T.font, fontWeight: primary ? "600" : "400" }}>{label}</Text>
+    </Pressable>
+  )
   async function connect() {
     if (guard.current) return
     try {
@@ -53,7 +71,7 @@ export default function TunnelScreen() {
         {button(platform === 'windows' ? '✓ Windows (PowerShell)' : 'Windows (PowerShell)', () => setPlatform('windows'))}
         {button(platform === 'unix' ? '✓ macOS / Linux' : 'macOS / Linux', () => setPlatform('unix'))}
         {button(t('tunnel.install'), () => { void Linking.openURL(provider === 'cloudflare' ? 'https://developers.cloudflare.com/tunnel/get-started/' : 'https://ngrok.com/docs/getting-started/').catch(() => Alert.alert(t('common.error'), t('tunnel.failed'))) })}
-        {button(t('tunnel.next'), () => setStep(2), 'tunnel-next')}
+        {button(t('tunnel.next'), () => setStep(2), 'tunnel-next', true)}
       </>}
       {step === 2 && <>
         <Text style={{ color: fg, fontFamily: T.font }}>{t('tunnel.start')}</Text>
@@ -66,7 +84,7 @@ export default function TunnelScreen() {
           {button(t('tunnel.copy', { number: i + 1 }), () => { void Clipboard.setStringAsync(command) })}
         </View>)}
         <Text style={{ color: fg, fontFamily: T.font }}>{t('tunnel.warning')}</Text>
-        {commands.length > 0 && button(t('tunnel.next'), () => setStep(3), 'tunnel-next')}
+        {commands.length > 0 && button(t('tunnel.next'), () => setStep(3), 'tunnel-next', true)}
         {button(t('tunnel.back'), () => setStep(1))}
       </>}
       {step === 3 && <>
