@@ -72,23 +72,9 @@ export const MessageBubble = memo(
         activeOpacity={isUser && onLongPress ? 0.7 : 1}
         onLongPress={isUser && onLongPress ? () => onLongPress(message.id) : undefined}
         disabled={!isUser || !onLongPress}
-        style={[
-          s.bubble,
-          isUser ? s.user : s.assistant,
-          isUser && isDark && s.userDark,
-          !isUser && isDark && s.assistantDark,
-        ]}
+        style={[s.bubble, isUser ? s.user : s.assistant]}
         testID={`chat-bubble-${message.role}`}
       >
-        {/* The transcript is a shell session: the prompt is yours, the output is the agent's */}
-        <View style={s.header}>
-          {isUser && <Text style={s.prompt}>&gt;</Text>}
-          <Text style={[s.role, isUser && s.roleUser]}>
-            {isUser ? "You" : "Assistant"}
-          </Text>
-          {message.model && <Text style={[s.modelTag, isDark && s.modelTagDark]}>{message.model.modelID}</Text>}
-          {!isUser && message.modelID && <Text style={[s.modelTag, isDark && s.modelTagDark]}>{message.modelID}</Text>}
-        </View>
 
         {/* Image attachments */}
         {fileParts.length > 0 && (
@@ -133,8 +119,11 @@ export const MessageBubble = memo(
 
         {/* Per-message actions — desktop parity: copy + "reset to this point".
             Shown under the bubble content so both icons are separate buttons. */}
-        {(text.length > 0 || (isUser && !!onRevert)) && (
+        {(text.length > 0 || (isUser && !!onRevert) || !isUser) && (
           <View style={s.actionRow}>
+            {!isUser && (message.model?.modelID ?? message.modelID) && (
+              <Text style={s.modelTag} numberOfLines={1}>{message.model?.modelID ?? message.modelID}</Text>
+            )}
             {text.length > 0 && (
               <TouchableOpacity
                 style={s.actionBtn}
@@ -148,7 +137,7 @@ export const MessageBubble = memo(
                   size={12}
                   color={T.muted}
                 />
-                <Text style={[s.actionText, isDark && s.actionTextDark]}>{copied ? t("chat.message.copied") : t("chat.message.copy")}</Text>
+                <Text style={s.actionText}>{copied ? t("chat.message.copied") : t("chat.message.copy")}</Text>
               </TouchableOpacity>
             )}
             {isUser && !!onRevert && (
@@ -160,7 +149,7 @@ export const MessageBubble = memo(
                 testID="message-revert"
               >
                 <Ionicons name="arrow-undo-outline" size={12} color={T.muted} />
-                <Text style={[s.actionText, isDark && s.actionTextDark]}>{t("chat.message.revertHere")}</Text>
+                <Text style={s.actionText}>{t("chat.message.revertHere")}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -196,33 +185,34 @@ export const MessageBubble = memo(
 )
 
 const s = StyleSheet.create({
-  // A command block and its output: one hairline on the left, no fill that shouts
-  bubble: { marginBottom: 20, paddingVertical: 2, paddingLeft: 12, borderLeftWidth: 2, maxWidth: "100%" },
-  user: { borderLeftColor: T.accent },
-  userDark: { borderLeftColor: T.accent },
-  assistant: { borderLeftColor: T.rule2 },
-  assistantDark: { borderLeftColor: T.rule2 },
+  // What you said sits in a soft block on the right; the reply is just text.
+  bubble: { marginBottom: 22 },
+  user: {
+    alignSelf: "flex-end",
+    maxWidth: "88%",
+    backgroundColor: T.paper2,
+    borderRadius: T.radius,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  assistant: { alignSelf: "stretch" },
+  userDark: {},
+  assistantDark: {},
+  textWhite: { fontFamily: T.font, color: T.ink },
+  modelTag: { fontFamily: T.font, fontSize: 11, color: T.muted },
+  modelTagDark: { fontFamily: T.font, color: T.muted },
 
-  header: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 },
-  prompt: { fontFamily: T.mono, fontSize: 15, fontWeight: "700", color: T.accent },
-  role: { fontFamily: T.mono, fontSize: 12, color: T.muted },
-  roleUser: { fontFamily: T.mono, color: T.ink2 },
-  textWhite: { fontFamily: T.mono, color: T.ink },
+  messageText: { fontFamily: T.font, fontSize: 16, lineHeight: 23, color: T.ink },
+  markdownWrap: { marginHorizontal: 0 },
 
-  modelTag: { fontFamily: T.mono, fontSize: 11, color: T.muted },
-  modelTagDark: { fontFamily: T.mono, color: T.muted },
+  tokens: { fontFamily: T.font, fontSize: 11, color: T.muted, marginTop: 8 },
+  tokensDark: { fontFamily: T.font, color: T.muted },
 
-  messageText: { fontFamily: T.mono, fontSize: 15, lineHeight: 22, color: T.ink },
-  markdownWrap: { marginHorizontal: -4 },
-
-  tokens: { fontFamily: T.mono, fontSize: 11, color: T.muted, marginTop: 8 },
-  tokensDark: { fontFamily: T.mono, color: T.muted },
-
-  // Per-message action buttons (copy / reset-to-this-point), desktop parity.
-  actionRow: { flexDirection: "row", flexWrap: "wrap", gap: 14, marginTop: 8 },
+  // Per-message actions (copy / reset-to-this-point), desktop parity.
+  actionRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 14, marginTop: 10 },
   actionBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 2 },
-  actionText: { fontFamily: T.mono, fontSize: 11, color: T.muted },
-  actionTextDark: { fontFamily: T.mono, color: T.muted },
+  actionText: { fontFamily: T.font, fontSize: 11, color: T.muted },
+  actionTextDark: { fontFamily: T.font, color: T.muted },
 
   // Images
   imageScroll: { marginBottom: 8 },
@@ -231,9 +221,9 @@ const s = StyleSheet.create({
   attachedImage: {
     width: Math.min(200, SCREEN_WIDTH * 0.5),
     height: Math.min(200, SCREEN_WIDTH * 0.5),
-    borderRadius: 0,
+    borderRadius: T.radius,
     backgroundColor: T.paper,
   },
-  imageLabel: { fontFamily: T.mono, fontSize: 10, color: T.muted, marginTop: 2, maxWidth: 200 },
-  imageLabelDark: { fontFamily: T.mono, color: T.muted },
+  imageLabel: { fontFamily: T.font, fontSize: 10, color: T.muted, marginTop: 2, maxWidth: 200 },
+  imageLabelDark: { fontFamily: T.font, color: T.muted },
 })

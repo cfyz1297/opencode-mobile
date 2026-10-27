@@ -45,7 +45,7 @@ export function CodeBlock({ code, language }: Props) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: T.paper2,
-    borderRadius: 0,
+    borderRadius: T.radius,
     marginVertical: 8,
     overflow: "hidden",
   },

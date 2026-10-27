@@ -378,14 +378,14 @@ export function ToolCallCard({ tool, isDark }: Props) {
 
 const s = StyleSheet.create({
   card: {
-    backgroundColor: T.paper,
+    backgroundColor: T.paper2,
     padding: 10,
-    borderRadius: 0,
+    borderRadius: T.radius,
     marginTop: 8,
     borderWidth: 1,
     borderColor: T.rule,
   },
-  cardDark: { backgroundColor: T.paper3, borderColor: T.rule },
+  cardDark: { backgroundColor: T.paper2, borderColor: T.rule },
   cardError: { borderColor: T.rule },
   cardErrorDark: { borderColor: T.rule },
 
@@ -396,10 +396,10 @@ const s = StyleSheet.create({
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 6 },
-  name: { fontFamily: T.mono, fontSize: 13, fontWeight: "500", color: T.ink, flex: 1 },
-  nameDark: { fontFamily: T.mono, color: T.ink2 },
-  elapsed: { fontFamily: T.mono, fontSize: 11, color: T.muted },
-  elapsedDark: { fontFamily: T.mono, color: T.muted },
+  name: { fontFamily: T.font, fontSize: 13, fontWeight: "500", color: T.ink, flex: 1 },
+  nameDark: { fontFamily: T.font, color: T.ink2 },
+  elapsed: { fontFamily: T.font, fontSize: 11, color: T.muted },
+  elapsedDark: { fontFamily: T.font, color: T.muted },
 
   // Error
   errorBanner: {
@@ -408,11 +408,11 @@ const s = StyleSheet.create({
     gap: 6,
     marginTop: 8,
     padding: 8,
-    backgroundColor: T.accentWash,
-    borderRadius: 0,
+    backgroundColor: T.paper3,
+    borderRadius: T.radiusSm,
   },
-  errorBannerDark: { backgroundColor: T.paper2 },
-  errorText: { fontFamily: T.mono, fontSize: 12, color: T.ink2, flex: 1, lineHeight: 18 },
+  errorBannerDark: { backgroundColor: T.paper3 },
+  errorText: { fontFamily: T.font, fontSize: 13, color: T.danger, flex: 1, lineHeight: 19 },
 
   // Detail
   detailScroll: { maxHeight: 300, marginTop: 8 },
@@ -420,24 +420,24 @@ const s = StyleSheet.create({
   detailFile: {
     fontSize: 12,
     fontFamily: mono,
-    color: T.accent,
-    backgroundColor: T.accentWash,
+    color: T.ink2,
+    backgroundColor: T.paper3,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 0,
+    borderRadius: T.radiusSm,
     overflow: "hidden",
   },
-  detailFileDark: { fontFamily: T.mono, color: T.accent, backgroundColor: T.accentWash },
-  detailMeta: { fontFamily: T.mono, fontSize: 12, color: T.muted, lineHeight: 18 },
-  detailMetaDark: { fontFamily: T.mono, color: T.muted },
+  detailFileDark: { fontFamily: mono, color: T.ink2, backgroundColor: T.paper3 },
+  detailMeta: { fontFamily: mono, fontSize: 12, color: T.muted, lineHeight: 18 },
+  detailMetaDark: { fontFamily: mono, color: T.muted },
 
   // Code block
   codeBlock: {
-    backgroundColor: T.paper2,
-    borderRadius: 0,
+    backgroundColor: T.paper,
+    borderRadius: T.radiusSm,
     padding: 10,
   },
-  codeBlockDark: { backgroundColor: T.paper2 },
+  codeBlockDark: { backgroundColor: T.paper },
   codePre: {
     fontSize: 12,
     fontFamily: mono,

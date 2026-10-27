@@ -185,7 +185,7 @@ function RootLayout() {
                   backgroundColor: T.paper,
                 },
                 headerTitleStyle: {
-                  fontFamily: T.mono,
+                  fontFamily: T.font,
                   fontSize: 15,
                   fontWeight: "500",
                 },

@@ -94,8 +94,8 @@ export default function DemoScreen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: T.paper },
   containerDark: { backgroundColor: T.paper },
-  textWhite: { fontFamily: T.mono, color: T.ink },
-  metaDark: { fontFamily: T.mono, color: T.muted },
+  textWhite: { fontFamily: T.font, color: T.ink },
+  metaDark: { fontFamily: T.font, color: T.muted },
 
   banner: {
     flexDirection: "row",
@@ -108,32 +108,32 @@ const s = StyleSheet.create({
     borderBottomColor: T.rule,
   },
   bannerDark: { backgroundColor: T.paper2, borderBottomColor: T.rule },
-  bannerText: { fontFamily: T.mono, fontSize: 13, fontWeight: "600", color: T.accent, flex: 1 },
+  bannerText: { fontFamily: T.font, fontSize: 13, fontWeight: "600", color: T.accent, flex: 1 },
 
   scrollContent: { padding: 16, paddingBottom: 40 },
 
   ctaCard: {
     marginTop: 8,
     padding: 20,
-    borderRadius: 0,
+    borderRadius: T.radius,
     backgroundColor: T.accentWash,
     alignItems: "center",
   },
   ctaCardDark: { backgroundColor: T.accentWash },
-  ctaTitle: { fontFamily: T.mono, fontSize: 17, fontWeight: "700", color: T.accent, textAlign: "center" },
-  ctaSubtitle: { fontFamily: T.mono, fontSize: 13, color: T.muted, marginTop: 6, textAlign: "center", lineHeight: 18 },
+  ctaTitle: { fontFamily: T.font, fontSize: 17, fontWeight: "700", color: T.accent, textAlign: "center" },
+  ctaSubtitle: { fontFamily: T.font, fontSize: 13, color: T.muted, marginTop: 6, textAlign: "center", lineHeight: 18 },
   connectButton: {
     marginTop: 16,
     backgroundColor: T.accent,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 0,
+    borderRadius: T.radius,
     width: "100%",
     alignItems: "center",
   },
-  connectButtonText: { fontFamily: T.mono, color: T.accentInk, fontWeight: "600", fontSize: 15 },
+  connectButtonText: { fontFamily: T.font, color: T.accentInk, fontWeight: "600", fontSize: 15 },
   hostedCtaLink: { marginTop: 14 },
-  hostedCtaLinkText: { fontFamily: T.mono, fontSize: 14, fontWeight: "600", color: T.accent, textAlign: "center" },
+  hostedCtaLinkText: { fontFamily: T.font, fontSize: 14, fontWeight: "600", color: T.accent, textAlign: "center" },
   setupGuideLink: { marginTop: 14 },
-  setupGuideLinkText: { fontFamily: T.mono, fontSize: 14, fontWeight: "600", color: T.accent },
+  setupGuideLinkText: { fontFamily: T.font, fontSize: 14, fontWeight: "600", color: T.accent },
 })

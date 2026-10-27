@@ -60,11 +60,11 @@ export default function ModelsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { fontFamily: T.mono, flex: 1 }, description: { color: T.muted, fontSize: 14, padding: 16 },
-  search: { fontFamily: T.mono, marginHorizontal: 16, marginBottom: 12, borderRadius: 0, padding: 12, fontSize: 16 },
+  container: { fontFamily: T.font, flex: 1 }, description: { color: T.muted, fontSize: 14, padding: 16 },
+  search: { fontFamily: T.font, marginHorizontal: 16, marginBottom: 12, borderRadius: T.radius, padding: 12, fontSize: 16 },
   content: { paddingHorizontal: 16, paddingBottom: 40 },
-  heading: { fontFamily: T.mono, fontSize: 16, fontWeight: '600', paddingVertical: 18 },
+  heading: { fontFamily: T.font, fontSize: 16, fontWeight: '600', paddingVertical: 18 },
   row: { flexDirection: 'row', alignItems: 'center', minHeight: 52, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth },
-  name: { fontFamily: T.mono, flex: 1, fontSize: 15, paddingRight: 12 }, empty: { paddingVertical: 20 },
-  link: { fontFamily: T.mono, color: T.ink, padding: 16 }, error: { color: T.ink, padding: 16 },
+  name: { fontFamily: T.font, flex: 1, fontSize: 15, paddingRight: 12 }, empty: { paddingVertical: 20 },
+  link: { fontFamily: T.font, color: T.ink, padding: 16 }, error: { color: T.ink, padding: 16 },
 })

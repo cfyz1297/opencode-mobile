@@ -16,11 +16,11 @@ export function TabletSessions({ width, selected }: { width: number; selected: s
   }
   return <ScrollView testID="tablet-session-sidebar" style={{ width, flexGrow: 0, borderRightWidth: 1, borderRightColor: T.rule, backgroundColor: T.paper }}>
     <Pressable accessibilityRole="button" onPress={() => router.replace('/')} style={{ padding: 20 }}>
-      <Text style={{ color: T.ink, fontWeight: '700', fontSize: 18, fontFamily: T.mono }}>{t('nav.sessionsTab')}</Text>
+      <Text style={{ color: T.ink, fontWeight: '700', fontSize: 18, fontFamily: T.font }}>{t('nav.sessionsTab')}</Text>
     </Pressable>
     {sessions.map(session => <Pressable key={session.id} testID={`tablet-session-${session.id}`} accessibilityRole="button" accessibilityState={{ selected: selected === session.id }} onPress={() => openSession(session)} style={{ padding: 16, minHeight: 56, backgroundColor: selected === session.id ? (T.paper2) : 'transparent' }}>
-      <Text numberOfLines={2} style={{ color: T.ink, fontFamily: T.mono }}>{session.title || t('sessionsList.untitledSession')}</Text>
-      <Text numberOfLines={1} style={{ color: T.muted, marginTop: 6, fontFamily: T.mono }}>{session.directory}</Text>
+      <Text numberOfLines={2} style={{ color: T.ink, fontFamily: T.font }}>{session.title || t('sessionsList.untitledSession')}</Text>
+      <Text numberOfLines={1} style={{ color: T.muted, marginTop: 6, fontFamily: T.font }}>{session.directory}</Text>
     </Pressable>)}
   </ScrollView>
 }

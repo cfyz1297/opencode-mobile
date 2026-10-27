@@ -45,6 +45,6 @@ const s = StyleSheet.create({
     borderTopColor: T.rule,
   },
   barDark: { backgroundColor: T.accentWash, borderTopColor: T.rule },
-  text: { fontFamily: T.mono, fontSize: 13, color: T.accent, fontWeight: "500" },
-  textDark: { fontFamily: T.mono, color: T.accent },
+  text: { fontFamily: T.font, fontSize: 13, color: T.accent, fontWeight: "500" },
+  textDark: { fontFamily: T.font, color: T.accent },
 })

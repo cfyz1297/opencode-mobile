@@ -53,7 +53,7 @@ export function DiffView({ before, after, isDark }: Props) {
 
 const s = StyleSheet.create({
   container: {
-    borderRadius: 0,
+    borderRadius: T.radius,
     overflow: "hidden",
     backgroundColor: T.paper2,
     marginTop: 6,

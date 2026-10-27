@@ -141,17 +141,17 @@ const s = StyleSheet.create({
   sheet: { backgroundColor: T.paper2, borderTopWidth: 1, borderTopColor: T.rule2 },
   sheetDark: { backgroundColor: T.paper2 },
   header: { paddingHorizontal: 16, paddingBottom: 12, gap: 10 },
-  title: { fontFamily: T.mono, fontSize: 18, fontWeight: "700", color: T.ink },
-  textWhite: { fontFamily: T.mono, color: T.ink },
+  title: { fontFamily: T.font, fontSize: 18, fontWeight: "700", color: T.ink },
+  textWhite: { fontFamily: T.font, color: T.ink },
   search: {
     backgroundColor: T.paper2,
-    borderRadius: 0,
+    borderRadius: T.radius,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
     color: T.ink,
   },
-  searchDark: { fontFamily: T.mono, backgroundColor: T.paper3, color: T.ink },
+  searchDark: { fontFamily: T.font, backgroundColor: T.paper3, color: T.ink },
   content: { paddingBottom: 40 },
   sectionHeader: {
     backgroundColor: T.paper2,
@@ -165,9 +165,9 @@ const s = StyleSheet.create({
     color: T.muted,
 
 
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
-  metaDark: { fontFamily: T.mono, color: T.muted },
+  metaDark: { fontFamily: T.font, color: T.muted },
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -181,17 +181,17 @@ const s = StyleSheet.create({
   rowSelectedDark: { backgroundColor: T.accentWash },
   rowText: { flex: 1 },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  rowName: { fontFamily: T.mono, fontSize: 15, fontWeight: "500", color: T.ink, flexShrink: 1 },
-  rowProvider: { fontFamily: T.mono, fontSize: 12, color: T.muted, marginTop: 1 },
+  rowName: { fontFamily: T.font, fontSize: 15, fontWeight: "500", color: T.ink, flexShrink: 1 },
+  rowProvider: { fontFamily: T.font, fontSize: 12, color: T.muted, marginTop: 1 },
   freeBadge: {
     backgroundColor: T.paper2,
-    borderRadius: 0,
+    borderRadius: T.radius,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   freeBadgeDark: { backgroundColor: T.paper3 },
-  freeBadgeText: { fontFamily: T.mono, fontSize: 11, fontWeight: "600", color: T.muted },
-  freeBadgeTextDark: { fontFamily: T.mono, color: T.muted },
+  freeBadgeText: { fontFamily: T.font, fontSize: 11, fontWeight: "600", color: T.muted },
+  freeBadgeTextDark: { fontFamily: T.font, color: T.muted },
   manageRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -203,5 +203,5 @@ const s = StyleSheet.create({
     marginTop: 4,
   },
   manageRowDark: { borderTopColor: T.rule },
-  manageText: { fontFamily: T.mono, fontSize: 15, fontWeight: "500", color: T.ink },
+  manageText: { fontFamily: T.font, fontSize: 15, fontWeight: "500", color: T.ink },
 })

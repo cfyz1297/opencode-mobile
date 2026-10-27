@@ -1134,7 +1134,7 @@ const s = StyleSheet.create({
     right: 16,
     width: 44,
     height: 44,
-    borderRadius: 0,
+    borderRadius: T.radius,
     backgroundColor: T.paper3,
     justifyContent: "center",
     alignItems: "center",
@@ -1149,7 +1149,7 @@ const s = StyleSheet.create({
     gap: 8,
     paddingVertical: 16,
   },
-  loadingMoreText: { fontFamily: T.mono, fontSize: 13, color: T.muted },
+  loadingMoreText: { fontFamily: T.font, fontSize: 13, color: T.muted },
 
   // Empty state overlay — sits on top of the (empty) inverted list, untransformed,
   // so its text/icon render upright and un-mirrored on Android.
@@ -1162,10 +1162,10 @@ const s = StyleSheet.create({
 
   // Empty
   empty: { flex: 1, justifyContent: "center", alignItems: "center", paddingVertical: 64 },
-  emptyText: { fontFamily: T.mono, fontSize: 16, color: T.muted, marginTop: 12 },
-  emptyHint: { fontFamily: T.mono, fontSize: 13, color: T.muted, marginTop: 4 },
-  metaDark: { fontFamily: T.mono, color: T.muted },
-  textWhite: { fontFamily: T.mono, color: T.ink },
+  emptyText: { fontFamily: T.font, fontSize: 16, color: T.muted, marginTop: 12 },
+  emptyHint: { fontFamily: T.font, fontSize: 13, color: T.muted, marginTop: 4 },
+  metaDark: { fontFamily: T.font, color: T.muted },
+  textWhite: { fontFamily: T.font, color: T.ink },
 
   // Question reply confirmation (survives prompt removal)
   questionSent: {
@@ -1175,16 +1175,16 @@ const s = StyleSheet.create({
     marginHorizontal: 12,
     marginTop: 8,
     padding: 12,
-    borderRadius: 0,
+    borderRadius: T.radius,
     borderWidth: 1,
     backgroundColor: T.paper2,
     borderColor: T.rule,
   },
   questionSentDark: { backgroundColor: T.accentWash, borderColor: T.rule },
   questionSentBody: { flex: 1 },
-  questionSentTitle: { fontFamily: T.mono, fontSize: 13, fontWeight: "600", color: T.ink },
-  questionSentTitleDark: { fontFamily: T.mono, color: T.ink },
-  questionSentAnswer: { fontFamily: T.mono, fontSize: 12, color: T.ink, marginTop: 2 },
+  questionSentTitle: { fontFamily: T.font, fontSize: 13, fontWeight: "600", color: T.ink },
+  questionSentTitleDark: { fontFamily: T.font, color: T.ink },
+  questionSentAnswer: { fontFamily: T.font, fontSize: 12, color: T.ink, marginTop: 2 },
 
   // Toolbar
   toolbar: {
@@ -1208,18 +1208,18 @@ const s = StyleSheet.create({
     paddingVertical: 4,
   },
   agentDot: { width: 6, height: 6, backgroundColor: T.accent },
-  agentLabel: { fontFamily: T.mono, fontSize: 12, fontWeight: "600", color: T.ink },
+  agentLabel: { fontFamily: T.font, fontSize: 12, fontWeight: "600", color: T.ink },
   modelChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
     backgroundColor: T.paper2,
-    borderRadius: 0,
+    borderRadius: T.radius,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   modelChipDark: { backgroundColor: T.paper2 },
-  modelLabel: { fontFamily: T.mono, fontSize: 12, color: T.muted, maxWidth: 160 },
+  modelLabel: { fontFamily: T.font, fontSize: 12, color: T.muted, maxWidth: 160 },
 
   // Variant (reasoning effort) chip
   variantChip: {
@@ -1227,14 +1227,14 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 4,
     backgroundColor: T.paper2,
-    borderRadius: 0,
+    borderRadius: T.radius,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   variantChipDark: { backgroundColor: T.paper2 },
   variantChipActive: { backgroundColor: T.accentWash },
-  variantLabel: { fontFamily: T.mono, fontSize: 12, color: T.muted },
-  variantLabelActive: { fontFamily: T.mono, color: T.accent },
+  variantLabel: { fontFamily: T.font, fontSize: 12, color: T.muted },
+  variantLabelActive: { fontFamily: T.font, color: T.accent },
 
   // Input
   inputContainer: {
@@ -1257,20 +1257,20 @@ const s = StyleSheet.create({
   input: {
     flex: 1,
     backgroundColor: T.paper2,
-    borderRadius: 0,
+    borderRadius: T.radius,
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 16,
     maxHeight: 120,
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
-  inputDark: { fontFamily: T.mono, backgroundColor: T.paper2, color: T.ink },
+  inputDark: { fontFamily: T.font, backgroundColor: T.paper2, color: T.ink },
   inputListening: { borderWidth: 1, borderColor: T.rule },
   sendBtn: {
     width: 40,
     height: 40,
-    borderRadius: 0,
+    borderRadius: T.radius,
     backgroundColor: T.accent,
     justifyContent: "center",
     alignItems: "center",
@@ -1280,7 +1280,7 @@ const s = StyleSheet.create({
   micBtn: {
     width: 40,
     height: 40,
-    borderRadius: 0,
+    borderRadius: T.radius,
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 8,
@@ -1288,7 +1288,7 @@ const s = StyleSheet.create({
   micBtnActive: {
     width: 40,
     height: 40,
-    borderRadius: 0,
+    borderRadius: T.radius,
     backgroundColor: T.paper3,
     justifyContent: "center",
     alignItems: "center",
@@ -1297,7 +1297,7 @@ const s = StyleSheet.create({
   stopBtn: {
     width: 40,
     height: 40,
-    borderRadius: 0,
+    borderRadius: T.radius,
     backgroundColor: T.paper3,
     justifyContent: "center",
     alignItems: "center",
@@ -1313,11 +1313,11 @@ const s = StyleSheet.create({
     backgroundColor: T.accentWash,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 0,
+    borderRadius: T.radius,
   },
   dirBadgeDark: { backgroundColor: T.accentWash },
-  dirText: { fontFamily: T.mono, fontSize: 12, color: T.muted, fontWeight: "500" },
-  dirTextDark: { fontFamily: T.mono, color: T.muted },
+  dirText: { fontFamily: T.font, fontSize: 12, color: T.muted, fontWeight: "500" },
+  dirTextDark: { fontFamily: T.font, color: T.muted },
 
   // SSE reconnect/connected banner
   banner: {
@@ -1327,7 +1327,7 @@ const s = StyleSheet.create({
   },
   bannerReconnecting: { backgroundColor: T.paper2 },
   bannerConnected: { backgroundColor: T.paper2 },
-  bannerText: { fontFamily: T.mono, color: T.ink, fontSize: 13, fontWeight: "500", flexShrink: 1 },
+  bannerText: { fontFamily: T.font, color: T.ink, fontSize: 13, fontWeight: "500", flexShrink: 1 },
 
   // Pending revert (edit message) banner
   bannerRevert: {
@@ -1339,5 +1339,5 @@ const s = StyleSheet.create({
     // it past the screen edge.
     gap: 12,
   },
-  bannerAction: { fontFamily: T.mono, color: T.ink, fontSize: 13, fontWeight: "700" },
+  bannerAction: { fontFamily: T.font, color: T.ink, fontSize: 13, fontWeight: "700" },
 })

@@ -305,8 +305,8 @@ export default function AddConnectionScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity accessibilityRole="button" testID="open-tunnel-wizard" onPress={() => router.push('/connection/tunnel')} style={{ padding: 16, marginBottom: 16, borderRadius: 0, backgroundColor: T.paper3 }}>
-          <Text style={{ color: T.ink, fontWeight: '700', fontFamily: T.mono }}>{t('tunnel.title')}</Text>
+        <TouchableOpacity accessibilityRole="button" testID="open-tunnel-wizard" onPress={() => router.push('/connection/tunnel')} style={{ padding: 16, marginBottom: 16, borderRadius: T.radius, backgroundColor: T.paper3 }}>
+          <Text style={{ color: T.ink, fontWeight: '700', fontFamily: T.font }}>{t('tunnel.title')}</Text>
         </TouchableOpacity>
         <View style={styles.quickHeader}>
           <Ionicons name="wifi" size={48} color={T.ink} />
@@ -683,13 +683,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
     color: T.ink,
-    marginTop: 16, fontFamily: T.mono,
+    marginTop: 16, fontFamily: T.font,
   },
   quickSubtitle: {
     fontSize: 15,
     color: T.muted,
     marginTop: 8,
-    textAlign: "center", fontFamily: T.mono,
+    textAlign: "center", fontFamily: T.font,
   },
   ipRow: {
     flexDirection: "row",
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
   ipColon: {
     fontSize: 20,
     fontWeight: "600",
-    color: T.ink, fontFamily: T.mono,
+    color: T.ink, fontFamily: T.font,
   },
   portInput: {
     width: 80,
@@ -713,7 +713,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     padding: 16,
-    borderRadius: 0,
+    borderRadius: T.radius,
     backgroundColor: T.accent,
     marginTop: 24,
   },
@@ -723,14 +723,14 @@ const styles = StyleSheet.create({
   connectButtonText: {
     fontSize: 18,
     fontWeight: "600",
-    color: T.accentInk, fontFamily: T.mono,
+    color: T.accentInk, fontFamily: T.font,
   },
   connectButtonTextDark: {
-    color: T.accentInk, fontFamily: T.mono,
+    color: T.accentInk, fontFamily: T.font,
   },
   helpBox: {
     backgroundColor: T.paper2,
-    borderRadius: 0,
+    borderRadius: T.radius,
     padding: 16,
     marginTop: 24,
   },
@@ -741,29 +741,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: T.ink,
-    marginBottom: 8, fontFamily: T.mono,
+    marginBottom: 8, fontFamily: T.font,
   },
   helpText: {
     fontSize: 13,
     color: T.muted,
-    lineHeight: 20, fontFamily: T.mono,
+    lineHeight: 20, fontFamily: T.font,
   },
   code: {
-    fontFamily: "monospace",
-    backgroundColor: T.paper,
+    fontFamily: T.mono,
+    backgroundColor: T.paper3,
     paddingHorizontal: 4,
-    borderRadius: 0,
+    borderRadius: 4,
   },
   usernameHint: {
     fontSize: 12,
     color: T.muted,
     marginTop: 6,
     marginBottom: 4,
-    lineHeight: 18, fontFamily: T.mono,
+    lineHeight: 18, fontFamily: T.font,
   },
   usernameHintLink: {
     color: T.accent,
-    fontWeight: "600", fontFamily: T.mono,
+    fontWeight: "600", fontFamily: T.font,
   },
   advancedLink: {
     flexDirection: "row",
@@ -775,7 +775,7 @@ const styles = StyleSheet.create({
   },
   advancedLinkText: {
     fontSize: 14,
-    color: T.muted, fontFamily: T.mono,
+    color: T.muted, fontFamily: T.font,
   },
   backToQuick: {
     flexDirection: "row",
@@ -785,7 +785,7 @@ const styles = StyleSheet.create({
   },
   backToQuickText: {
     fontSize: 14,
-    color: T.muted, fontFamily: T.mono,
+    color: T.muted, fontFamily: T.font,
   },
   // Original styles
   label: {
@@ -793,10 +793,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: T.ink,
     marginTop: 16,
-    marginBottom: 8, fontFamily: T.mono,
+    marginBottom: 8, fontFamily: T.font,
   },
   labelDark: {
-    color: T.ink, fontFamily: T.mono,
+    color: T.ink, fontFamily: T.font,
   },
   typeContainer: {
     flexDirection: "row",
@@ -808,7 +808,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 12,
-    borderRadius: 0,
+    borderRadius: T.radius,
     backgroundColor: T.accentWash,
     gap: 6,
   },
@@ -824,55 +824,55 @@ const styles = StyleSheet.create({
   typeLabel: {
     fontSize: 13,
     fontWeight: "500",
-    color: T.muted, fontFamily: T.mono,
+    color: T.muted, fontFamily: T.font,
   },
   textDark: {
-    color: T.ink, fontFamily: T.mono,
+    color: T.ink, fontFamily: T.font,
   },
   typeLabelSelected: {
-    color: T.ink, fontFamily: T.mono,
+    color: T.ink, fontFamily: T.font,
   },
   typeLabelSelectedDark: {
-    color: T.ink, fontFamily: T.mono,
+    color: T.ink, fontFamily: T.font,
   },
   hint: {
     fontSize: 13,
     color: T.muted,
-    marginTop: 8, fontFamily: T.mono,
+    marginTop: 8, fontFamily: T.font,
   },
   hintDark: {
-    color: T.muted, fontFamily: T.mono,
+    color: T.muted, fontFamily: T.font,
   },
   securityHint: {
     fontSize: 13,
     color: T.ink2,
-    marginTop: 8, fontFamily: T.mono,
+    marginTop: 8, fontFamily: T.font,
   },
   securityHintDark: {
-    color: T.ink2, fontFamily: T.mono,
+    color: T.ink2, fontFamily: T.font,
   },
   input: {
     backgroundColor: T.paper2,
-    borderRadius: 0,
+    borderRadius: T.radius,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: T.ink, fontFamily: T.mono,
+    color: T.ink, fontFamily: T.font,
   },
   inputDark: {
     backgroundColor: T.paper2,
-    color: T.ink, fontFamily: T.mono,
+    color: T.ink, fontFamily: T.font,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
     color: T.ink,
     marginTop: 32,
-    marginBottom: 8, fontFamily: T.mono,
+    marginBottom: 8, fontFamily: T.font,
   },
   connectCard: {
     backgroundColor: T.accentWash,
-    borderRadius: 0,
+    borderRadius: T.radius,
     padding: 16,
     marginTop: 24,
     borderWidth: 1,
@@ -897,23 +897,23 @@ const styles = StyleSheet.create({
   connectCardTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: T.ink, fontFamily: T.mono,
+    color: T.ink, fontFamily: T.font,
   },
   connectCardBadge: {
     backgroundColor: T.accentWash,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 0,
+    borderRadius: T.radius,
   },
   connectCardBadgeText: {
     color: T.accent,
     fontSize: 11,
-    fontWeight: "600", fontFamily: T.mono,
+    fontWeight: "600", fontFamily: T.font,
   },
   connectCardDesc: {
     fontSize: 13,
     color: T.muted,
-    lineHeight: 20, fontFamily: T.mono,
+    lineHeight: 20, fontFamily: T.font,
   },
   waitlistButton: {
     flexDirection: "row",
@@ -921,14 +921,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     padding: 12,
-    borderRadius: 0,
+    borderRadius: T.radius,
     backgroundColor: T.paper3,
     marginTop: 12,
   },
   waitlistButtonText: {
     fontSize: 15,
     fontWeight: "600",
-    color: T.ink, fontFamily: T.mono,
+    color: T.ink, fontFamily: T.font,
   },
   waitlistSuccess: {
     flexDirection: "row",
@@ -940,7 +940,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     color: T.ink,
-    lineHeight: 20, fontFamily: T.mono,
+    lineHeight: 20, fontFamily: T.font,
   },
   waitlistEscapeHatch: {
     marginTop: 8,
@@ -949,6 +949,6 @@ const styles = StyleSheet.create({
   waitlistEscapeHatchText: {
     fontSize: 13,
     fontWeight: "600",
-    color: T.accent, fontFamily: T.mono,
+    color: T.accent, fontFamily: T.font,
   },
 })

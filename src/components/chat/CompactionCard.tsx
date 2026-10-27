@@ -67,15 +67,15 @@ const s = StyleSheet.create({
   line: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: T.paper2 },
   lineDark: { backgroundColor: T.paper3 },
   header: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 6 },
-  title: { fontFamily: T.mono, fontSize: 12, fontWeight: "600" },
+  title: { fontFamily: T.font, fontSize: 12, fontWeight: "600" },
   body: {
     marginTop: 8,
     padding: 10,
-    borderRadius: 0,
+    borderRadius: T.radius,
     borderWidth: 1,
     borderColor: T.rule,
     backgroundColor: T.paper2,
   },
   bodyDark: { backgroundColor: T.paper2, borderColor: T.rule },
-  error: { fontFamily: T.mono, fontSize: 13, lineHeight: 20, color: T.ink2 },
+  error: { fontFamily: T.font, fontSize: 13, lineHeight: 20, color: T.ink2 },
 })

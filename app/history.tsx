@@ -53,31 +53,31 @@ export default function HistoryScreen() {
   ])
   return <ScrollView style={{ flex: 1, backgroundColor: T.paper }} contentContainerStyle={{ padding: 20, maxWidth: 1000, width: '100%', alignSelf: 'center', gap: 16 }}>
     <Stack.Screen options={{ title: t('history.title') }} />
-    <Text style={{ color: T.ink, fontFamily: T.mono }}>{t('history.privacy')}</Text>
+    <Text style={{ color: T.ink, fontFamily: T.font }}>{t('history.privacy')}</Text>
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-      <Text style={{ color: T.ink, flex: 1, fontFamily: T.mono }}>{t('history.enable')}</Text>
+      <Text style={{ color: T.ink, flex: 1, fontFamily: T.font }}>{t('history.enable')}</Text>
       <Switch testID="history-enable" accessibilityLabel={t('history.enable')} value={enabled} onValueChange={value => {
         void setHistoryEnabled(value).then(() => setEnabled(value)).catch(() => Alert.alert(t('common.error'), t('history.failed')))
       }} />
     </View>
-    <Text style={{ color: T.ink, fontWeight: '700', fontFamily: T.mono }}>{connections.find(c => c.id === active)?.name ?? t('history.noConnection')}</Text>
-    <Pressable accessibilityRole="button" testID="history-refresh" onPress={() => { void reload() }} style={{ padding: 14, borderWidth: 1, borderColor: T.rule2 }}><Text style={{ color: T.ink, fontFamily: T.mono }}>{t('common.retry')}</Text></Pressable>
-    <Pressable accessibilityRole="button" testID="history-clear" onPress={clear} style={{ padding: 14, borderWidth: 1, borderColor: T.rule2 }}><Text style={{ color: T.ink, fontFamily: T.mono }}>{t('history.clear')}</Text></Pressable>
+    <Text style={{ color: T.ink, fontWeight: '700', fontFamily: T.font }}>{connections.find(c => c.id === active)?.name ?? t('history.noConnection')}</Text>
+    <Pressable accessibilityRole="button" testID="history-refresh" onPress={() => { void reload() }} style={{ padding: 14, borderWidth: 1, borderColor: T.rule2 }}><Text style={{ color: T.ink, fontFamily: T.font }}>{t('common.retry')}</Text></Pressable>
+    <Pressable accessibilityRole="button" testID="history-clear" onPress={clear} style={{ padding: 14, borderWidth: 1, borderColor: T.rule2 }}><Text style={{ color: T.ink, fontFamily: T.font }}>{t('history.clear')}</Text></Pressable>
     {busy && <ActivityIndicator />}
-    {!busy && !sessions.length && <Text style={{ color: T.ink, fontFamily: T.mono }}>{t('history.empty')}</Text>}
+    {!busy && !sessions.length && <Text style={{ color: T.ink, fontFamily: T.font }}>{t('history.empty')}</Text>}
     {selected ? <>
-      <Pressable accessibilityRole="button" onPress={() => setSelected(null)} style={{ padding: 14 }}><Text style={{ color: T.ink, fontFamily: T.mono }}>← {t('history.title')}</Text></Pressable>
-      <Text selectable style={{ color: T.ink, fontSize: 22, fontWeight: '700', fontFamily: T.mono }}>{selected.title}</Text>
-      <Text style={{ color: T.ink, fontFamily: T.mono }}>{t('history.savedAt', { date: new Date(selected.savedAt).toLocaleString() })}</Text>
-      <Text style={{ color: T.ink, fontFamily: T.mono }}>{t('history.readOnly')}</Text>
-      {selected.messages.map((message, i) => <View key={`${message.id}-${i}`} style={{ padding: 16, gap: 8, borderRadius: 0, backgroundColor: T.paper3 }}>
-        <Text style={{ color: T.ink, fontWeight: '700', fontFamily: T.mono }}>{message.role === 'user' ? t('history.user') : t('history.assistant')}</Text>
-        <Text selectable testID="history-message" style={{ color: T.ink, fontSize: 16, lineHeight: 24, fontFamily: T.mono }}>{message.text}</Text>
+      <Pressable accessibilityRole="button" onPress={() => setSelected(null)} style={{ padding: 14 }}><Text style={{ color: T.ink, fontFamily: T.font }}>← {t('history.title')}</Text></Pressable>
+      <Text selectable style={{ color: T.ink, fontSize: 22, fontWeight: '700', fontFamily: T.font }}>{selected.title}</Text>
+      <Text style={{ color: T.ink, fontFamily: T.font }}>{t('history.savedAt', { date: new Date(selected.savedAt).toLocaleString() })}</Text>
+      <Text style={{ color: T.ink, fontFamily: T.font }}>{t('history.readOnly')}</Text>
+      {selected.messages.map((message, i) => <View key={`${message.id}-${i}`} style={{ padding: 16, gap: 8, borderRadius: T.radius, backgroundColor: T.paper3 }}>
+        <Text style={{ color: T.ink, fontWeight: '700', fontFamily: T.font }}>{message.role === 'user' ? t('history.user') : t('history.assistant')}</Text>
+        <Text selectable testID="history-message" style={{ color: T.ink, fontSize: 16, lineHeight: 24, fontFamily: T.font }}>{message.text}</Text>
       </View>)}
     </> : sessions.map(session => <Pressable key={session.id} testID={`history-session-${session.id}`} accessibilityRole="button" onPress={() => setSelected(session)} style={{ padding: 16, gap: 6, borderBottomWidth: 1, borderBottomColor: T.rule }}>
-      <Text style={{ color: T.ink, fontWeight: '700', fontFamily: T.mono }}>{session.title}</Text>
-      <Text style={{ color: T.ink, fontFamily: T.mono }}>{session.directory}</Text>
-      <Text style={{ color: T.ink, fontFamily: T.mono }}>{t('history.savedAt', { date: new Date(session.savedAt).toLocaleString() })}</Text>
+      <Text style={{ color: T.ink, fontWeight: '700', fontFamily: T.font }}>{session.title}</Text>
+      <Text style={{ color: T.ink, fontFamily: T.font }}>{session.directory}</Text>
+      <Text style={{ color: T.ink, fontFamily: T.font }}>{t('history.savedAt', { date: new Date(session.savedAt).toLocaleString() })}</Text>
     </Pressable>)}
   </ScrollView>
 }

@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 13,
     color: T.muted,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   connectionItem: {
     flexDirection: "row",
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   },
   connectionIcon: {
     width: 24,
-    borderRadius: 0,
+    borderRadius: T.radius,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -317,29 +317,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   connectionNameActive: {
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   connectionNameActiveDark: {
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   textDark: {
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   badge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 0,
+    borderRadius: T.radius,
   },
   badgeText: {
     fontSize: 11,
     fontWeight: "600",
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   activeBadge: {
     backgroundColor: T.accentWash,
@@ -349,11 +349,11 @@ const styles = StyleSheet.create({
   },
   activeBadgeText: {
     color: T.accent,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   activeBadgeTextDark: {
     color: T.accent,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   offlineBadge: {
     backgroundColor: T.paper3,
@@ -363,11 +363,11 @@ const styles = StyleSheet.create({
   },
   offlineBadgeText: {
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   offlineBadgeTextDark: {
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   checkingBadge: {
     backgroundColor: T.accentWash,
@@ -377,31 +377,31 @@ const styles = StyleSheet.create({
   },
   checkingBadgeText: {
     color: T.accent,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   checkingBadgeTextDark: {
     color: T.accent,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   connectionUrl: {
     fontSize: 13,
     color: T.muted,
     marginTop: 2,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   connectionUrlActive: {
     color: T.muted,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   connectionMeta: {
     fontSize: 12,
     color: T.muted,
     marginTop: 4,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   metaDark: {
     color: T.muted,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   emptyContainer: {
     flex: 1,
@@ -414,14 +414,14 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 16,
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   emptySubtitle: {
     fontSize: 14,
     color: T.muted,
     marginTop: 8,
     textAlign: "center",
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   emptyContent: {
     flex: 1,
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     bottom: 16,
     width: 56,
     height: 56,
-    borderRadius: 0,
+    borderRadius: T.radius,
     backgroundColor: T.accent,
     justifyContent: "center",
     alignItems: "center",
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   settingRow: {
     flexDirection: "row",
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
   settingText: {
     fontSize: 14,
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   pagePicker: {
     flexDirection: "row",
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
   pageOption: {
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 0,
+    borderRadius: T.radius,
     borderWidth: 1,
     borderColor: T.rule,
     backgroundColor: T.accentWash,
@@ -499,15 +499,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "500",
     color: T.accent,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   pageOptionTextActive: {
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   settingHint: {
     fontSize: 12,
     color: T.muted,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
 })

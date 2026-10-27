@@ -328,11 +328,11 @@ const styles = StyleSheet.create({
     marginLeft: 16,
     marginBottom: 8,
 
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   sectionTitleDark: {
     color: T.muted,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   sectionContent: {
     backgroundColor: T.paper,
@@ -370,21 +370,21 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 16,
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   textDark: {
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   settingDescription: {
     fontSize: 13,
     color: T.muted,
     marginTop: 2,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   metaDark: {
     color: T.muted,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   footer: {
     alignItems: "center",
@@ -394,6 +394,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: T.muted,
     textAlign: "center",
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
 })

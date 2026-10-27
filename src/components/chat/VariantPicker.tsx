@@ -93,9 +93,9 @@ const s = StyleSheet.create({
   sheet: { backgroundColor: T.paper2, borderTopWidth: 1, borderTopColor: T.rule2 },
   sheetDark: { backgroundColor: T.paper2 },
   header: { paddingHorizontal: 16, paddingBottom: 12 },
-  title: { fontFamily: T.mono, fontSize: 18, fontWeight: "700", color: T.ink },
-  textWhite: { fontFamily: T.mono, color: T.ink },
-  metaDark: { fontFamily: T.mono, color: T.muted },
+  title: { fontFamily: T.font, fontSize: 18, fontWeight: "700", color: T.ink },
+  textWhite: { fontFamily: T.font, color: T.ink },
+  metaDark: { fontFamily: T.font, color: T.muted },
   content: { paddingBottom: 40 },
   row: {
     flexDirection: "row",
@@ -109,6 +109,6 @@ const s = StyleSheet.create({
   rowSelected: { backgroundColor: T.accentWash },
   rowSelectedDark: { backgroundColor: T.accentWash },
   rowText: { flex: 1 },
-  rowName: { fontFamily: T.mono, fontSize: 15, fontWeight: "600", color: T.ink },
-  rowDesc: { fontFamily: T.mono, fontSize: 12, color: T.muted, marginTop: 2 },
+  rowName: { fontFamily: T.font, fontSize: 15, fontWeight: "600", color: T.ink },
+  rowDesc: { fontFamily: T.font, fontSize: 12, color: T.muted, marginTop: 2 },
 })

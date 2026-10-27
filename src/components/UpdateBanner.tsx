@@ -87,29 +87,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   titleDark: {
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   body: {
     fontSize: 12,
     color: T.ink2,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   bodyDark: {
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   action: {
     fontSize: 14,
     fontWeight: "600",
     color: T.ink2,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   actionDark: {
     color: T.ink2,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
 })

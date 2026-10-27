@@ -961,13 +961,13 @@ const styles = StyleSheet.create({
     borderBottomColor: T.rule,
   },
   statFigure: {
-    fontFamily: T.mono,
-    fontSize: 20,
+    fontFamily: T.font,
+    fontSize: 17,
     fontWeight: "400",
     color: T.ink,
   },
   statLabel: {
-    fontFamily: T.mono,
+    fontFamily: T.font,
     fontSize: 12,
     color: T.muted,
   },
@@ -987,7 +987,7 @@ const styles = StyleSheet.create({
     borderBottomColor: T.rule,
   },
   historyRowText: {
-    fontFamily: T.mono,
+    fontFamily: T.font,
     fontSize: 13,
     color: T.ink2,
   },
@@ -1011,35 +1011,35 @@ const styles = StyleSheet.create({
   connectionDot: {
     width: 8,
     height: 8,
-    borderRadius: 0,
+    borderRadius: T.radiusFull,
   },
   connectionName: {
     fontSize: 14,
     fontWeight: "600",
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   connectionUrl: {
     fontSize: 12,
     color: T.muted,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   projectPath: {
     fontSize: 13,
     color: T.muted,
     flex: 1,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   errorBar: {
-    backgroundColor: T.accentWash,
+    backgroundColor: T.paper3,
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: T.rule,
   },
   errorText: {
-    color: T.ink2,
+    color: T.danger,
     fontSize: 14,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   groupHeader: {
     flexDirection: "row",
@@ -1060,12 +1060,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   groupHeaderCount: {
     fontSize: 12,
     color: T.muted,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   sessionItem: {
     flexDirection: "row",
@@ -1091,16 +1091,16 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: T.ink,
     marginBottom: 4,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   textDark: {
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   sessionMeta: {
     fontSize: 13,
     color: T.muted,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   sessionMetaRow: {
     flexDirection: "row",
@@ -1114,16 +1114,16 @@ const styles = StyleSheet.create({
     backgroundColor: T.accentWash,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 0,
+    borderRadius: T.radius,
   },
   sessionDirText: {
     fontSize: 11,
     color: T.muted,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   metaDark: {
     color: T.muted,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   emptyContainer: {
     flex: 1,
@@ -1137,20 +1137,20 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 16,
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   emptySubtitle: {
     fontSize: 14,
     color: T.muted,
     marginTop: 8,
     textAlign: "center",
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   addButton: {
     backgroundColor: T.accent,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 0,
+    borderRadius: T.radius,
     marginTop: 24,
   },
   authErrorButtonRow: {
@@ -1163,11 +1163,11 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: T.accentInk,
     fontWeight: "600",
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   addButtonTextDark: {
     color: T.accentInk,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   setupGuideLink: {
     marginTop: 16,
@@ -1176,7 +1176,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: T.accent,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   tryDemoButton: {
     flexDirection: "row",
@@ -1185,7 +1185,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 0,
+    borderRadius: T.radius,
     borderWidth: 1,
     borderColor: T.accent,
   },
@@ -1196,11 +1196,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: T.accent,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   tryDemoButtonTextDark: {
     color: T.accent,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   loadingContainer: {
     flex: 1,
@@ -1217,7 +1217,7 @@ const styles = StyleSheet.create({
   emptyListText: {
     fontSize: 16,
     color: T.muted,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   emptyContent: {
     flex: 1,
@@ -1228,7 +1228,7 @@ const styles = StyleSheet.create({
     bottom: 16,
     width: 56,
     height: 56,
-    borderRadius: 0,
+    borderRadius: T.radius,
     backgroundColor: T.accent,
     justifyContent: "center",
     alignItems: "center",
@@ -1265,7 +1265,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "600",
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   modalBody: {
     marginBottom: 24,
@@ -1280,7 +1280,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 14,
     paddingVertical: 11,
-    borderRadius: 0,
+    borderRadius: T.radius,
     backgroundColor: T.paper2,
     marginBottom: 6,
   },
@@ -1297,17 +1297,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   projectRowNameActive: {
     color: T.accent,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   projectRowPath: {
     fontSize: 11,
     color: T.muted,
     marginTop: 1,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   modalLabel: {
     fontSize: 13,
@@ -1315,7 +1315,7 @@ const styles = StyleSheet.create({
     color: T.muted,
     marginBottom: 8,
 
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   modalDirBox: {
     flexDirection: "row",
@@ -1323,7 +1323,7 @@ const styles = StyleSheet.create({
     gap: 12,
     backgroundColor: T.paper2,
     padding: 16,
-    borderRadius: 0,
+    borderRadius: T.radius,
   },
   modalDirBoxDark: {
     backgroundColor: T.paper3,
@@ -1332,21 +1332,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: T.ink,
     flex: 1,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   modalInput: {
     backgroundColor: T.paper2,
-    borderRadius: 0,
+    borderRadius: T.radius,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   modalInputDark: {
     backgroundColor: T.paper3,
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   pathChips: {
     flexDirection: "row",
@@ -1357,7 +1357,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     backgroundColor: T.accentWash,
-    borderRadius: 0,
+    borderRadius: T.radius,
   },
   pathChipDark: {
     backgroundColor: T.accentWash,
@@ -1366,17 +1366,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: T.accent,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   pathChipTextDark: {
     color: T.accent,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   modalHint: {
     fontSize: 13,
     color: T.muted,
     marginTop: 12,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   modalActions: {
     flexDirection: "row",
@@ -1389,7 +1389,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     padding: 16,
-    borderRadius: 0,
+    borderRadius: T.radius,
   },
   modalButtonSecondary: {
     borderWidth: 1,
@@ -1409,17 +1409,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   modalButtonTextPrimary: {
     fontSize: 15,
     fontWeight: "600",
     color: T.accentInk,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   modalButtonTextPrimaryDark: {
     color: T.accentInk,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   modalButtonFull: {
     flex: 0,
@@ -1428,7 +1428,7 @@ const styles = StyleSheet.create({
   // Rename modal
   renameCard: {
     backgroundColor: T.paper,
-    borderRadius: 0,
+    borderRadius: T.radius,
     padding: 20,
     marginHorizontal: 32,
     gap: 16,
@@ -1440,7 +1440,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "600",
     color: T.ink,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
   renameActions: {
     flexDirection: "row",
@@ -1450,7 +1450,7 @@ const styles = StyleSheet.create({
   renameBtn: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 0,
+    borderRadius: T.radius,
   },
   renameBtnCancel: {
     backgroundColor: "transparent",
@@ -1459,6 +1459,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: T.muted,
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
 })

@@ -55,7 +55,7 @@ const s = StyleSheet.create({
   image: {
     width: 72,
     height: 72,
-    borderRadius: 0,
+    borderRadius: T.radius,
     backgroundColor: T.paper2,
   },
   remove: {
@@ -64,7 +64,7 @@ const s = StyleSheet.create({
     right: -6,
     width: 22,
     height: 22,
-    borderRadius: 0,
+    borderRadius: T.radius,
     backgroundColor: T.paper,
     justifyContent: "center",
     alignItems: "center",
@@ -78,7 +78,7 @@ const s = StyleSheet.create({
     marginTop: 2,
     maxWidth: 72,
     textAlign: "center",
-    fontFamily: T.mono,
+    fontFamily: T.font,
   },
-  labelDark: { fontFamily: T.mono, color: T.muted },
+  labelDark: { fontFamily: T.font, color: T.muted },
 })

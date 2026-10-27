@@ -22,7 +22,7 @@ export default function TabLayout() {
           borderTopWidth: T.hair,
         },
         tabBarLabelStyle: {
-          fontFamily: T.mono,
+          fontFamily: T.font,
           fontSize: 11,
         },
         headerStyle: {
@@ -31,7 +31,7 @@ export default function TabLayout() {
           borderBottomWidth: T.hair,
         },
         headerTitleStyle: {
-          fontFamily: T.mono,
+          fontFamily: T.font,
           fontSize: 15,
           fontWeight: "500",
         },
