@@ -190,7 +190,7 @@ const s = StyleSheet.create({
   user: {
     alignSelf: "flex-end",
     maxWidth: "88%",
-    backgroundColor: T.paper2,
+    backgroundColor: T.paper3,
     borderRadius: T.radius,
     paddingHorizontal: 14,
     paddingVertical: 10,
