@@ -3,6 +3,7 @@ import {
   View,
   Text,
   FlatList,
+  ScrollView,
   TextInput,
   TouchableOpacity,
   StyleSheet,
@@ -943,42 +944,55 @@ export default function SessionScreen() {
         {currentSession && <StatusIndicator sessionID={currentSession.id} isDark={isDark} />}
 
         {/* Permissions */}
-        {permissions.map((perm) => (
-          <PermissionPrompt
-            key={perm.id}
-            permission={perm}
-            isDark={isDark}
-            onReply={(reply) => handlePermissionReply(perm.id, reply)}
-          />
-        ))}
+        {/* Prompts: permissions, reply confirmation, questions.
+            Scrollable and shrinkable on purpose. The message list above is
+            `flex: 1` and collapses to nothing, so a fixed-height question card
+            used to push the composer below the screen as soon as the keyboard
+            opened — typing in the chat was blind. Here the card scrolls inside
+            the space that is left, and the composer below always stays visible.
+            `handled` keeps option taps working while the keyboard is up
+            (without it the first tap only dismisses the keyboard). */}
+        <ScrollView
+          style={s.promptArea}
+          contentContainerStyle={s.promptAreaContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {permissions.map((perm) => (
+            <PermissionPrompt
+              key={perm.id}
+              permission={perm}
+              isDark={isDark}
+              onReply={(reply) => handlePermissionReply(perm.id, reply)}
+            />
+          ))}
 
-        {/* Question reply confirmation — survives the prompt's removal */}
-        {questionSentText !== null && (
-          <View style={[s.questionSent, isDark && s.questionSentDark]}>
-            <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
-            <View style={s.questionSentBody}>
-              <Text style={[s.questionSentTitle, isDark && s.questionSentTitleDark]}>
-                {t("chat.questionPrompt.sent")}
-              </Text>
-              {questionSentText ? (
-                <Text style={[s.questionSentAnswer, isDark && s.metaDark]} numberOfLines={2}>
-                  {questionSentText}
+          {/* Question reply confirmation — survives the prompt's removal */}
+          {questionSentText !== null && (
+            <View style={[s.questionSent, isDark && s.questionSentDark]}>
+              <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
+              <View style={s.questionSentBody}>
+                <Text style={[s.questionSentTitle, isDark && s.questionSentTitleDark]}>
+                  {t("chat.questionPrompt.sent")}
                 </Text>
-              ) : null}
+                {questionSentText ? (
+                  <Text style={[s.questionSentAnswer, isDark && s.metaDark]} numberOfLines={2}>
+                    {questionSentText}
+                  </Text>
+                ) : null}
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
-        {/* Questions */}
-        {questions.map((q) => (
-          <QuestionPrompt
-            key={q.id}
-            request={q}
-            isDark={isDark}
-            onReply={(answers) => handleQuestionReply(q.id, answers)}
-            onReject={() => handleQuestionReject(q.id)}
-          />
-        ))}
+          {questions.map((q) => (
+            <QuestionPrompt
+              key={q.id}
+              request={q}
+              isDark={isDark}
+              onReply={(answers) => handleQuestionReply(q.id, answers)}
+              onReject={() => handleQuestionReject(q.id)}
+            />
+          ))}
+        </ScrollView>
 
         {/* Slash popover */}
         {slashActive && (
@@ -1123,6 +1137,10 @@ const s = StyleSheet.create({
   containerDark: { backgroundColor: "#0a0a0a" },
   loading: { flex: 1, justifyContent: "center", alignItems: "center" },
   listWrap: { flex: 1, position: "relative" },
+  // Shrinks only when the prompts do not fit (flexBasis stays auto), so the
+  // layout is unchanged with the keyboard closed.
+  promptArea: { flexShrink: 1 },
+  promptAreaContent: { flexGrow: 0 },
 
   // Messages
   messageList: { padding: 16, paddingBottom: 8 },

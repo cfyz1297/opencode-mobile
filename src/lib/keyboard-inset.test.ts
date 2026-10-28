@@ -67,3 +67,24 @@ test("full-screen layouts do not add their own keyboard padding", () => {
     assert.doesNotMatch(source, /paddingBottom:\s*kb(Height)?\b/, `${file} double-pads for the keyboard`)
   }
 })
+
+// Regression: with a question card on screen, focusing the chat composer hid it
+// behind the keyboard. The message list collapses to nothing (flex: 1), so a
+// fixed-height prompt block pushed the composer off the bottom edge. The prompts
+// must scroll in whatever space is left, and the composer must sit outside that
+// scroll area so it is always visible.
+test("the question card scrolls so the composer stays visible", () => {
+  const root = path.join(import.meta.dirname, "..", "..")
+  const source = fs.readFileSync(path.join(root, "app/session/[id].tsx"), "utf8")
+
+  assert.match(source, /promptArea: \{ flexShrink: 1 \}/)
+  const promptAreaStart = source.indexOf("<ScrollView\n          style={s.promptArea}")
+  const promptAreaEnd = source.indexOf("</ScrollView>", promptAreaStart + 1)
+  assert.ok(promptAreaStart > 0 && promptAreaEnd > promptAreaStart, "prompts are wrapped in a shrinkable ScrollView")
+
+  const questionsAt = source.indexOf("<QuestionPrompt")
+  assert.ok(questionsAt > promptAreaStart && questionsAt < promptAreaEnd, "question cards live inside the scroll area")
+
+  const composerAt = source.indexOf("s.inputContainer,")
+  assert.ok(composerAt > promptAreaEnd, "the composer must be outside the prompt scroll area")
+})
