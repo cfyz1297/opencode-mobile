@@ -954,7 +954,6 @@ export default function SessionScreen() {
             (without it the first tap only dismisses the keyboard). */}
         <ScrollView
           style={s.promptArea}
-          contentContainerStyle={s.promptAreaContent}
           keyboardShouldPersistTaps="handled"
         >
           {permissions.map((perm) => (
@@ -1137,10 +1136,10 @@ const s = StyleSheet.create({
   containerDark: { backgroundColor: "#0a0a0a" },
   loading: { flex: 1, justifyContent: "center", alignItems: "center" },
   listWrap: { flex: 1, position: "relative" },
-  // Shrinks only when the prompts do not fit (flexBasis stays auto), so the
-  // layout is unchanged with the keyboard closed.
-  promptArea: { flexShrink: 1 },
-  promptAreaContent: { flexGrow: 0 },
+  // ScrollView defaults to flexGrow: 1 (RN's baseVertical), which would let an
+  // empty prompt area eat the free space and push the message list up. Grow
+  // never, shrink only when the prompts do not fit.
+  promptArea: { flexGrow: 0, flexShrink: 1 },
 
   // Messages
   messageList: { padding: 16, paddingBottom: 8 },

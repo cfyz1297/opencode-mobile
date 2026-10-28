@@ -77,7 +77,10 @@ test("the question card scrolls so the composer stays visible", () => {
   const root = path.join(import.meta.dirname, "..", "..")
   const source = fs.readFileSync(path.join(root, "app/session/[id].tsx"), "utf8")
 
-  assert.match(source, /promptArea: \{ flexShrink: 1 \}/)
+  // ScrollView defaults to flexGrow: 1 (RN baseVertical): without the explicit
+  // flexGrow: 0 an empty prompt area eats the free space and pushes the message
+  // list up, leaving a blank band above the composer.
+  assert.match(source, /promptArea: \{ flexGrow: 0, flexShrink: 1 \}/)
   const promptAreaStart = source.indexOf("<ScrollView\n          style={s.promptArea}")
   const promptAreaEnd = source.indexOf("</ScrollView>", promptAreaStart + 1)
   assert.ok(promptAreaStart > 0 && promptAreaEnd > promptAreaStart, "prompts are wrapped in a shrinkable ScrollView")
