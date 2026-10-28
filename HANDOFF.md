@@ -1,6 +1,6 @@
 # OpenCode Mobile — мастер-документ (форк cfyz1297)
 
-Актуально на **2026-10-28**.
+Актуально на **2026-10-29**.
 - App: **`cc.agentlabs.opencode`** — Expo/React Native Android-клиент к собственному серверу `opencode serve` (V2 API).
 - Репозиторий форка: **`cfyz1297/opencode-mobile`**. Апстрим для справки: `dzianisv/opencode-mobile`.
 - Пользователь запускает сервер в Termux на телефоне; приложение — клиент к нему.
@@ -9,14 +9,20 @@
 
 | Что | Значение |
 |---|---|
-| Версия | **0.2.24**, versionCode **58** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
+| Версия | **0.2.25**, versionCode **59** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
 | Ветки | `main` = `master` (релизный коммит — см. `git log -1`) |
-| Тег | `v0.2.24` |
-| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.24 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
-| APK | 86 388 000 байт, SHA256 `42b1b6512cb51576d5253ef9c4acea7362babb28585611314a65c0844eccdaf4` |
+| Тег | `v0.2.25` |
+| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.25 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
+| APK | 86 387 968 байт, SHA256 `3c18d8bdacecfc5d42e73c0d517349775f0e547e8dbcfecbd7a3435d40761968` |
 | Подпись | production keystore, сертификат тот же, что у 0.2.20/0.2.22/0.2.23 → установка поверх без удаления |
 | Каналы | только `Build Android APK` и `Security scan`. Play / F-Droid / App Store не используются, на тег `v*` не запускаются |
-| Тесты | `npm test` — **531 passed, 0 failed**; покрытие **98.57 / 85.04 / 95.78** при пороге 80; `npm run typecheck` чисто |
+| Тесты | `npm test` — **535 passed, 0 failed**; покрытие **98.57 / 85.11 / 95.78** при пороге 80; `npm run typecheck` чисто |
+
+Что нового в 0.2.25:
+
+- **Композер больше не уезжает под клавиатуру.** Причина была в том, что RN-события клавиатуры в этом приложении не приходят вообще: под bridgeless-архитектурой `ReactSurfaceView` не ставит `ReactInstanceManager`, поэтому слушатель `ReactRootView.onGlobalLayout` выходит раньше отправки `keyboardDidShow`. Плюс edge-to-edge: окно под IME не сжимается. Решение двухслойное: `MainActivity` (`installImeReporter`) и сжимает корневую view под инсет клавиатуры (`updatePadding`), и отдаёт `imeInset` в JS для RN `Modal`; полноэкранные экраны своих отступов больше не добавляют.
+- **Блок вопросов прокручивается.** Список сообщений схлопывается в ноль (`flex: 1`), поэтому карточка вопроса фиксированной высоты выталкивала композер за нижний край, и писать в чат при висящих вопросах было нельзя. Теперь подсказки (permissions, подтверждение ответа, вопросы) живут в `ScrollView` с `flexShrink: 1`: они прокручиваются в остатке места, композер всегда виден.
+- Тесты: `src/lib/keyboard-inset.test.ts` — нормализация `imeInset`, контракт «нативный эмиттер ↔ JS-слушатель», запрет собственных отступов на полноэкранных экранах, и статическая проверка, что композер вне прокручиваемого блока подсказок (падает без фикса).
 
 Что нового в 0.2.24:
 
