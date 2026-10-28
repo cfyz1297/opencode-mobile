@@ -9,14 +9,18 @@
 
 | Что | Значение |
 |---|---|
-| Версия | **0.2.25**, versionCode **59** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
+| Версия | **0.2.26**, versionCode **60** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
 | Ветки | `main` = `master` (релизный коммит — см. `git log -1`) |
-| Тег | `v0.2.25` |
-| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.25 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
-| APK | 86 387 968 байт, SHA256 `3c18d8bdacecfc5d42e73c0d517349775f0e547e8dbcfecbd7a3435d40761968` |
+| Тег | `v0.2.26` |
+| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.26 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
+| APK | 86 387 932 байт, SHA256 `e5ce36ff7c6fd7421b4b83d16d0a24633b01b3ce6f26b65277f1f4e337cf8139` |
 | Подпись | production keystore, сертификат тот же, что у 0.2.20/0.2.22/0.2.23 → установка поверх без удаления |
 | Каналы | только `Build Android APK` и `Security scan`. Play / F-Droid / App Store не используются, на тег `v*` не запускаются |
 | Тесты | `npm test` — **535 passed, 0 failed**; покрытие **98.57 / 85.11 / 95.78** при пороге 80; `npm run typecheck` чисто |
+
+Что нового в 0.2.26:
+
+- **Возвращён правильный вид чата.** Блок подсказок из 0.2.25 тянулся даже пустым и выталкивал сообщения вверх: `ScrollView` в RN по умолчанию имеет `flexGrow: 1` (`baseVertical` в `ScrollView.js`). Теперь `promptArea: { flexGrow: 0, flexShrink: 1 }` — не растёт никогда, сжимается только когда карточка не влезает. Тест проверяет именно `flexGrow: 0` (без него падает).
 
 Что нового в 0.2.25:
 
