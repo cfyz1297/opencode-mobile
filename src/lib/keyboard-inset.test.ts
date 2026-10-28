@@ -37,7 +37,7 @@ test("garbage values never produce a negative or non-finite padding", () => {
 // prebuild-generated project: `expo prebuild --clean` or a careless
 // regeneration silently drops it, and the bug returns with no failing test
 // anywhere else. Pin both ends of the contract.
-test("MainActivity emits imeInset and the hook listens for it", () => {
+test("MainActivity shrinks the root view under the IME and emits imeInset", () => {
   const root = path.join(import.meta.dirname, "..", "..")
   const activity = fs.readFileSync(
     path.join(root, "android/app/src/main/java/cc/agentlabs/opencode/MainActivity.kt"),
@@ -46,7 +46,24 @@ test("MainActivity emits imeInset and the hook listens for it", () => {
   const hook = fs.readFileSync(path.join(root, "src/lib/use-keyboard-height.ts"), "utf8")
 
   assert.match(activity, /WindowInsetsCompat\.Type\.ime\(\)/)
+  assert.match(activity, /updatePadding\(bottom = imeBottom\)/)
   assert.match(activity, /emitDeviceEvent\("imeInset"/)
   assert.match(activity, /putDouble\("height"/)
   assert.match(hook, /addListener\("imeInset"/)
+})
+
+// Screens must not pad themselves by the keyboard height: the root view is
+// already shrunk, so a second offset only shortens the scroll area and leaves
+// the bottom of the screen — the composer included — under the keyboard.
+test("full-screen layouts do not add their own keyboard padding", () => {
+  const root = path.join(import.meta.dirname, "..", "..")
+  for (const file of [
+    "app/session/[id].tsx",
+    "app/connection/add.tsx",
+    "app/connection/[id].tsx",
+    "app/connection/tunnel.tsx",
+  ]) {
+    const source = fs.readFileSync(path.join(root, file), "utf8")
+    assert.doesNotMatch(source, /paddingBottom:\s*kb(Height)?\b/, `${file} double-pads for the keyboard`)
+  }
 })

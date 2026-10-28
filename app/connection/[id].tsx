@@ -11,7 +11,6 @@ import {
   Alert,
 } from "react-native"
 import { router, useLocalSearchParams } from "expo-router"
-import { useKeyboardHeight } from "../../src/lib/use-keyboard-height"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { useConnections } from "../../src/stores/connections"
@@ -40,9 +39,6 @@ export default function EditConnectionScreen() {
   const colorScheme = useColorScheme()
   const isDark = colorScheme === "dark"
   const { t } = useTranslation()
-
-  // Exact keyboard avoidance (edge-to-edge): see use-keyboard-height.
-  const kbHeight = useKeyboardHeight()
 
   const { connections, updateConnection, removeConnection, testConnection } = useConnections()
 
@@ -184,7 +180,7 @@ export default function EditConnectionScreen() {
   }
 
   return (
-    <View style={{ flex: 1, paddingBottom: kbHeight }}>
+    <View style={{ flex: 1 }}>
     <ScrollView
       style={[styles.container, isDark && styles.containerDark]}
       contentContainerStyle={styles.content}

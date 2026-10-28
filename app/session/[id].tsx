@@ -824,10 +824,10 @@ export default function SessionScreen() {
           s.container,
           { maxWidth: layout.content },
           isDark && s.containerDark,
-          // Exact avoidance: the window never resizes under edge-to-edge, so
-          // raw keyboard height as bottom padding puts the composer exactly
-          // on top of the keyboard (see useKeyboardHeight).
-          kbHeight > 0 && { paddingBottom: kbHeight },
+          // No keyboard padding here: MainActivity already shrinks the whole
+          // root view under the IME inset. Padding the container on top of that
+          // only moved the list, leaving the screen's own bottom edge (and the
+          // composer with it) partly under the keyboard.
         ]}
       >
         {/* Session info pulldown */}

@@ -12,7 +12,6 @@ import {
   Linking,
 } from "react-native"
 import { router } from "expo-router"
-import { useKeyboardHeight } from "../../src/lib/use-keyboard-height"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { useConnections } from "../../src/stores/connections"
@@ -76,11 +75,6 @@ export default function AddConnectionScreen() {
       cancelled = true
     }
   }, [])
-
-  // Exact keyboard avoidance: the raw keyboard height (0 when hidden) as
-  // bottom padding — the edge-to-edge window never resizes, so raw height
-  // is exact and ScrollView shrink keeps all form fields reachable.
-  const kbHeight = useKeyboardHeight()
 
   const buildUrl = () => {
     if (mode === "advanced") return url.trim()
@@ -298,7 +292,7 @@ export default function AddConnectionScreen() {
   // Quick connect mode - simplified
   if (mode === "quick") {
     return (
-      <View style={{ flex: 1, paddingBottom: kbHeight }}>
+      <View style={{ flex: 1 }}>
       <ScrollView
         style={[styles.container, isDark && styles.containerDark]}
         contentContainerStyle={styles.content}
@@ -514,7 +508,7 @@ export default function AddConnectionScreen() {
 
   // Advanced mode - full options
   return (
-    <View style={{ flex: 1, paddingBottom: kbHeight }}>
+    <View style={{ flex: 1 }}>
     <ScrollView
       style={[styles.container, isDark && styles.containerDark]}
       contentContainerStyle={styles.content}

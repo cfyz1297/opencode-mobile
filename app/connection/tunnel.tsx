@@ -5,11 +5,10 @@ import * as Clipboard from 'expo-clipboard'
 import { useTranslation } from 'react-i18next'
 import { tunnelCommands, tunnelUrl, createTunnelConnector, type TunnelProvider, type HostPlatform } from '../../src/lib/tunnel'
 import { useConnections } from '../../src/stores/connections'
-import { useKeyboardHeight } from '../../src/lib/use-keyboard-height'
 
 export default function TunnelScreen() {
   const { t } = useTranslation()
-  const dark = useColorScheme() === 'dark', kb = useKeyboardHeight()
+  const dark = useColorScheme() === 'dark'
   const [provider, setProvider] = useState<TunnelProvider>('cloudflare')
   const [platform, setPlatform] = useState<HostPlatform>('windows')
   const [port, setPort] = useState('4096'), [url, setUrl] = useState('')
@@ -41,7 +40,7 @@ export default function TunnelScreen() {
       Alert.alert(t('common.error'), error instanceof Error ? error.message : t('tunnel.failed'))
     } finally { guard.current = false; setBusy(false) }
   }
-  return <View style={{ flex: 1, paddingBottom: kb, backgroundColor: dark ? '#0a0a0a' : '#fff' }}>
+  return <View style={{ flex: 1, backgroundColor: dark ? '#0a0a0a' : '#fff' }}>
     <Stack.Screen options={{ title: t('tunnel.title') }} />
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, width: '100%', maxWidth: 720, alignSelf: 'center', gap: 12 }}>
       <Text style={{ color: fg, fontSize: 22, fontWeight: '700' }}>{t('tunnel.step', { step })}</Text>
