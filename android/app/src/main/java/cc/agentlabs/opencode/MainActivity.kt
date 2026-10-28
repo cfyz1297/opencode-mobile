@@ -2,21 +2,65 @@ package cc.agentlabs.opencode
 
 import android.os.Build
 import android.os.Bundle
+import android.view.View
+
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
+import com.facebook.react.ReactApplication
+import com.facebook.react.bridge.Arguments
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
+  /** Last reported IME height in dp; -1 means "nothing reported yet". */
+  private var reportedImeDp = -1f
+
   override fun onCreate(savedInstanceState: Bundle?) {
     // Set the theme to AppTheme BEFORE onCreate to support
     // coloring the background, status bar, and navigation bar.
     // This is required for expo-splash-screen.
     setTheme(R.style.AppTheme);
     super.onCreate(null)
+    installImeReporter()
+  }
+
+  /**
+   * Reports the soft-keyboard height to JS as the `imeInset` device event.
+   *
+   * React Native's own `keyboardDidShow`/`keyboardDidHide` never fire here:
+   * they come from `ReactRootView`'s global-layout listener, which bails out
+   * when `mReactInstanceManager` is null — always the case under the
+   * bridgeless New Architecture this app runs on. With edge-to-edge the window
+   * also never resizes for the IME, so without this event the app cannot know
+   * the keyboard is open and the composer stays behind it.
+   *
+   * Keep this in sync with `src/lib/use-keyboard-height.ts`
+   * (`imeInset` + `{height, visible}`).
+   */
+  private fun installImeReporter() {
+    val content = findViewById<View>(android.R.id.content) ?: return
+    ViewCompat.setOnApplyWindowInsetsListener(content) { _, insets ->
+      reportIme(insets.getInsets(WindowInsetsCompat.Type.ime()).bottom)
+      // Never consume: the rest of the view tree still needs these insets.
+      insets
+    }
+  }
+
+  /** @param px IME inset in physical pixels, 0 when the keyboard is hidden. */
+  private fun reportIme(px: Int) {
+    val heightDp = px / resources.displayMetrics.density
+    val context = (application as? ReactApplication)?.reactHost?.currentReactContext ?: return
+    if (heightDp == reportedImeDp) return
+    reportedImeDp = heightDp
+    val payload = Arguments.createMap()
+    payload.putDouble("height", heightDp.toDouble())
+    payload.putBoolean("visible", heightDp > 0f)
+    context.emitDeviceEvent("imeInset", payload)
   }
 
   /**

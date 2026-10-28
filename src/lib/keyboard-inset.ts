@@ -1,16 +1,18 @@
-// Bottom padding (dp) that lifts content exactly onto the soft keyboard.
+// Keyboard padding from the two payload shapes the app receives:
 //
-// Android/edge-to-edge (Expo SDK 54, always on): the window never shrinks under
-// the IME, so the app has to pad for the keyboard itself. RN reports the IME
-// inset *net of the system bars* (ReactRootView: imeInsets.bottom -
-// barInsets.bottom) while the app draws to the screen edge, so the bar inset
-// has to be added back or the composer stays that far behind the keyboard.
-//
-// The previous guess — `windowHeight - screenY` — collapsed to the nav-bar
-// height on edge-to-edge: the visible display frame does not shrink there, so
-// the "keyboard top" it reports is the screen bottom minus the bars, and the
-// padding became a few dozen pixels instead of the whole keyboard.
-export function keyboardPadding(reportedHeight: number, barInsetBottom: number): number {
-  if (!(reportedHeight > 0)) return 0
-  return reportedHeight + Math.max(0, barInsetBottom)
+// - `imeInset` from MainActivity (Android): {height, visible} in dp. This is
+//   the only signal that works under the bridgeless New Architecture — React
+//   Native's own keyboardDidShow never fires there (see MainActivity).
+// - React Native's Keyboard event (iOS): {endCoordinates: {height}}.
+export type KeyboardSignal = {
+  height?: number
+  visible?: boolean
+  endCoordinates?: { height?: number }
+}
+
+/** Bottom padding (dp) that lifts content exactly onto the keyboard; 0 when hidden. */
+export function keyboardPadding(signal: KeyboardSignal): number {
+  if (signal.visible === false) return 0
+  const height = signal.height ?? signal.endCoordinates?.height
+  return height != null && Number.isFinite(height) && height > 0 ? height : 0
 }

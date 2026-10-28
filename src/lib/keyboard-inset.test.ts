@@ -1,21 +1,52 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
+import fs from "node:fs"
+import path from "node:path"
 import { keyboardPadding } from "./keyboard-inset.ts"
 
-// Regression: on edge-to-edge Android the old screenY-based guess produced the
-// nav-bar inset (~24dp) instead of the keyboard height, so the composer stayed
-// behind the keyboard. The padding must come from the reported IME inset.
-test("edge-to-edge: the system bar inset is added back to the reported height", () => {
-  assert.equal(keyboardPadding(252, 24), 276)
-  assert.equal(keyboardPadding(300, 48), 348)
+// Regression: the composer sat behind the keyboard on every Android build.
+// React Native's keyboardDidShow never fires in this app (bridgeless root view
+// has no ReactInstanceManager, so RN's global-layout listener returns early),
+// and edge-to-edge means the window never resizes for the IME either. The
+// padding now comes from the native `imeInset` event instead.
+
+test("the native IME inset becomes the padding", () => {
+  assert.equal(keyboardPadding({ height: 276, visible: true }), 276)
+  assert.equal(keyboardPadding({ height: 312.5, visible: true }), 312.5)
 })
 
-test("no system bar inset (iOS, or a window that already avoids the keyboard)", () => {
-  assert.equal(keyboardPadding(300, 0), 300)
-  assert.equal(keyboardPadding(300, -5), 300)
+test("a hidden keyboard means no padding, even if a stale height lingers", () => {
+  assert.equal(keyboardPadding({ height: 0, visible: false }), 0)
+  assert.equal(keyboardPadding({ height: 276, visible: false }), 0)
+  assert.equal(keyboardPadding({ height: 0 }), 0)
 })
 
-test("a hidden keyboard needs no padding", () => {
-  assert.equal(keyboardPadding(0, 24), 0)
-  assert.equal(keyboardPadding(Number.NaN, 24), 0)
+test("the React Native event shape still works (iOS path)", () => {
+  assert.equal(keyboardPadding({ endCoordinates: { height: 300 } }), 300)
+  assert.equal(keyboardPadding({ endCoordinates: { height: 0 } }), 0)
+  assert.equal(keyboardPadding({}), 0)
+})
+
+test("garbage values never produce a negative or non-finite padding", () => {
+  assert.equal(keyboardPadding({ height: Number.NaN }), 0)
+  assert.equal(keyboardPadding({ height: -40 }), 0)
+  assert.equal(keyboardPadding({ height: Number.POSITIVE_INFINITY }), 0)
+})
+
+// The event only exists because of a hand-written native listener in a
+// prebuild-generated project: `expo prebuild --clean` or a careless
+// regeneration silently drops it, and the bug returns with no failing test
+// anywhere else. Pin both ends of the contract.
+test("MainActivity emits imeInset and the hook listens for it", () => {
+  const root = path.join(import.meta.dirname, "..", "..")
+  const activity = fs.readFileSync(
+    path.join(root, "android/app/src/main/java/cc/agentlabs/opencode/MainActivity.kt"),
+    "utf8",
+  )
+  const hook = fs.readFileSync(path.join(root, "src/lib/use-keyboard-height.ts"), "utf8")
+
+  assert.match(activity, /WindowInsetsCompat\.Type\.ime\(\)/)
+  assert.match(activity, /emitDeviceEvent\("imeInset"/)
+  assert.match(activity, /putDouble\("height"/)
+  assert.match(hook, /addListener\("imeInset"/)
 })
