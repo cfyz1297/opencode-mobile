@@ -26,12 +26,18 @@ interface Props {
   // Reverts the session to (just before) this message — desktop's
   // "reset to this point". Offered on user messages only.
   onRevert?: (messageID: string) => void
+  // Set for assistant steps that continue a tool-using run above them: the
+  // header is shown once per run, not per step.
+  continued?: boolean
+  // False for every step of a run except the newest: the token/cost footer
+  // only makes sense once, at the end.
+  showMeta?: boolean
 }
 
 // TODO: Replace with streamdown-rn once React 19 types PR lands - it has
 // built-in block-level memoization that eliminates re-renders for stable blocks
 export const MessageBubble = memo(
-  function MessageBubble({ message, parts, isDark, onLongPress, onRevert }: Props) {
+  function MessageBubble({ message, parts, isDark, onLongPress, onRevert, continued = false, showMeta = true }: Props) {
     const isUser = message.role === "user"
     const { t } = useTranslation()
     const [copied, setCopied] = useState(false)
@@ -66,32 +72,33 @@ export const MessageBubble = memo(
     const compactionPart = parts.find((p) => p.type === "compaction")
     if (compactionPart) return <CompactionCard part={compactionPart} isDark={isDark} />
 
-    return (
-      <TouchableOpacity
-        activeOpacity={isUser && onLongPress ? 0.7 : 1}
-        onLongPress={isUser && onLongPress ? () => onLongPress(message.id) : undefined}
-        disabled={!isUser || !onLongPress}
-        style={[
-          s.bubble,
-          isUser ? s.user : s.assistant,
-          isUser && isDark && s.userDark,
-          !isUser && isDark && s.assistantDark,
-        ]}
-        testID={`chat-bubble-${message.role}`}
-      >
-        {/* Role indicator */}
-        <View style={s.header}>
-          <Ionicons
-            name={isUser ? "person" : "sparkles"}
-            size={14}
-            color={isUser ? (isDark ? "#ffffff" : "#0a0a0a") : "#8b5cf6"}
-          />
-          <Text style={[s.role, isUser && s.roleUser, isDark && s.textWhite]}>
-            {isUser ? "You" : "Assistant"}
-          </Text>
-          {message.model && <Text style={[s.modelTag, isDark && s.modelTagDark]}>{message.model.modelID}</Text>}
-          {!isUser && message.modelID && <Text style={[s.modelTag, isDark && s.modelTagDark]}>{message.modelID}</Text>}
-        </View>
+    const interactive = isUser && !!onLongPress
+    const bubbleStyle = [
+      s.bubble,
+      isUser ? s.user : s.assistant,
+      isUser && isDark && s.userDark,
+      !isUser && isDark && s.assistantDark,
+      continued && s.continued,
+    ]
+
+    const body = (
+      <>
+        {/* Role indicator — shown once per run, so a tool-using turn does not
+            repeat "Assistant + model" above every single step. */}
+        {!continued && (
+          <View style={s.header}>
+            <Ionicons
+              name={isUser ? "person" : "sparkles"}
+              size={14}
+              color={isUser ? (isDark ? "#ffffff" : "#0a0a0a") : "#8b5cf6"}
+            />
+            <Text style={[s.role, isUser && s.roleUser, isDark && s.textWhite]}>
+              {isUser ? "You" : "Assistant"}
+            </Text>
+            {message.model && <Text style={[s.modelTag, isDark && s.modelTagDark]}>{message.model.modelID}</Text>}
+            {!isUser && message.modelID && <Text style={[s.modelTag, isDark && s.modelTagDark]}>{message.modelID}</Text>}
+          </View>
+        )}
 
         {/* Image attachments */}
         {fileParts.length > 0 && (
@@ -114,7 +121,8 @@ export const MessageBubble = memo(
           </ScrollView>
         )}
 
-        {/* Reasoning (collapsible) */}
+        {/* Reasoning (collapsible) — per step, so the model's "now I'll…" notes
+            stay attached to the tool call they explain. */}
         {reasoning.length > 0 && <ReasoningBlock text={reasoning} isDark={isDark} />}
 
         {/* Message text */}
@@ -169,14 +177,37 @@ export const MessageBubble = memo(
           </View>
         )}
 
-        {/* Tokens/cost for assistant messages */}
-        {!isUser && message.tokens && (
+        {/* Tokens/cost — once per run, at its last step */}
+        {!isUser && showMeta && message.tokens && (
           <Text style={[s.tokens, isDark && s.tokensDark]}>
             {message.tokens.input + message.tokens.output} {t("chat.message.tokens")}
             {message.cost ? ` · $${message.cost.toFixed(4)}` : ""}
           </Text>
         )}
-      </TouchableOpacity>
+      </>
+    )
+
+    // Only user bubbles are tappable (long-press = edit/revert). Assistant
+    // bubbles stay a plain View: wrapping them in a Touchable steals the
+    // long-press that <Text selectable> needs on Android, which is why their
+    // text could not be selected or copied at all.
+    if (interactive) {
+      return (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onLongPress={() => onLongPress!(message.id)}
+          style={bubbleStyle}
+          testID={`chat-bubble-${message.role}`}
+        >
+          {body}
+        </TouchableOpacity>
+      )
+    }
+
+    return (
+      <View style={bubbleStyle} testID={`chat-bubble-${message.role}`}>
+        {body}
+      </View>
     )
   },
   (prev, next) => {
@@ -190,6 +221,8 @@ export const MessageBubble = memo(
     if (prev.isDark !== next.isDark) return false
     if (prev.onLongPress !== next.onLongPress) return false
     if (prev.onRevert !== next.onRevert) return false
+    if (prev.continued !== next.continued) return false
+    if (prev.showMeta !== next.showMeta) return false
     if (prev.parts.length !== next.parts.length) return false
     for (let i = 0; i < prev.parts.length; i++) {
       if (prev.parts[i] !== next.parts[i]) return false
@@ -200,6 +233,9 @@ export const MessageBubble = memo(
 
 const s = StyleSheet.create({
   bubble: { marginBottom: 16, padding: 12, borderRadius: 12, maxWidth: "100%" },
+  // Continuation of the assistant run above: sits flush under it so a turn with
+  // many tool steps reads as one card instead of a stack of bubbles.
+  continued: { marginBottom: 2, borderTopLeftRadius: 2, borderTopRightRadius: 2 },
   user: { backgroundColor: "#f5f5f5", marginLeft: 32 },
   userDark: { backgroundColor: "#1a1a1a" },
   assistant: { backgroundColor: "#f0f0ff" },

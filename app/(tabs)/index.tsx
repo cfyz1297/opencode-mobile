@@ -75,11 +75,19 @@ function SessionItem({
 
   const onLongPress = () => {
     if (selecting) return
-    Alert.alert(title, undefined, [
-      { text: t("common.cancel"), style: "cancel" },
-      { text: t("sessionsList.actions.rename"), onPress: onRename },
-      { text: t("common.delete"), style: "destructive", onPress: onDelete },
-    ])
+    // Android needs an explicit opt-in: RN defaults the dialog to
+    // non-cancelable, which also disables the system BACK gesture — without it
+    // the sheet could only be closed by tapping a button.
+    Alert.alert(
+      title,
+      undefined,
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        { text: t("sessionsList.actions.rename"), onPress: onRename },
+        { text: t("common.delete"), style: "destructive", onPress: onDelete },
+      ],
+      { cancelable: true },
+    )
   }
 
   // Extract short directory name from session
@@ -388,6 +396,7 @@ export default function SessionsScreen() {
             },
           },
         ],
+        { cancelable: true },
       )
     },
     [deleteSession, t],
@@ -427,6 +436,7 @@ export default function SessionsScreen() {
         { text: t("common.cancel"), style: "cancel" },
         { text: t("common.delete"), style: "destructive", onPress: () => void deleteSelected() },
       ],
+      { cancelable: true },
     )
   }, [deleteSelected, selected.size, t])
 

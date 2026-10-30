@@ -4,20 +4,16 @@ import { useMarkdown, Renderer } from "react-native-marked"
 import { CodeBlock } from "./CodeBlock"
 
 // react-native-marked's base Renderer hardcodes `selectable` on every plain
-// text node it produces (text/strong/em/del/heading/codespan). On Android,
-// selectable <Text> nested inside a FlatList row has a long-standing,
-// still-unresolved RN bug (facebook/react-native#46999, a reopened
-// regression of #28952's fix) where the underlying view's selectable state
-// — and, per our own diff-scroll flow (issue #104), its exposure to the
-// accessibility tree Maestro/UiAutomator reads from — never gets applied
-// correctly. Chat messages here are rendered as rows of the session screen's
-// own FlatList (app/session/[id].tsx), so every markdown text node hits
-// this. Code content is still copyable via CodeBlock's explicit Copy
-// button, so dropping `selectable` on plain text costs little.
+// text node it produces (text/strong/em/del/heading/codespan). That was removed
+// here while the chat bubbles were wrapped in a TouchableOpacity: on Android the
+// touch wrapper wins the long-press, so `selectable` text inside it could never
+// be selected — the flag was dead weight and only fed the accessibility tree.
+// Assistant bubbles are a plain View now (see MessageBubble), so selection works
+// again and the flag is back on every text node.
 class CustomRenderer extends Renderer {
   private plainText(children: string | ReactNode[], styles?: StyleProp<TextStyle>): ReactNode {
     return (
-      <Text key={this.getKey()} style={styles}>
+      <Text key={this.getKey()} style={styles} selectable>
         {children}
       </Text>
     )

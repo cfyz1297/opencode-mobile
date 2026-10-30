@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useKeyboardHeight } from "../../src/lib/use-keyboard-height"
 import { buildMessageData, type MessageDataItem } from "../../src/lib/revert-filter"
+import { bubbleFlags } from "../../src/lib/message-run"
 import { shouldFollowBottom } from "../../src/lib/scroll-follow"
 import { useTranslation } from "react-i18next"
 import * as ImagePicker from "expo-image-picker"
@@ -254,6 +255,9 @@ export default function SessionScreen() {
     () => buildMessageData(messages || [], parts || {}, revertMessageID, messageDataCache.current),
     [messages, parts, revertMessageID],
   )
+  // Consecutive assistant steps (one per tool call) render as one run: shared
+  // header at the top, totals at the bottom, no repeated chrome per step.
+  const flags = useMemo(() => bubbleFlags(messageData.map((item) => item.message.role)), [messageData])
   // Drop cached items when switching sessions so the map cannot grow across
   // every session visited in one app run.
   useEffect(() => {
@@ -292,33 +296,40 @@ export default function SessionScreen() {
   // closing over props) so MessageBubble's custom memo comparator can bail
   // safely without risking a stale handler.
   const handleMessageLongPress = useCallback((messageID: string) => {
-    Alert.alert(t("session.alerts.messageActionsTitle"), undefined, [
-      { text: t("common.cancel"), style: "cancel" },
-      {
-        text: t("session.actions.editMessage"),
-        onPress: () => {
-          const doRevert = async () => {
-            const result = await useSessions.getState().revertToMessage(messageID)
-            applyRevertResult(result)
-          }
-          // Editing overwrites the composer — don't silently clobber an
-          // in-progress unsent draft.
-          if (inputRef.current.trim()) {
-            Alert.alert(
-              t("session.alerts.replaceDraftTitle"),
-              t("session.alerts.replaceDraftMessage"),
-              [
-                { text: t("common.cancel"), style: "cancel" },
-                { text: t("session.actions.replace"), style: "destructive", onPress: doRevert },
-              ],
-              { cancelable: false },
-            )
-            return
-          }
-          doRevert()
+    Alert.alert(
+      t("session.alerts.messageActionsTitle"),
+      undefined,
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("session.actions.editMessage"),
+          onPress: () => {
+            const doRevert = async () => {
+              const result = await useSessions.getState().revertToMessage(messageID)
+              applyRevertResult(result)
+            }
+            // Editing overwrites the composer — don't silently clobber an
+            // in-progress unsent draft.
+            if (inputRef.current.trim()) {
+              Alert.alert(
+                t("session.alerts.replaceDraftTitle"),
+                t("session.alerts.replaceDraftMessage"),
+                [
+                  { text: t("common.cancel"), style: "cancel" },
+                  { text: t("session.actions.replace"), style: "destructive", onPress: doRevert },
+                ],
+                { cancelable: true },
+              )
+              return
+            }
+            doRevert()
+          },
         },
-      },
-    ])
+      ],
+      // Android: RN defaults to cancelable:false, which disables the BACK
+      // gesture on the sheet — it could only be closed by picking an action.
+      { cancelable: true },
+    )
   }, [applyRevertResult, t])
 
   // The per-message "reset to this point" button on user messages: same
@@ -893,11 +904,13 @@ export default function SessionScreen() {
               data={messageData}
               inverted
               keyExtractor={(item) => item.message.id}
-              renderItem={({ item }) => (
+              renderItem={({ item, index }) => (
                 <MessageBubble
                   message={item.message}
                   parts={item.parts}
                   isDark={isDark}
+                  continued={flags[index]?.continued}
+                  showMeta={flags[index]?.showMeta}
                   onLongPress={handleMessageLongPress}
                   onRevert={handleMessageRevert}
                 />
