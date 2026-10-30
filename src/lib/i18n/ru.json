@@ -301,6 +301,15 @@
     },
     "renameModal": {
       "title": "Переименовать сессию"
+    },
+    "selection": {
+      "start": "Выбрать",
+      "count": "Выбрано: {{count}}",
+      "delete": "Удалить ({{count}})",
+      "deleting": "Удаляем…",
+      "deleteTitle": "Удалить сессии",
+      "deleteMessage": "Удалить сессии: {{count}}? Отменить это будет нельзя.",
+      "partialDelete": "Удалено {{deleted}} из {{total}}. Остальные остались выбранными."
     }
   },
   "notifications": {

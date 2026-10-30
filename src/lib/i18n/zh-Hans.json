@@ -301,6 +301,15 @@
     },
     "renameModal": {
       "title": "重命名会话"
+    },
+    "selection": {
+      "start": "选择",
+      "count": "已选择 {{count}} 个",
+      "delete": "删除 ({{count}})",
+      "deleting": "正在删除…",
+      "deleteTitle": "删除会话",
+      "deleteMessage": "删除 {{count}} 个会话？此操作无法撤销。",
+      "partialDelete": "已删除 {{deleted}}/{{total}}，其余仍处于选中状态。"
     }
   },
   "notifications": {

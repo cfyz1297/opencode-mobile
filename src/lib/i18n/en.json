@@ -301,6 +301,15 @@
     },
     "renameModal": {
       "title": "Rename Session"
+    },
+    "selection": {
+      "start": "Select",
+      "count": "{{count}} selected",
+      "delete": "Delete ({{count}})",
+      "deleting": "Deleting…",
+      "deleteTitle": "Delete sessions",
+      "deleteMessage": "Delete {{count}} sessions? This cannot be undone.",
+      "partialDelete": "Deleted {{deleted}} of {{total}}. The rest are still selected."
     }
   },
   "notifications": {

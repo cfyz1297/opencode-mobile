@@ -26,6 +26,7 @@ import type BottomSheet from "@gorhom/bottom-sheet"
 import type { Session, Project } from "../../src/lib/sdk"
 import { DirectorySwitcher, DirectoryBrowserSheet, ModelPickerModal } from "../../src/components/chat"
 import { groupByDirectory } from "../../src/lib/session-grouping"
+import { groupSelection, setGroupSelected, toggleSelection } from "../../src/lib/session-selection"
 import { UpdateBanner } from "../../src/components/UpdateBanner"
 import { nameOf } from "../../src/lib/path-utils"
 import { SETUP_GUIDE_URL } from "../../src/lib/links"
@@ -46,17 +47,26 @@ function formatTime(timestamp: number, t: (key: string, opts?: Record<string, un
 function SessionItem({
   session,
   isDark,
+  selecting,
+  selected,
+  onToggleSelect,
   onRename,
   onDelete,
 }: {
   session: Session
   isDark: boolean
+  selecting: boolean
+  selected: boolean
+  onToggleSelect: () => void
   onRename: () => void
   onDelete: () => void
 }) {
   const { t } = useTranslation()
+  const title = session.title || t("sessionsList.untitledSession")
 
   const onPress = () => {
+    // In bulk mode a tap is the checkbox, not "open this session".
+    if (selecting) return onToggleSelect()
     router.push({
       pathname: `/session/[id]`,
       params: { id: session.id, ...(session.directory ? { directory: session.directory } : {}) },
@@ -64,7 +74,8 @@ function SessionItem({
   }
 
   const onLongPress = () => {
-    Alert.alert(session.title || t("sessionsList.untitledSession"), undefined, [
+    if (selecting) return
+    Alert.alert(title, undefined, [
       { text: t("common.cancel"), style: "cancel" },
       { text: t("sessionsList.actions.rename"), onPress: onRename },
       { text: t("common.delete"), style: "destructive", onPress: onDelete },
@@ -76,15 +87,30 @@ function SessionItem({
 
   return (
     <TouchableOpacity
-      style={[styles.sessionItem, isDark && styles.sessionItemDark]}
+      style={[
+        styles.sessionItem,
+        isDark && styles.sessionItemDark,
+        selecting && selected && (isDark ? { backgroundColor: "#241b3a" } : { backgroundColor: "#f5f3ff" }),
+      ]}
       onPress={onPress}
       onLongPress={onLongPress}
       testID={`session-item-${session.id}`}
+      accessibilityRole={selecting ? "checkbox" : "button"}
+      accessibilityState={selecting ? { checked: selected } : undefined}
+      accessibilityLabel={selecting ? title : undefined}
     >
+      {selecting && (
+        <Ionicons
+          name={selected ? "checkbox" : "square-outline"}
+          size={24}
+          color={selected ? "#8b5cf6" : isDark ? "#666666" : "#999999"}
+          style={{ marginRight: 12 }}
+        />
+      )}
       <View style={styles.sessionContent}>
         <View style={styles.sessionHeader}>
           <Text style={[styles.sessionTitle, isDark && styles.textDark]} numberOfLines={1}>
-            {session.title || t("sessionsList.untitledSession")}
+            {title}
           </Text>
         </View>
         <View style={styles.sessionMetaRow}>
@@ -104,7 +130,7 @@ function SessionItem({
           )}
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={20} color={isDark ? "#666666" : "#999999"} />
+      {!selecting && <Ionicons name="chevron-forward" size={20} color={isDark ? "#666666" : "#999999"} />}
     </TouchableOpacity>
   )
 }
@@ -113,34 +139,56 @@ function SessionItem({
 // A single flat array keeps FlatList's refresh/empty-state handling as-is
 // instead of switching to SectionList.
 type ListRow =
-  | { type: "header"; directory: string; shortName: string; count: number; collapsed: boolean }
+  | ({ type: "header" } & GroupRow)
   | { type: "session"; session: Session }
+
+type GroupRow = { directory: string; shortName: string; count: number; collapsed: boolean; ids: string[] }
 
 function GroupHeader({
   row,
   isDark,
+  selecting,
+  selected,
   onToggle,
+  onToggleSelect,
 }: {
-  row: { directory: string; shortName: string; count: number; collapsed: boolean }
+  row: GroupRow
   isDark: boolean
+  selecting: boolean
+  selected: "none" | "some" | "all"
   onToggle: () => void
+  onToggleSelect: () => void
 }) {
   return (
     <TouchableOpacity
       style={[styles.groupHeader, isDark && styles.groupHeaderDark]}
-      onPress={onToggle}
+      // While picking sessions the whole-group checkbox replaces collapse.
+      onPress={selecting ? onToggleSelect : onToggle}
       activeOpacity={0.7}
+      accessibilityRole={selecting ? "checkbox" : "button"}
+      accessibilityState={selecting ? { checked: selected === "all" ? true : selected === "some" ? "mixed" : false } : undefined}
+      testID={selecting ? `group-select-${row.directory}` : undefined}
     >
+      {selecting && (
+        <Ionicons
+          name={selected === "all" ? "checkbox" : selected === "some" ? "remove-outline" : "square-outline"}
+          size={24}
+          color={selected === "none" ? (isDark ? "#666666" : "#999999") : "#8b5cf6"}
+          style={{ marginRight: 2 }}
+        />
+      )}
       <Ionicons name="folder-outline" size={16} color={isDark ? "#8b5cf6" : "#6d28d9"} />
       <Text style={[styles.groupHeaderText, isDark && styles.textDark]} numberOfLines={1}>
         {row.shortName}
       </Text>
       <Text style={[styles.groupHeaderCount, isDark && styles.metaDark]}>{row.count}</Text>
-      <Ionicons
-        name={row.collapsed ? "chevron-forward" : "chevron-down"}
-        size={16}
-        color={isDark ? "#666666" : "#999999"}
-      />
+      {!selecting && (
+        <Ionicons
+          name={row.collapsed ? "chevron-forward" : "chevron-down"}
+          size={16}
+          color={isDark ? "#666666" : "#999999"}
+        />
+      )}
     </TouchableOpacity>
   )
 }
@@ -207,6 +255,18 @@ export default function SessionsScreen() {
   // Directories collapsed in the grouped session list. Empty by default —
   // all groups start expanded (#67).
   const [collapsedDirs, setCollapsedDirs] = useState<Set<string>>(new Set())
+  // Bulk-delete mode: taps pick sessions instead of opening them.
+  const [selecting, setSelecting] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [deleting, setDeleting] = useState(false)
+
+  const exitSelecting = useCallback(() => {
+    setSelecting(false)
+    setSelected(new Set())
+  }, [])
+
+  // Leaving the tab would otherwise come back with a stale selection.
+  useFocusEffect(useCallback(() => () => exitSelecting(), [exitSelecting]))
 
   const toggleGroup = useCallback((directory: string) => {
     setCollapsedDirs((prev) => {
@@ -233,6 +293,7 @@ export default function SessionsScreen() {
         shortName: nameOf(group.directory) || group.directory,
         count: group.items.length,
         collapsed,
+        ids: group.items.map((session) => session.id),
       })
       if (!collapsed) {
         for (const session of group.items) out.push({ type: "session", session })
@@ -331,6 +392,43 @@ export default function SessionsScreen() {
     },
     [deleteSession, t],
   )
+
+  const deleteSelected = useCallback(async () => {
+    if (deleting) return
+    const ids = [...selected]
+    if (!ids.length) return
+    setDeleting(true)
+    try {
+      for (const id of ids) await deleteSession(id)
+      // deleteSession reports failures through store error state instead of
+      // throwing, so survivors are whatever is still in the list.
+      const remaining = new Set(
+        ids.filter((id) => useSessions.getState().sessions.some((session) => session.id === id)),
+      )
+      if (remaining.size) {
+        setSelected(remaining)
+        Alert.alert(
+          t("sessionsList.alerts.deleteFailedTitle"),
+          t("sessionsList.selection.partialDelete", { deleted: ids.length - remaining.size, total: ids.length }),
+        )
+      } else {
+        exitSelecting()
+      }
+    } finally {
+      setDeleting(false)
+    }
+  }, [deleteSession, deleting, exitSelecting, selected, t])
+
+  const confirmDeleteSelected = useCallback(() => {
+    Alert.alert(
+      t("sessionsList.selection.deleteTitle"),
+      t("sessionsList.selection.deleteMessage", { count: selected.size }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        { text: t("common.delete"), style: "destructive", onPress: () => void deleteSelected() },
+      ],
+    )
+  }, [deleteSelected, selected.size, t])
 
   const onCreateSession = async () => {
     if (creatingInFlight.current) return
@@ -562,20 +660,54 @@ export default function SessionsScreen() {
       )}
 
       <UpdateBanner isDark={isDark} />
-      <TouchableOpacity accessibilityRole="button" testID="open-offline-history" onPress={() => router.push('/history')} style={{ padding: 14, backgroundColor: isDark ? '#222' : '#eee' }}>
-        <Text style={{ color: isDark ? '#fff' : '#111' }}>{t('history.title')}</Text>
-      </TouchableOpacity>
+      {selecting ? (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 10 }}>
+          <Text testID="selection-count" style={{ flex: 1, color: isDark ? "#fff" : "#111", fontWeight: "600" }}>
+            {t("sessionsList.selection.count", { count: selected.size })}
+          </Text>
+          <TouchableOpacity accessibilityRole="button" testID="selection-cancel" onPress={exitSelecting} style={{ padding: 8 }}>
+            <Text style={{ color: "#8b5cf6", fontWeight: "600" }}>{t("common.cancel")}</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={{ flexDirection: "row", alignItems: "stretch", gap: 8 }}>
+          <TouchableOpacity accessibilityRole="button" testID="open-offline-history" onPress={() => router.push('/history')} style={{ flex: 1, padding: 14, backgroundColor: isDark ? '#222' : '#eee' }}>
+            <Text style={{ color: isDark ? '#fff' : '#111' }}>{t('history.title')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            testID="selection-start"
+            disabled={!sessions.length}
+            onPress={() => setSelecting(true)}
+            style={{ paddingHorizontal: 16, paddingVertical: 14, backgroundColor: isDark ? '#222' : '#eee', opacity: sessions.length ? 1 : 0.4 }}
+          >
+            <Text style={{ color: isDark ? '#fff' : '#111', fontWeight: "600" }}>{t('sessionsList.selection.start')}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <FlatList
         data={rows}
         keyExtractor={(row) => (row.type === "header" ? `dir:${row.directory}` : row.session.id)}
         renderItem={({ item: row }) =>
           row.type === "header" ? (
-            <GroupHeader row={row} isDark={isDark} onToggle={() => toggleGroup(row.directory)} />
+            <GroupHeader
+              row={row}
+              isDark={isDark}
+              selecting={selecting}
+              selected={groupSelection(selected, row.ids)}
+              onToggle={() => toggleGroup(row.directory)}
+              onToggleSelect={() =>
+                setSelected((prev) => setGroupSelected(prev, row.ids, groupSelection(prev, row.ids) !== "all"))
+              }
+            />
           ) : (
             <SessionItem
               session={row.session}
               isDark={isDark}
+              selecting={selecting}
+              selected={selected.has(row.session.id)}
+              onToggleSelect={() => setSelected((prev) => toggleSelection(prev, row.session.id))}
               onRename={() => handleRename(row.session)}
               onDelete={() => handleDelete(row.session)}
             />
@@ -598,16 +730,38 @@ export default function SessionsScreen() {
         contentContainerStyle={sessions.length === 0 ? styles.emptyContent : undefined}
       />
 
-      {/* FAB to create new session */}
-      <TouchableOpacity
-        style={[styles.fab, isDark && styles.fabDark]}
-        onPress={onFabPress}
-        onLongPress={onFabLongPress}
-        delayLongPress={500}
-        testID="new-session-fab"
-      >
-        <Ionicons name="add" size={28} color={isDark ? "#0a0a0a" : "#ffffff"} />
-      </TouchableOpacity>
+      {selecting ? (
+        <TouchableOpacity
+          accessibilityRole="button"
+          testID="selection-delete"
+          disabled={!selected.size || deleting}
+          onPress={confirmDeleteSelected}
+          style={{
+            margin: 12,
+            padding: 16,
+            borderRadius: 12,
+            alignItems: "center",
+            backgroundColor: selected.size ? "#b91c1c" : isDark ? "#2a2a2a" : "#e5e5e5",
+          }}
+        >
+          <Text style={{ color: selected.size ? "#fff" : isDark ? "#666666" : "#999999", fontWeight: "700" }}>
+            {deleting
+              ? t("sessionsList.selection.deleting")
+              : t("sessionsList.selection.delete", { count: selected.size })}
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        /* FAB to create new session */
+        <TouchableOpacity
+          style={[styles.fab, isDark && styles.fabDark]}
+          onPress={onFabPress}
+          onLongPress={onFabLongPress}
+          delayLongPress={500}
+          testID="new-session-fab"
+        >
+          <Ionicons name="add" size={28} color={isDark ? "#0a0a0a" : "#ffffff"} />
+        </TouchableOpacity>
+      )}
 
       {/* New Session Info Modal */}
       <Modal visible={showNewSession} animationType="slide" transparent onRequestClose={() => setShowNewSession(false)}>
