@@ -29,8 +29,9 @@ test("buildDemoScript: assistant parts include reasoning, a search tool call, an
   assert.equal(reasoning.length, 1)
 
   const tools = assistantParts.filter((p) => p.type === "tool")
-  assert.equal(tools.length, 2)
+  assert.equal(tools.length, 3)
   assert.ok(tools.some((p) => p.tool === "grep"))
+  assert.ok(tools.some((p) => p.tool === "bash"))
 
   const edit = tools.find((p) => p.tool === "edit")
   assert.ok(edit, "expected an edit tool call")

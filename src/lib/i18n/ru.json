@@ -445,7 +445,12 @@
       "thisFolderFallback": "эту папку"
     },
     "reasoningBlock": {
-      "label": "Размышления"
+      "label": "Размышления",
+      "thought": "Думал {{seconds}} с"
+    },
+    "toolRun": {
+      "commands": "Выполнено команд: {{n}}",
+      "tools": "Выполнено инструментов: {{n}}"
     },
     "compaction": {
       "title": "Сессия сжата",

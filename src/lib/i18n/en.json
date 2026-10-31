@@ -445,7 +445,12 @@
       "thisFolderFallback": "this folder"
     },
     "reasoningBlock": {
-      "label": "Thinking"
+      "label": "Thinking",
+      "thought": "Thought for {{seconds}}s"
+    },
+    "toolRun": {
+      "commands": "Ran {{n}} commands",
+      "tools": "Ran {{n}} tools"
     },
     "compaction": {
       "title": "Session compacted",

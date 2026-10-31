@@ -4,9 +4,10 @@ import { Ionicons } from "@expo/vector-icons"
 import * as Clipboard from "expo-clipboard"
 import { useTranslation } from "react-i18next"
 import { Markdown } from "../markdown"
-import { ToolCallCard } from "./ToolCallCard"
+import { ToolRun } from "./ToolRun"
 import { ReasoningBlock } from "./ReasoningBlock"
 import { CompactionCard } from "./CompactionCard"
+import { groupParts } from "../../lib/part-runs"
 import type { Message, Part } from "../../lib/sdk"
 
 const SCREEN_WIDTH = Dimensions.get("window").width
@@ -43,11 +44,11 @@ export const MessageBubble = memo(
     const [copied, setCopied] = useState(false)
 
     const textParts = parts.filter((p) => p.type === "text")
-    const reasoningParts = parts.filter((p) => p.type === "reasoning")
-    const toolParts = parts.filter((p) => p.type === "tool")
     const fileParts = parts.filter((p) => p.type === "file" && isImageMime(p.mime))
     const text = textParts.map((p) => p.text).join("\n") || ""
-    const reasoning = reasoningParts.map((p) => p.text).join("\n") || ""
+    // Assistant steps render as a timeline in the order the model produced
+    // them (see groupParts); user messages stay a single text block.
+    const items = isUser ? [] : groupParts(parts)
 
     // Copy the message's plain text (same content markdown renders). A failed
     // copy stays silent — a per-message alert row would be noise.
@@ -121,26 +122,31 @@ export const MessageBubble = memo(
           </ScrollView>
         )}
 
-        {/* Reasoning (collapsible) — per step, so the model's "now I'll…" notes
-            stay attached to the tool call they explain. */}
-        {reasoning.length > 0 && <ReasoningBlock text={reasoning} isDark={isDark} />}
+        {/* Assistant timeline: text, reasoning and tool runs in the order the
+            model produced them. Reasoning keeps a two-line preview; runs of
+            tool calls fold into one "Ran N commands" row. */}
+        {items.map((item) => {
+          if (item.kind === "text") {
+            return (
+              <View key={item.key} style={s.markdownWrap}>
+                <Markdown>{item.part.text!}</Markdown>
+              </View>
+            )
+          }
+          if (item.kind === "reasoning") {
+            return (
+              <ReasoningBlock key={item.key} text={item.part.text!} time={item.part.time} isDark={isDark} />
+            )
+          }
+          return <ToolRun key={item.key} tools={item.tools} isDark={isDark} />
+        })}
 
-        {/* Message text */}
-        {text.length > 0 &&
-          (isUser ? (
-            <Text style={[s.messageText, isDark && s.textWhite]} selectable>
-              {text}
-            </Text>
-          ) : (
-            <View style={s.markdownWrap}>
-              <Markdown>{text}</Markdown>
-            </View>
-          ))}
-
-        {/* Tool calls */}
-        {toolParts.map((tool) => (
-          <ToolCallCard key={tool.id} tool={tool} isDark={isDark} />
-        ))}
+        {/* User text */}
+        {isUser && text.length > 0 && (
+          <Text style={[s.messageText, isDark && s.textWhite]} selectable>
+            {text}
+          </Text>
+        )}
 
         {/* Per-message actions — desktop parity: copy + "reset to this point".
             Shown under the bubble content so both icons are separate buttons. */}
@@ -232,16 +238,18 @@ export const MessageBubble = memo(
 )
 
 const s = StyleSheet.create({
-  bubble: { marginBottom: 16, padding: 12, borderRadius: 12, maxWidth: "100%" },
+  bubble: { marginBottom: 16, maxWidth: "100%" },
   // Continuation of the assistant run above: sits flush under it so a turn with
   // many tool steps reads as one card instead of a stack of bubbles.
-  continued: { marginBottom: 2, borderTopLeftRadius: 2, borderTopRightRadius: 2 },
-  user: { backgroundColor: "#f5f5f5", marginLeft: 32 },
+  continued: { marginBottom: 2 },
+  // User messages keep a bubble; assistant output is a flat timeline so tool
+  // rows and text sit directly on the background, as in the TUI.
+  user: { backgroundColor: "#f5f5f5", marginLeft: 32, padding: 12, borderRadius: 12 },
   userDark: { backgroundColor: "#1a1a1a" },
-  assistant: { backgroundColor: "#f0f0ff" },
-  assistantDark: { backgroundColor: "#1a1a2e" },
+  assistant: {},
+  assistantDark: {},
 
-  header: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
+  header: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 },
   role: { fontSize: 13, fontWeight: "600", color: "#666666" },
   roleUser: { color: "#0a0a0a" },
   textWhite: { color: "#ffffff" },

@@ -445,7 +445,12 @@
       "thisFolderFallback": "此文件夹"
     },
     "reasoningBlock": {
-      "label": "思考中"
+      "label": "思考中",
+      "thought": "思考了 {{seconds}} 秒"
+    },
+    "toolRun": {
+      "commands": "运行了 {{n}} 条命令",
+      "tools": "运行了 {{n}} 个工具"
     },
     "compaction": {
       "title": "会话已压缩",

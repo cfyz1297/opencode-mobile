@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react"
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Platform } from "react-native"
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import type { Part } from "../../lib/sdk"
@@ -321,6 +321,15 @@ export function ToolCallCard({ tool, isDark }: Props) {
   const error = tool.state?.error?.message
   const elapsed = duration(tool.state?.time?.start, tool.state?.time?.end)
   const hasDetail = tool.state?.input !== undefined || tool.state?.output !== undefined || error
+  const command =
+    tool.tool === "bash" && typeof tool.state?.input === "object" && tool.state?.input !== null
+      ? (tool.state?.input as Record<string, unknown>).command
+      : undefined
+  const title =
+    (typeof command === "string" && command) ||
+    tool.state?.title ||
+    tool.tool ||
+    t("chat.toolCallCard.fallbackTitle")
 
   const toggle = useCallback(() => {
     if (hasDetail) setExpanded((v) => !v)
@@ -328,33 +337,31 @@ export function ToolCallCard({ tool, isDark }: Props) {
 
   return (
     <TouchableOpacity
-      style={[
-        s.card,
-        isDark && s.cardDark,
-        status === "error" && s.cardError,
-        status === "error" && isDark && s.cardErrorDark,
-      ]}
+      style={s.card}
       onPress={toggle}
       activeOpacity={hasDetail ? 0.7 : 1}
     >
       {/* Header row */}
       <View style={s.header}>
         <View style={s.headerLeft}>
-          <Ionicons name={icon as any} size={16} color={color} />
-          <Text style={[s.name, isDark && s.nameDark]} numberOfLines={1}>
-            {tool.state?.title || tool.tool || t("chat.toolCallCard.fallbackTitle")}
+          <Ionicons name={icon as any} size={14} color={color} />
+          <Text
+            style={[s.name, isDark && s.nameDark, typeof command === "string" && command ? s.nameMono : null]}
+            numberOfLines={1}
+          >
+            {title}
           </Text>
           {elapsed && <Text style={[s.elapsed, isDark && s.elapsedDark]}>{elapsed}</Text>}
         </View>
         <View style={s.headerRight}>
           {status === "running" && <ActivityIndicator size="small" color={color} />}
-          {status === "completed" && <Ionicons name="checkmark-circle" size={16} color="#22c55e" />}
-          {status === "error" && <Ionicons name="close-circle" size={16} color="#ef4444" />}
+          {status === "completed" && <Ionicons name="checkmark" size={14} color="#22c55e" />}
+          {status === "error" && <Ionicons name="close" size={14} color="#ef4444" />}
           {hasDetail && (
             <Ionicons
               name={expanded ? "chevron-up" : "chevron-down"}
-              size={16}
-              color={isDark ? "#666666" : "#999999"}
+              size={14}
+              color={isDark ? "#555555" : "#aaaaaa"}
             />
           )}
         </View>
@@ -363,40 +370,35 @@ export function ToolCallCard({ tool, isDark }: Props) {
       {/* Error banner */}
       {error && !expanded && <ErrorBanner message={error} isDark={isDark} />}
 
-      {/* Expanded detail */}
+      {/* Expanded detail — grows with the row instead of scrolling inside it,
+          so the transcript scrolls as one surface. */}
       {expanded && (
-        <ScrollView style={s.detailScroll} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+        <View style={s.detail}>
           {error && <ErrorBanner message={error} isDark={isDark} />}
           <ToolDetail tool={tool} isDark={isDark} />
-        </ScrollView>
+        </View>
       )}
     </TouchableOpacity>
   )
 }
 
 const s = StyleSheet.create({
-  card: {
-    backgroundColor: "#ffffff",
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: "#f0f0f0",
-  },
-  cardDark: { backgroundColor: "#2a2a2a", borderColor: "#3a3a3a" },
-  cardError: { borderColor: "#fecaca" },
-  cardErrorDark: { borderColor: "#7f1d1d" },
+  // Flat row: no card chrome, so a turn with many tool steps stays a compact
+  // list instead of a stack of boxes.
+  card: { marginTop: 2 },
 
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingVertical: 3,
   },
-  headerLeft: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
-  headerRight: { flexDirection: "row", alignItems: "center", gap: 6 },
-  name: { fontSize: 13, fontWeight: "500", color: "#0a0a0a", flex: 1 },
-  nameDark: { color: "#e5e5e5" },
-  elapsed: { fontSize: 11, color: "#999999" },
+  headerLeft: { flexDirection: "row", alignItems: "center", gap: 6, flex: 1 },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 5 },
+  name: { fontSize: 12.5, fontWeight: "500", color: "#555555", flexShrink: 1 },
+  nameDark: { color: "#b0b0b0" },
+  nameMono: { fontFamily: mono, fontSize: 12 },
+  elapsed: { fontSize: 10.5, color: "#999999" },
   elapsedDark: { color: "#666666" },
 
   // Error
@@ -404,7 +406,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 6,
-    marginTop: 8,
+    marginTop: 4,
     padding: 8,
     backgroundColor: "#fef2f2",
     borderRadius: 6,
@@ -412,8 +414,8 @@ const s = StyleSheet.create({
   errorBannerDark: { backgroundColor: "#1a0a0a" },
   errorText: { fontSize: 12, color: "#dc2626", flex: 1, lineHeight: 18 },
 
-  // Detail
-  detailScroll: { maxHeight: 300, marginTop: 8 },
+  // Detail — indented under the row's icon so nested calls read as children.
+  detail: { marginTop: 2, marginBottom: 4, paddingLeft: 20 },
   detailSection: { gap: 4 },
   detailFile: {
     fontSize: 12,

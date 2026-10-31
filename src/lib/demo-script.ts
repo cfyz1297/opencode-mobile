@@ -66,12 +66,27 @@ export function buildDemoScript(now: number = Date.now()): DemoScript {
         messageID: ASSISTANT_MESSAGE_ID,
         type: "reasoning",
         text: "The tap handler on the login button isn't firing while the Android keyboard is open — likely the surrounding scroll view is swallowing the first tap to dismiss the keyboard instead of forwarding it to the button. Let me check the handler and confirm.",
+        time: { start: now - 8000, end: now - 6500 },
       },
       {
         id: "demo-part-text-search",
         messageID: ASSISTANT_MESSAGE_ID,
         type: "text",
         text: "Found it — keyboardShouldPersistTaps isn't set on the form's scroll view, so Android eats the first tap. Searching for the file...",
+      },
+      {
+        id: "demo-part-tool-bash",
+        messageID: ASSISTANT_MESSAGE_ID,
+        type: "tool",
+        tool: "bash",
+        callID: "demo-call-bash",
+        state: {
+          status: "completed",
+          title: "Ran command",
+          input: { command: "git log --oneline -5 -- src/components/LoginButton.tsx" },
+          output: "9f2c1ab fix: keep taps through the keyboard on Android",
+          time: { start: now - 6400, end: now - 6300 },
+        },
       },
       {
         id: "demo-part-tool-search",
