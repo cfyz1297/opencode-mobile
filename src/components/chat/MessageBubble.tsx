@@ -37,14 +37,6 @@ interface Props {
   // Tokens/cost summed over the whole run (see runTotals). Falls back to the
   // message's own usage when the caller has no run context (demo screen).
   totals?: RunTotals
-  // False for the continuation steps of a run: their reasoning stays hidden so
-  // a tool-using turn does not repeat "Thought" for every roundtrip.
-  showReasoning?: boolean
-  // Every tool call of the run, passed to its newest step only. When set, this
-  // bubble renders one aggregated row and the steps' own rows stay hidden.
-  runTools?: Part[]
-  // False for continuation steps: their tool rows are folded into runTools.
-  showTools?: boolean
 }
 
 // TODO: Replace with streamdown-rn once React 19 types PR lands - it has
@@ -59,9 +51,6 @@ export const MessageBubble = memo(
     continued = false,
     showMeta = true,
     totals,
-    showReasoning = true,
-    showTools = true,
-    runTools,
   }: Props) {
     const isUser = message.role === "user"
     const { t } = useTranslation()
@@ -158,19 +147,12 @@ export const MessageBubble = memo(
             )
           }
           if (item.kind === "reasoning") {
-            if (!showReasoning) return null
             return (
               <ReasoningBlock key={item.key} text={item.part.text!} time={item.part.time} isDark={isDark} />
             )
           }
-          // Continuation steps hide their rows: the run prints one aggregated
-          // row on its newest step instead of "Ran 2 commands" per step.
-          if (!showTools || runTools) return null
           return <ToolRun key={item.key} tools={item.tools} isDark={isDark} />
         })}
-
-        {/* One row for every tool call the run made */}
-        {!!runTools && <ToolRun tools={runTools} isDark={isDark} />}
 
         {/* User text */}
         {isUser && text.length > 0 && (
@@ -260,9 +242,6 @@ export const MessageBubble = memo(
     if (prev.onRevert !== next.onRevert) return false
     if (prev.continued !== next.continued) return false
     if (prev.showMeta !== next.showMeta) return false
-    if (prev.showReasoning !== next.showReasoning) return false
-    if (prev.showTools !== next.showTools) return false
-    if (prev.runTools !== next.runTools) return false
     // runTotals rebuilds its objects on every transcript update, so compare the
     // values — a reference check would re-render every bubble while streaming.
     if (prev.totals?.tokens !== next.totals?.tokens || prev.totals?.cost !== next.totals?.cost) return false
