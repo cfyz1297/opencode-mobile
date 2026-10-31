@@ -48,7 +48,7 @@
 3. **Провайдеры**: короткий каталог популярных (OpenCode Zen/Go первыми), подключение API-ключом через сервер. Ключи в APK не хранятся. OAuth **не реализован**.
 4. **Безопасность**: пароли серверов пишутся только как `WHEN_UNLOCKED_THIS_DEVICE_ONLY`; форма подключения предупреждает о пароле по `http://`; разрешение `SYSTEM_ALERT_WINDOW` заблокировано и в APK отсутствует.
 
-Подробности: `docs/run-resync-validation.md`, `docs/security-review-0.2.21.md`, `docs/connection-status-validation.md`, `docs/model-visibility-validation.md`, пользовательское описание — `README.md`.
+Подробности: `docs/run-resync-validation.md`, `docs/security-review-0.2.21.md`, `docs/connection-status-validation.md`, `docs/model-visibility-validation.md`, пользовательское описание — `README.md` (en) и `README.ru.md` (ru).
 
 ## Что дальше
 
@@ -64,7 +64,7 @@
 2. `npm run check:versions` — версии в трёх файлах должны совпасть.
 3. Слить в `main`, поставить тег `vX.Y.Z`, дождаться зелёного CI на теге.
 4. Опубликовать GitHub Release вручную с текстом изменений в описании и приложить `app-release.apk` под именем `opencode-mobile-v2.apk` (+ `SHA256SUMS.txt`): workflow Release не создаёт, а `releases/latest/download/opencode-mobile-v2.apk` используется встроенной проверкой обновлений.
-5. Обновить `README.md` (раздел «Новое в …») и этот файл.
+5. Обновить `README.md` (английский, основной) и `README.ru.md` (русский), затем этот файл.
 
 ## Правила окружения этого форка
 

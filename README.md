@@ -1,188 +1,190 @@
-# OpenCode Mobile (форк cfyz1297)
+# OpenCode Mobile (cfyz1297 fork)
 
-Форк [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile) — Expo/React Native клиент к собственному серверу `opencode serve`. Форк переведён на **OpenCode API V2** (сервер 2.0.x) и собирается как APK для GitHub Releases; магазины приложений не используются.
+[Русский](README.ru.md) | **English**
 
-Версия **0.2.27 (61)** продолжает пользовательскую линию 0.2.20. Обновляется поверх без удаления приложения.
+A fork of [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile) — an Expo/React Native client for a self-hosted `opencode serve`. The fork runs on **OpenCode API V2** (server 2.0.x) and ships as an APK from GitHub Releases; app stores are not used.
 
-> **Важно:** функции 0.2.20 (мастер туннелей, планшетный интерфейс, офлайн-история) по-прежнему **не проверялись пользователем** на реальном устройстве и реальном сервере. Есть автотесты и Android CUA smoke на эмуляторе; это не замена ручной проверке.
+Version **0.2.27 (61)** continues the 0.2.20 user line. It installs over the previous build — no uninstall needed.
 
-## Установка (Android, APK)
+> **Important:** the 0.2.20 features (tunnel wizard, tablet layout, offline history) have still **not been verified by the user** on a real device against a real server. There are automated tests and an Android CUA smoke run on an emulator; that is not a substitute for manual checking.
 
-Стабильная ссылка — всегда последний релиз:
+## Install (Android, APK)
 
-- **[Скачать opencode-mobile-v2.apk](https://github.com/cfyz1297/opencode-mobile/releases/latest/download/opencode-mobile-v2.apk)** (~86 МБ)
-- Все релизы: [Releases](https://github.com/cfyz1297/opencode-mobile/releases) — на каждый новый билд свой релиз (`0.2.15`, `0.2.18`, …), файл APK во всех называется `opencode-mobile-v2.apk`
+Stable link — always the latest release:
 
-> ⚠️ Разовая переустановка: начиная с `0.2.9` APK подписывается постоянным ключом (раньше на каждый билд генерировался новый debug-ключ, поэтому обновление поверх не устанавливалось). Если стоит сборка старее — удалить её **один** раз и поставить текущую, дальше обновления ставятся поверх без удаления.
+- **[Download opencode-mobile-v2.apk](https://github.com/cfyz1297/opencode-mobile/releases/latest/download/opencode-mobile-v2.apk)** (~86 MB)
+- All releases: [Releases](https://github.com/cfyz1297/opencode-mobile/releases) — every new build gets its own release (`0.2.15`, `0.2.18`, …); the APK file is always named `opencode-mobile-v2.apk`
 
-APK собирается GitHub Actions из `main` этого репозитория и подписывается постоянным ключом из секретов репозитория (без секрета — debug-ключ). Google Play / F-Droid / App Store — не используются: эти workflow отключены. Активны только `Build Android APK` и `Security scan`.
+> ⚠️ One-time reinstall: since `0.2.9` the APK is signed with a permanent key (earlier every build generated a new debug key, so updates would not install over the old app). If you are on an older build, uninstall it **once** and install the current one; after that updates install in place.
 
-## Подключение к серверу opencode
+The APK is built by GitHub Actions from `main` of this repository and signed with a permanent key from the repository secrets (a debug key is used when the secret is missing). Google Play / F-Droid / App Store — not used: those workflows are disabled. Only `Build Android APK` and `Security scan` are active.
 
-Нужен сервер **opencode 2.0.x** (V2 API). V2 ставится нативным бинарником — npm-пакет `opencode-ai` остался на линии 1.x и `/api/*` не обслуживает.
+## Connecting to an opencode server
 
-1. Поставить и запустить сервер:
+You need an **opencode 2.0.x** server (V2 API). V2 is installed as a native binary — the `opencode-ai` npm package stayed on the 1.x line and does not serve `/api/*`.
+
+1. Install and start the server:
 
    ```bash
    curl -fsSL https://opencode.ai/v2/install | bash
-   OPENCODE_SERVER_PASSWORD=вашпароль opencode serve --hostname 0.0.0.0 --port 4096
+   OPENCODE_SERVER_PASSWORD=yourpassword opencode serve --hostname 0.0.0.0 --port 4096
    ```
-2. В приложении: **Add Connection** → адрес сервера (`http://IP:4096`), логин `opencode`, пароль из команды выше.
+2. In the app: **Add Connection** → server address (`http://IP:4096`), user `opencode`, password from the command above.
 
-Формат V2 (проверено на 2.0.27): Basic-аутентификация только в виде `opencode:<пароль>` (Bearer и пустой пользователь = 401), все пути `/api/*`, страничные ответы `{data, cursor}`, SSE `GET /api/event`.
+V2 specifics (verified on 2.0.27): Basic authentication only as `opencode:<password>` (Bearer and an empty user both return 401), all paths under `/api/*`, paginated responses as `{data, cursor}`, SSE at `GET /api/event`.
 
-## Чем форк отличается от оригинала
+## How the fork differs from upstream
 
-Основа — upstream [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile) на теге `v0.4.15` (14.08.2026). Дальше у форка своя линия версий и свои задачи: один пользователь, один сервер в Termux, один канал доставки — APK.
+The base is upstream [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile) at tag `v0.4.15` (2026-08-14). From there the fork has its own version line and its own goals: one user, one server in Termux, one delivery channel — an APK.
 
-| Что | Оригинал | Форк |
+| What | Upstream | Fork |
 |---|---|---|
-| API сервера | API 1.x (`/session`, `/global/*`) | только **V2** (`/api/*`), сервер 2.0.x |
-| Версия | 0.4.x | линия 0.2.x, сейчас 0.2.27 (61) |
-| Подпись и обновления | debug-ключ на билд у старых версий | постоянный keystore, установка поверх |
-| Каналы | Google Play, self-hosted F-Droid, APK, EAS | только APK из GitHub Releases |
-| Телеметрия | Sentry (краш-репорты) + PostHog | удалены обе зависимости |
-| Языки | English, 简体中文 | + русский (en / ru / zh-Hans с проверкой паритета ключей) |
-| Ориентация | только портрет | любая, планшетный расклад от 768 dp, две панели от 1000 dp |
-| Офлайн-история | в планах | есть, шифруется Keystore/Keychain |
-| Мастер туннелей | beta | Cloudflare (именованные туннели) и ngrok, встроенный мастер |
-| Экран моделей | нет | есть: поиск, группы, видимость — влияет на оба окна выбора |
-| Статус подключения | «выбрано» = «активно» | реальный ответ сервера, опрос при фокусе и раз в 15 с |
-| Восстановление прогона | нет | сторож тишины, догрузка переписки, `GET /api/session/active` |
-| Клавиатура | отступ в JS | нативный IME-инсет в `MainActivity` |
-| Папка новой сессии | по умолчанию | выбранный проект (`location.directory` в теле запроса) |
-| Тесты | `node --test` по glob | `scripts/run-tests.mjs` + порог покрытия 80 %, CUA smoke на эмуляторе |
+| Server API | API 1.x (`/session`, `/global/*`) | **V2 only** (`/api/*`), server 2.0.x |
+| Version | 0.4.x | 0.2.x line, currently 0.2.27 (61) |
+| Signing and updates | new debug key per build in old versions | permanent keystore, installs in place |
+| Channels | Google Play, self-hosted F-Droid, APK, EAS | APK from GitHub Releases only |
+| Telemetry | Sentry (crash reports) + PostHog | both dependencies removed |
+| Languages | English, 简体中文 | + Russian (en / ru / zh-Hans with key parity check) |
+| Orientation | portrait only | any, tablet layout from 768 dp, two panes from 1000 dp |
+| Offline history | planned | available, encrypted with Keystore/Keychain |
+| Tunnel wizard | beta | Cloudflare (named tunnels) and ngrok, built-in wizard |
+| Models screen | none | search, groups, visibility — affects both pickers |
+| Connection status | "selected" means "active" | real server response, polled on focus and every 15 s |
+| Run recovery | none | silence watchdog, transcript re-read, `GET /api/session/active` |
+| Keyboard | JS inset | native IME inset in `MainActivity` |
+| New session folder | default | the selected project (`location.directory` in the request body) |
+| Tests | `node --test` over a glob | `scripts/run-tests.mjs` + 80 % coverage gate, CUA smoke on an emulator |
 
-Что изменено в коде:
+What changed in the code:
 
-- **Адаптер `src/lib/v2-compat.ts`**: ответы и события V2 приводятся к V1-форме, поэтому сторы и экраны остались прежними. V1-события (`session.status`, `message.part.updated`) собираются из V2-дельт (`session.text.delta`, `session.reasoning.delta`, `session.tool.*`).
-- **SDK** переключён на `/api/session`, `/api/event`, `/api/info`, `/api/permission/request`, `/api/fs/*`, `/api/project`, `/api/location`. Смена модели/агента сессии — через `POST /api/session/{id}/model` и `/agent`.
-- **Новые экраны и логика**: `app/history.tsx` (офлайн-история), `app/models.tsx` (видимость моделей), `app/providers/*` (каталог и подключение провайдера ключом через сервер), `app/connection/tunnel.tsx` (мастер туннелей), `src/components/TabletSessions.tsx` (планшет), `src/lib/adaptive-layout.ts`, `src/lib/connection-health.ts`, `src/lib/connection-security.ts`, `src/lib/run-watchdog.ts`, `src/lib/stream-watchdog.ts`, `src/lib/keyboard-inset.ts`.
-- **V2-специфика**: вопросы агента идут через формы V2, в переписке видны саммари компакции, вложения-картинки рендерятся как изображения, чат следует за потоком, композер очищается после встроенной команды.
-- **Изоляция клиентов**: SDK-клиент привязан к подключению, поэтому потоковые сообщения и выбранная модель не перетекают между серверами.
-- **Удалено вместе с инфраструктурой**: `website/`, `docs-site/`, `fastlane/`, `fdroid/`, `distribution/`, `eas.json`, `.maestro/`, `.autopilot/`, `.supervisor/`, `.tasks/`, workflow сборки iOS и публикации в магазины, Sentry-плагин и source-map upload.
-- **Безопасность**: заблокировано разрешение `SYSTEM_ALERT_WINDOW`, пароли и офлайн-копии пишутся с политикой `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, форма подключения предупреждает о пароле по незашифрованному `http://`.
+- **Adapter `src/lib/v2-compat.ts`**: V2 responses and events are normalized to the V1 shape, so stores and screens stayed as they were. V1 events (`session.status`, `message.part.updated`) are assembled from V2 deltas (`session.text.delta`, `session.reasoning.delta`, `session.tool.*`).
+- **SDK** switched to `/api/session`, `/api/event`, `/api/info`, `/api/permission/request`, `/api/fs/*`, `/api/project`, `/api/location`. Changing a session's model/agent goes through `POST /api/session/{id}/model` and `/agent`.
+- **New screens and logic**: `app/history.tsx` (offline history), `app/models.tsx` (model visibility), `app/providers/*` (provider catalog and key-based connection through the server), `app/connection/tunnel.tsx` (tunnel wizard), `src/components/TabletSessions.tsx` (tablet), `src/lib/adaptive-layout.ts`, `src/lib/connection-health.ts`, `src/lib/connection-security.ts`, `src/lib/run-watchdog.ts`, `src/lib/stream-watchdog.ts`, `src/lib/keyboard-inset.ts`.
+- **V2 specifics**: agent questions go through V2 forms, compaction summaries are visible in the transcript, image attachments render as images, the chat follows the stream, the composer clears after a built-in command.
+- **Client isolation**: the SDK client is bound to its connection, so streamed messages and the selected model do not leak between servers.
+- **Removed along with the infrastructure**: `website/`, `docs-site/`, `fastlane/`, `fdroid/`, `distribution/`, `eas.json`, `.maestro/`, `.autopilot/`, `.supervisor/`, `.tasks/`, the iOS build and store-publishing workflows, the Sentry plugin and source-map upload.
+- **Security**: the `SYSTEM_ALERT_WINDOW` permission is blocked, passwords and offline copies are written with the `WHEN_UNLOCKED_THIS_DEVICE_ONLY` policy, and the connection form warns about a password over unencrypted `http://`.
 
-Чего в форке нет (сознательно или пока): OAuth-подключения провайдеров (только API-ключ), OpenCode Cloud (только лист ожидания), iOS-сборки, магазинов и телеметрии.
+What the fork does not have (by design or not yet): provider OAuth connections (API key only), OpenCode Cloud (waitlist only), iOS builds, stores and telemetry.
 
-## Что осталось от оригинала
+## What is kept from upstream
 
-Демо-режим без сервера, мультиподключения (LAN, туннель, Tailscale), биометрическая разблокировка, потоковый чат, дифф-вьюер, подтверждение вызовов инструментов, вопросы агента, безопасное хранение паролей, уведомления, баннер о новой версии. Подробнее — [upstream README](https://github.com/dzianisv/opencode-mobile#readme).
+Demo mode without a server, multiple connections (LAN, tunnel, Tailscale), biometric unlock, streaming chat, diff viewer, tool-call approval, agent questions, secure password storage, notifications, a new-version banner. See the [upstream README](https://github.com/dzianisv/opencode-mobile#readme) for details.
 
-## Безопасность
+## Security
 
-- Пароли серверов и офлайн-история лежат в Android Keystore / iOS Keychain с политикой `WHEN_UNLOCKED_THIS_DEVICE_ONLY`: они не попадают в резервные копии ОС и не восстанавливаются на другом устройстве.
-- Обычный `http://` не шифрует ни пароль, ни переписку. Формы подключения предупреждают об этом; для недоверенных сетей используйте https, туннель или Tailscale. Loopback (Termux на том же телефоне) предупреждения не показывает — трафик не покидает устройство.
-- Приложение не запрашивает `SYSTEM_ALERT_WINDOW` (рисование поверх других приложений).
-- Зависимости сборки: `npm audit` показывает 11 уязвимостей в цепочке Metro/PostCSS/Espree (`npm audit fix --force` откатывает Expo до 44 и ломает сборку). В поставляемый APK этот код не входит — он исполняется только при сборке на CI.
+- Server passwords and offline history live in the Android Keystore / iOS Keychain with the `WHEN_UNLOCKED_THIS_DEVICE_ONLY` policy: they do not end up in OS backups and are not restored on another device.
+- Plain `http://` encrypts neither the password nor the transcript. The connection forms warn about it; use https, a tunnel or Tailscale on untrusted networks. Loopback (Termux on the same phone) shows no warning — traffic never leaves the device.
+- The app does not request `SYSTEM_ALERT_WINDOW` (drawing over other apps).
+- Build dependencies: `npm audit` reports 11 vulnerabilities in the Metro/PostCSS/Espree chain (`npm audit fix --force` downgrades Expo to 44 and breaks the build). None of that code ships in the APK — it only runs during the CI build.
 
-## Мастер Cloudflare / ngrok
+## Cloudflare / ngrok wizard
 
-Для Cloudflare нужен **именованный туннель**, аккаунт и домен: в панели Cloudflare создайте Tunnel и Published application route с Service URL `http://127.0.0.1:4096`, затем запустите команду с токеном на компьютере. Токен Cloudflare в приложение не вводится. Быстрые адреса `trycloudflare.com` отклоняются мастером: [они не поддерживают SSE](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/#limitations), необходимый для потоковых ответов. Альтернатива без своего домена — ngrok. Установку cloudflared/ngrok и вход в ngrok выполняет владелец компьютера.
+Cloudflare needs a **named tunnel**, an account and a domain: in the Cloudflare dashboard create a Tunnel and a Published application route with the Service URL `http://127.0.0.1:4096`, then run the command with the token on your computer. The Cloudflare token is never entered in the app. Quick `trycloudflare.com` addresses are rejected by the wizard: [they do not support SSE](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/#limitations), which streaming replies require. The alternative without your own domain is ngrok. Installing cloudflared/ngrok and logging into ngrok is done by the computer's owner.
 
-## Сборка из исходников
+## Building from source
 
 ```bash
 git clone https://github.com/cfyz1297/opencode-mobile
 cd opencode-mobile
 npm install
-npm run android            # dev-сборка на устройстве/эмуляторе
+npm run android            # dev build on a device/emulator
 ```
 
-Релизный APK собирает GitHub Actions (`.github/workflows/build.yml`) на каждый push в `main` и на теги `v*`: сначала тесты, typecheck и проверка версий, потом `expo prebuild` + `gradlew assembleRelease`. Артефакт — `app-release`; GitHub-релиз с APK публикуется вручную.
+The release APK is built by GitHub Actions (`.github/workflows/build.yml`) on every push to `main` and on `v*` tags: tests, typecheck and version parity first, then `expo prebuild` + `gradlew assembleRelease`. The artifact is `app-release`; the GitHub release with the APK is published manually.
 
-Тесты (Node.js 24+): `npm test`. Общее покрытие с порогом 80 %: `npm run test:coverage`. Typecheck: `npm run typecheck`. Версии в `package.json`, `app.json` и `android/app/build.gradle`: `npm run check:versions`.
+Tests (Node.js 24+): `npm test`. Total coverage with an 80 % gate: `npm run test:coverage`. Typecheck: `npm run typecheck`. Versions in `package.json`, `app.json` and `android/app/build.gradle`: `npm run check:versions`.
 
-Сборка включает Android CUA smoke: релизный APK, команды мастера, отклонение HTTP до сетевого обращения, переходы между сессиями в двух панелях, смена размера окна, холодный перезапуск без сервера, чтение и очистка истории. Артефакт `roadmap-smoke-evidence` содержит снимки экрана и результат.
+The build includes an Android CUA smoke: the release APK, wizard commands, rejection of HTTP before any network access, switching between sessions in two panes, window resizing, a cold restart without a server, reading and clearing history. The `roadmap-smoke-evidence` artifact holds screenshots and the result.
 
-Проверка безопасности и обоснование исправлений: [docs/security-review-0.2.21.md](docs/security-review-0.2.21.md), статус подключения: [docs/connection-status-validation.md](docs/connection-status-validation.md), видимость моделей: [docs/model-visibility-validation.md](docs/model-visibility-validation.md), восстановление прогона: [docs/run-resync-validation.md](docs/run-resync-validation.md). Текущее состояние проекта и порядок релиза: [HANDOFF.md](HANDOFF.md).
+Security review and the reasoning behind the fixes: [docs/security-review-0.2.21.md](docs/security-review-0.2.21.md), connection status: [docs/connection-status-validation.md](docs/connection-status-validation.md), model visibility: [docs/model-visibility-validation.md](docs/model-visibility-validation.md), run recovery: [docs/run-resync-validation.md](docs/run-resync-validation.md). Current project state and the release order: [HANDOFF.md](HANDOFF.md).
 
-Отдельный клиент на чистом Java без Gradle (`aapt → ecj → d8 → apksigner`), тоже на V2 API, живёт в другом репозитории.
+A separate pure-Java client without Gradle (`aapt → ecj → d8 → apksigner`), also on the V2 API, lives in another repository.
 
-## Обновления
+## Updates
 
 <details>
-<summary>Список изменений по версиям (0.2.11 – 0.2.27)</summary>
+<summary>Changelog by version (0.2.11 – 0.2.27)</summary>
 
 ### 0.2.27
 
-- **Инструменты и мысли в чате идут в том же порядке, что и на компьютере.** Раньше ответ агента выглядел как «стена размышлений сверху, все вызовы инструментов внизу»: промежуточные реплики модели между шагами терялись в общей куче, а строка «Выполнено команд: N» повторялась на каждом шаге. Теперь каждый шаг показывает свои размышления, свою строку инструментов и свой текст в том порядке, в котором их выдала модель: запрос → мысли → инструменты → «Now the plan: …» → снова инструменты → окончательный ответ. Шапка «Assistant + модель» одна на весь прогон.
-- **В конце — стоимость всего прогона, а не последнего шага.** Футер показывал токены и деньги только последнего roundtrip, из-за чего длинный прогон выглядел в разы дешевле, чем был. Теперь суммируются все шаги от вашего сообщения до конца ответа.
-- **Метки команд снова совпадают с сервером.** `isCommandRun` и детали вызова знали только `bash`, а V2 называет инструмент `shell`: реальные запуски получали метку «Выполнено инструментов» с иконкой пазла и теряли командное превью. Исправлено.
-- **Убрана привязка к Google Play.** Приложение не публикуется в магазинах, поэтому запрос оценки через Play In-App Review (`expo-store-review`) удалён вместе с зависимостью, счётчиком сессий в SecureStore и политикой порога. В APK больше нет кода магазина.
+- **Tools and thoughts now appear in the chat in the same order as on the desktop.** An agent reply used to look like "a wall of reasoning on top, every tool call at the bottom": the model's interim text between steps was buried in the pile, and the "Ran N commands" row repeated on every step. Now each step shows its own reasoning, its own tool row and its own text in the order the model produced them: prompt → thoughts → tools → "Now the plan: …" → tools again → final answer. The "Assistant + model" header appears once per run.
+- **The footer reports the cost of the whole run, not of the last step.** It used to show tokens and money for the final roundtrip only, which made a long run look several times cheaper than it was. Now everything from your message to the end of the reply is summed.
+- **Command labels match the server again.** `isCommandRun` and the call details only knew `bash`, while V2 names the tool `shell`: real command runs got the "Ran N tools" label with a puzzle icon and lost their command preview. Fixed.
+- **Google Play coupling removed.** The app is not distributed through stores, so the rating prompt via Play In-App Review (`expo-store-review`) is gone along with the dependency, the session counter in SecureStore and the threshold policy. The APK no longer contains any store code.
 
 ### 0.2.26
 
-- **Возвращён правильный вид чата.** В 0.2.25 блок вопросов занял половину экрана, и сообщения уезжали вверх с пустой полосой над полем ввода: у `ScrollView` в React Native `flexGrow: 1` по умолчанию, поэтому даже пустой блок тянулся вверх. Теперь он не растёт, а сжимается только когда карточка не влезает. Закреплено тестом.
+- **Chat layout restored.** In 0.2.25 the questions block took half the screen and pushed messages up with an empty strip above the input: React Native's `ScrollView` has `flexGrow: 1` by default, so even an empty block grew upward. It no longer grows, and shrinks only when the card does not fit. Covered by a test.
 
 ### 0.2.25
 
-- **Ввод текста больше не уезжает за клавиатуру.** При открытой клавиатуре всё окно приложения теперь сжимается под неё нативно (раньше под клавиатуру подстраивался только внутренний блок, поэтому нижняя часть экрана — вместе со строкой ввода — оставалась под ней). Дополнительно блок вопросов с вариантами ответа стал прокручиваемым: раньше при висящих вопросах он выталкивал строку ввода за пределы экрана, и написать в чат было нельзя, не закрыв клавиатуру. Теперь строка ввода видна всегда, а варианты ответа прокручиваются в оставшемся месте. Покрыто тестами.
+- **The input no longer hides behind the keyboard.** With the keyboard open the whole app window now shrinks under it natively (previously only an inner block adjusted, so the bottom of the screen — including the input row — stayed underneath). The questions block also became scrollable: with pending questions it used to push the input row off-screen, so you could not type without closing the keyboard. The input row is always visible now, and the answers scroll in the remaining space. Covered by tests.
 
 ### 0.2.24
 
-- **Новая сессия создаётся в выбранном проекте, а не в домашней папке сервера.** При выборе проекта (в списке недавних, среди проектов сервера, в обзоре папок или через переключатель проекта) сессия действительно открывается в этой папке. Раньше сервер V2 игнорировал заголовок с папкой при создании сессии и складывал все новые сессии в свой рабочий каталог — обычно `~`. Теперь папка передаётся в теле запроса (`location.directory`); покрыто HTTP-тестом SDK.
-- **Поле ввода больше не прячется за клавиатурой.** При наборе ответа клавиатура перекрывала строку ввода: приложение поднимало интерфейс всего на высоту системной панели навигации вместо высоты клавиатуры (ошибка в расчёте высоты, а не в самой клавиатуре). Теперь отступ берётся из системного отступа клавиатуры; исправление общее для всех экранов с вводом — чат, новая сессия, подключения. Покрыто тестом расчёта.
+- **A new session is created in the selected project, not in the server's home folder.** Selecting a project (from recent ones, from server projects, in the folder browser, or through the project switcher) now really opens the session in that folder. V2 previously ignored the folder header when creating a session and put every new session in its own working directory — usually `~`. The folder is now sent in the request body (`location.directory`); covered by an SDK HTTP test.
+- **The input field no longer hides behind the keyboard.** When typing an answer, the keyboard covered the input row: the app raised the UI by the height of the system navigation bar instead of the keyboard height (a height calculation bug, not the keyboard itself). The inset now comes from the system keyboard inset; the fix is shared by every screen with input — chat, new session, connections. Covered by a calculation test.
 
 ### 0.2.23
 
-- **Сессия оживает после пропадания сети.** Если прогон на сервере закончился (или оборвался) пока телефон был без сети, приложение теперь спрашивает сервер, что он реально выполняет, и снимает «Работаю…»: сессия снова принимает сообщения, а прошлая работа показывается. Раньше в этом случае спиннер и блокировка поля ввода оставались навсегда — помогала только перезагрузка приложения.
+- **A session revives after a network drop.** If a run finished (or broke off) on the server while the phone had no network, the app now asks the server what it is actually running and clears "Working…": the session accepts messages again and the past work is shown. Previously the spinner and the blocked input stayed forever — only an app restart helped.
 
 ### 0.2.22
 
-- **Ответ больше не «прячется» до перезахода в сессию.** Если события одного прогона потерялись, а сокет жив, приложение теперь само дочитывает переписку через 12 секунд тишины: ответ появляется на экране, «Работаю…» гаснет, а если модель всё ещё работает — подтягивается уже написанная часть. Раньше помогал только выход из сессии и обратно.
+- **A reply no longer "hides" until you re-enter the session.** If one run's events were lost while the socket is alive, the app now re-reads the transcript after 12 seconds of silence: the reply appears on screen, "Working…" clears, and if the model is still working the part already written is pulled in. Previously only leaving the session and coming back helped.
 
 ### 0.2.21
 
-- **Честный статус подключения**: «Активно» теперь означает, что сервер ответил, а не что подключение выбрано. Если `opencode serve` в Termux остановлен, строка показывает «Сервер недоступен» и красную иконку. Проверка идёт при открытии вкладки, раз в 15 с и при возврате приложения на передний план; результат привязан к серверу, поэтому ответ старого подключения не красит новое.
-- **Экран «Модели»** рядом с «Провайдерами»: поиск, группы по провайдерам и переключатели видимости. Скрытая модель пропадает из обоих окон выбора — в сессии и в New Session.
-- **Провайдеры**: короткий список популярных (OpenCode Zen/Go первыми), подключение ключом передаётся серверу через `opencode serve`. Ключи в APK не хранятся.
-- **Безопасность**: предупреждение перед отправкой пароля по незашифрованному http, пароли помечены «только это устройство», убрано разрешение `SYSTEM_ALERT_WINDOW`.
+- **Honest connection status**: "Active" now means the server responded, not that the connection is selected. If `opencode serve` in Termux is stopped, the row shows "Server unreachable" with a red icon. The check runs when the tab opens, every 15 s and when the app returns to the foreground; the result is bound to its server, so a stale connection's answer does not paint the new one.
+- **Models screen** next to Providers: search, groups by provider, visibility switches. A hidden model disappears from both pickers — in the session and in New Session.
+- **Providers**: a short list of popular ones (OpenCode Zen/Go first); connecting by key is passed to the server through `opencode serve`. No keys are stored in the APK.
+- **Security**: a warning before sending a password over unencrypted http, passwords marked "this device only", the `SYSTEM_ALERT_WINDOW` permission removed.
 
 ### 0.2.20
 
-- **Мастер Cloudflare / ngrok**: Add Connection → Настройка Cloudflare / ngrok. Выберите сервис и систему компьютера, выполните две команды на компьютере и вставьте HTTPS-адрес туннеля и пароль сервера. Приложение проверяет соединение перед сохранением. Сервер привязывается к loopback; туннель требует пароль.
-- **Планшеты**: боковая навигация от 768 dp, список сессий рядом с чатом от 1000 dp, ограничение ширины переписки и поддержка изменения ориентации/размера окна.
-- **История офлайн**: Settings → История сессий офлайн → включить сохранение, затем открыть сессию онлайн. Локальные копии доступны даже после перезапуска без сети. До 20 сессий на подключение, до 40 последних текстовых сообщений на сессию; длинные сообщения и общий объём ограничены. Хранилище защищено Android Keystore / iOS Keychain; инструменты, вложения и рассуждения исключены. Очистка удаляет копии всех подключений и выключает дальнейшее сохранение. Копии доступны только для чтения и не отправляются модели.
+- **Cloudflare / ngrok wizard**: Add Connection → Cloudflare / ngrok setup. Choose the service and the computer's OS, run two commands on the computer, then paste the tunnel's HTTPS address and the server password. The app checks the connection before saving. The server binds to loopback; the tunnel requires a password.
+- **Tablets**: side navigation from 768 dp, the session list next to the chat from 1000 dp, a width limit for the transcript, and support for orientation/window-size changes.
+- **Offline history**: Settings → Offline session history → enable saving, then open a session online. Local copies stay available after a restart without network. Up to 20 sessions per connection, up to the last 40 text messages per session; long messages and total size are capped. Storage is protected by Android Keystore / iOS Keychain; tools, attachments and reasoning are excluded. Clearing removes copies for all connections and turns further saving off. Copies are read-only and are never sent to the model.
 
 ### 0.2.19
 
-- SDK-клиент привязан к подключению: потоковые сообщения и выбранная модель больше не перетекают между серверами и проектами. Ошибки API сохраняются как ошибки.
+- The SDK client is bound to its connection: streamed messages and the selected model no longer leak between servers and projects. API errors are stored as errors.
 
 ### 0.2.18
 
-- Каталог моделей индексируется по `Model.Info.id`, поэтому смена модели в сессии применяется к нужной модели.
+- The model catalog is indexed by `Model.Info.id`, so changing the model in a session applies to the right model.
 
 ### 0.2.17
 
-- Композер очищается после выбора встроенной команды.
+- The composer clears after selecting a built-in command.
 
 ### 0.2.16
 
-- Переписка следует за потоковым ответом.
+- The transcript follows the streaming reply.
 
 ### 0.2.15
 
-- «Мёртвый» SSE-поток восстанавливается сам, без перезахода в сессию.
+- A "dead" SSE stream recovers on its own, without re-entering the session.
 
 ### 0.2.14
 
-- Вложения-картинки V2 показываются как изображения, а не белым блоком; видно, когда применён свой вариант ответа на вопрос.
+- V2 image attachments render as images instead of a white block; it is visible when your own answer variant was applied.
 
 ### 0.2.13
 
-- Ответы на вопросы агента подтверждаются в чате, потерянные промпты восстанавливаются.
+- Answers to agent questions are confirmed in the chat; lost prompts are restored.
 
 ### 0.2.12
 
-- Поток вопросов переведён на сервис форм V2 (BUG-004).
+- The question flow moved to the V2 forms service (BUG-004).
 
 ### 0.2.11
 
-- Саммари компакции видны в переписке; исправлены непереведённые подписи ролей.
+- Compaction summaries are visible in the transcript; untranslated role labels fixed.
 
 </details>
 
-## Лицензия и заимствования
+## License and credits
 
-MIT — см. [LICENSE](LICENSE). Учитываем upstream [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile) и [sst/opencode](https://github.com/sst/opencode).
+MIT — see [LICENSE](LICENSE). Upstream [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile) and [sst/opencode](https://github.com/sst/opencode) are credited.
