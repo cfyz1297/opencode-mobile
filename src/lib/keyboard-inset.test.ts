@@ -75,7 +75,9 @@ test("full-screen layouts do not add their own keyboard padding", () => {
 // scroll area so it is always visible.
 test("the question card scrolls so the composer stays visible", () => {
   const root = path.join(import.meta.dirname, "..", "..")
-  const source = fs.readFileSync(path.join(root, "app/session/[id].tsx"), "utf8")
+  // Windows checkouts (core.autocrlf) deliver CRLF; the patterns below are
+  // written with LF, so normalize before matching.
+  const source = fs.readFileSync(path.join(root, "app/session/[id].tsx"), "utf8").replace(/\r\n/g, "\n")
 
   // ScrollView defaults to flexGrow: 1 (RN baseVertical): without the explicit
   // flexGrow: 0 an empty prompt area eats the free space and pushes the message

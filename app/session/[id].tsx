@@ -18,7 +18,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useKeyboardHeight } from "../../src/lib/use-keyboard-height"
 import { buildMessageData, type MessageDataItem } from "../../src/lib/revert-filter"
-import { bubbleFlags } from "../../src/lib/message-run"
+import { bubbleFlags, runTotals, runTools } from "../../src/lib/message-run"
 import { shouldFollowBottom } from "../../src/lib/scroll-follow"
 import { useTranslation } from "react-i18next"
 import * as ImagePicker from "expo-image-picker"
@@ -258,6 +258,13 @@ export default function SessionScreen() {
   // Consecutive assistant steps (one per tool call) render as one run: shared
   // header at the top, totals at the bottom, no repeated chrome per step.
   const flags = useMemo(() => bubbleFlags(messageData.map((item) => item.message.role)), [messageData])
+  // The footer reports what the whole run cost, not just its last step.
+  const totals = useMemo(() => runTotals(messageData.map((item) => item.message)), [messageData])
+  // All of the run's tool calls, rendered as one row on its newest step.
+  const tools = useMemo(
+    () => runTools(messageData.map((item) => ({ role: item.message.role, parts: item.parts }))),
+    [messageData],
+  )
   // Drop cached items when switching sessions so the map cannot grow across
   // every session visited in one app run.
   useEffect(() => {
@@ -911,6 +918,10 @@ export default function SessionScreen() {
                   isDark={isDark}
                   continued={flags[index]?.continued}
                   showMeta={flags[index]?.showMeta}
+                  showReasoning={flags[index]?.showReasoning}
+                  showTools={flags[index]?.showTools}
+                  runTools={tools[index]}
+                  totals={totals[index]}
                   onLongPress={handleMessageLongPress}
                   onRevert={handleMessageRevert}
                 />

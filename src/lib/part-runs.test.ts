@@ -11,14 +11,37 @@ test("groupParts keeps the model's order instead of regrouping by type", () => {
   const parts = [
     part("reasoning", { text: "plan" }),
     part("text", { text: "answer" }),
-    part("tool", { tool: "bash" }),
+    part("tool", { tool: "shell" }),
     part("reasoning", { text: "next" }),
-    part("tool", { tool: "bash" }),
+    part("tool", { tool: "shell" }),
   ]
+  // Text closes the group: the two shell calls after it are one row, and the
+  // reasoning between them must not split it. A segment always reads
+  // reasoning-then-tools, so the thought that came second leads its segment.
   assert.deepEqual(
     groupParts(parts).map((item) => item.kind),
-    ["reasoning", "text", "tools", "reasoning", "tools"],
+    ["reasoning", "text", "reasoning", "tools"],
   )
+  const tools = groupParts(parts)[3]
+  assert.equal(tools.kind === "tools" && tools.tools.length, 2)
+})
+
+test("groupParts folds reasoning split by tool calls into one block", () => {
+  const items = groupParts([
+    part("reasoning", { text: "first" }),
+    part("tool", { tool: "shell" }),
+    part("reasoning", { text: "second" }),
+    part("tool", { tool: "shell" }),
+    part("text", { text: "done" }),
+  ])
+  assert.deepEqual(
+    items.map((item) => item.kind),
+    ["reasoning", "tools", "text"],
+  )
+  const reasoning = items[0]
+  assert.equal(reasoning.kind === "reasoning" && reasoning.part.text, "first\n\nsecond")
+  // A merged block spans several steps, so a per-block duration would lie.
+  assert.equal(reasoning.kind === "reasoning" && reasoning.part.time, undefined)
 })
 
 test("groupParts folds consecutive tool calls into one run", () => {
@@ -60,6 +83,9 @@ test("groupParts on an empty list is empty", () => {
 
 test("isCommandRun is true only for shell-only runs", () => {
   assert.equal(isCommandRun([part("tool", { tool: "bash" })]), true)
-  assert.equal(isCommandRun([part("tool", { tool: "bash" }), part("tool", { tool: "read" })]), false)
+  // V2 renamed the tool: real runs report `shell`, which used to fall through
+  // to the generic "Ran N tools" label.
+  assert.equal(isCommandRun([part("tool", { tool: "shell" })]), true)
+  assert.equal(isCommandRun([part("tool", { tool: "shell" }), part("tool", { tool: "read" })]), false)
   assert.equal(isCommandRun([]), false)
 })
