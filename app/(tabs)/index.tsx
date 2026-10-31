@@ -25,7 +25,7 @@ import { useCatalog } from "../../src/stores/catalog"
 import type BottomSheet from "@gorhom/bottom-sheet"
 import type { Session, Project } from "../../src/lib/sdk"
 import { DirectorySwitcher, DirectoryBrowserSheet, ModelPickerModal } from "../../src/components/chat"
-import { groupByDirectory } from "../../src/lib/session-grouping"
+import { groupByDirectory, sortByRecency } from "../../src/lib/session-grouping"
 import { groupSelection, setGroupSelected, toggleSelection } from "../../src/lib/session-selection"
 import { UpdateBanner } from "../../src/components/UpdateBanner"
 import { nameOf } from "../../src/lib/path-utils"
@@ -285,12 +285,16 @@ export default function SessionsScreen() {
     })
   }, [])
 
-  // Flatten sessions into header+item rows. Skip headers entirely when
-  // everything lives in one directory — a lone header adds noise, not clarity.
+  // Flatten sessions into header+item rows, newest first. Skip headers entirely
+  // when everything lives in one directory — a lone header adds noise, not
+  // clarity.
   const rows = useMemo<ListRow[]>(() => {
-    const groups = groupByDirectory(sessions)
+    // Sort before grouping: groups then follow their most recently active
+    // session, and each group lists its own sessions newest-first.
+    const sorted = sortByRecency(sessions)
+    const groups = groupByDirectory(sorted)
     if (groups.length <= 1) {
-      return sessions.map((session) => ({ type: "session", session }))
+      return sorted.map((session) => ({ type: "session", session }))
     }
     const out: ListRow[] = []
     for (const group of groups) {

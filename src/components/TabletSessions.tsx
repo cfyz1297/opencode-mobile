@@ -3,11 +3,15 @@ import { router } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { useSessions } from '../stores/sessions'
 import { tabletSessionHref } from '../lib/tablet-session-nav'
+import { sortByRecency } from '../lib/session-grouping'
 
 export function TabletSessions({ width, selected }: { width: number; selected: string }) {
   const { t } = useTranslation()
   const dark = useColorScheme() === 'dark'
-  const sessions = useSessions(s => s.sessions)
+  // Same newest-first order as the sessions tab — this sidebar is the same list
+  // in the split layout, it just has no project grouping. Sorted outside the
+  // selector: a selector returning a fresh array trips zustand's snapshot check.
+  const sessions = sortByRecency(useSessions(s => s.sessions))
   const openSession = (session: { id: string; directory?: string }) => {
     if (session.id === selected) return
     void useSessions.getState().selectSession(session.id, session.directory)
