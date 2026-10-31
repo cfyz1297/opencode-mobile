@@ -1,6 +1,6 @@
 {
   "name": "@opencode-ai/mobile",
-  "version": "0.2.26",
+  "version": "0.2.27",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
@@ -33,7 +33,6 @@
     "expo-secure-store": "~15.0.8",
     "expo-speech-recognition": "3.0.1",
     "expo-status-bar": "~3.0.9",
-    "expo-store-review": "~9.0.9",
     "i18next": "^26.3.6",
     "react": "19.1.0",
     "react-i18next": "^17.0.10",

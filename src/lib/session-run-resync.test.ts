@@ -156,7 +156,6 @@ function harness() {
     "../lib/notifications": { send: () => {} },
     "../lib/notify-format": { sanitizeBody: (_title: unknown, fallback: string) => fallback },
     "../lib/status-labels": { statusFromPart: () => "" },
-    "../lib/store-review": { recordSuccessfulSession: async () => {} },
     "../lib/api-error": { isAuthError: () => false },
     "../lib/session-status-reconcile": { isSessionActuallyIdle },
     "../lib/stream-watchdog": { isStreamStalled },

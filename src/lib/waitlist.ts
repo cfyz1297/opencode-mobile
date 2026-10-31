@@ -1,8 +1,8 @@
 // OpenCode Connect waitlist signup: pure payload/fallback logic.
 //
 // Kept free of react-native imports (Linking, Alert) so it's unit-testable
-// with plain `node --test`, the same split used for buildAuth() in auth.ts
-// and shouldRequestReview() in store-review-policy.ts. The screen injects
+// with plain `node --test`, the same split used for buildAuth() in auth.ts.
+// The screen injects
 // nothing in production (global fetch is used); tests inject a fake fetch.
 //
 // Backend: the OpenCodeMobileSite beta-signup route (VibeBrowserProductPage

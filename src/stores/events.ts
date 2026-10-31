@@ -4,7 +4,6 @@ import { useSessions, abortedSessions } from "./sessions"
 import { send as notify } from "../lib/notifications"
 import { sanitizeBody } from "../lib/notify-format"
 import { statusFromPart } from "../lib/status-labels"
-import { recordSuccessfulSession } from "../lib/store-review"
 import { isAuthError } from "../lib/api-error"
 import { isSessionActuallyIdle } from "../lib/session-status-reconcile"
 import { isStreamStalled } from "../lib/stream-watchdog"
@@ -444,11 +443,6 @@ export const useEvents = create<EventsState>((set, get) => ({
                     sessionId: sessionID,
                   })
                 }
-                // Genuinely positive moment — count it toward the one-time
-                // store review prompt, but only if this run never errored
-                // (session.error doesn't touch sessionStatus, so an errored
-                // session still lands here via busy -> idle) and wasn't aborted.
-                if (!aborted && !erroredSessions.has(sessionID)) void recordSuccessfulSession()
               }
               break
             }
