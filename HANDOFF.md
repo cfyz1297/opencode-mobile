@@ -1,22 +1,30 @@
 # OpenCode Mobile — мастер-документ (форк cfyz1297)
 
-Актуально на **2026-10-29**.
+Актуально на **2026-10-31**.
 - App: **`cc.agentlabs.opencode`** — Expo/React Native Android-клиент к собственному серверу `opencode serve` (V2 API).
 - Репозиторий форка: **`cfyz1297/opencode-mobile`**. Апстрим для справки: `dzianisv/opencode-mobile`.
 - Пользователь запускает сервер в Termux на телефоне; приложение — клиент к нему.
 
-## Состояние на 2026-10-28
+## Состояние на 2026-10-31
 
 | Что | Значение |
 |---|---|
-| Версия | **0.2.26**, versionCode **60** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
+| Версия | **0.2.27**, versionCode **61** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
 | Ветки | `main` = `master` (релизный коммит — см. `git log -1`) |
-| Тег | `v0.2.26` |
-| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.26 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
-| APK | 86 387 932 байт, SHA256 `e5ce36ff7c6fd7421b4b83d16d0a24633b01b3ce6f26b65277f1f4e337cf8139` |
+| Тег | `v0.2.27` |
+| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.27 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
+| APK | 86 394 471 байт, SHA256 `29a18bc50eccfc4a53aa6f5f10101bcb1c94785fbe49d9d0e9ccb6ecce8a0418` |
 | Подпись | production keystore, сертификат тот же, что у 0.2.20/0.2.22/0.2.23 → установка поверх без удаления |
 | Каналы | только `Build Android APK` и `Security scan`. Play / F-Droid / App Store не используются, на тег `v*` не запускаются |
-| Тесты | `npm test` — **535 passed, 0 failed**; покрытие **98.57 / 85.11 / 95.78** при пороге 80; `npm run typecheck` чисто |
+| Тесты | `npm test` — **559 passed, 0 failed**; `npm run typecheck` чисто; `npm run check:versions` — 0.2.27 (61) |
+| Документация | `README.md` — английский (основной), `README.ru.md` — русский, оба ссылаются друг на друга |
+
+Что нового в 0.2.27:
+
+- **Порядок мыслей и инструментов как на десктопе.** Чат склеивал прогон в «стена размышлений сверху, все вызовы внизу», а строка «Выполнено команд: N» повторялась на каждом шаге. Теперь каждый шаг рисует свои размышления, свою строку инструментов и свой текст в порядке модели; шапка «Assistant + модель» одна на прогон. Логика — `src/lib/part-runs.ts` (`groupParts`), тесты — `src/lib/part-runs.test.ts`.
+- **Стоимость всего прогона.** Футер показывал только последний roundtrip; `runTotals` (`src/lib/message-run.ts`) суммирует все шаги прогона и вешает итог на самый новый шаг. Тесты — `src/lib/message-run.test.ts`.
+- **Алиас `shell`.** `isCommandRun` и `TOOL_ICONS`/`ToolDetail` знали только `bash`, поэтому реальные запуски V2 получали метку «Выполнено инструментов» и теряли командное превью.
+- **Убрана привязка к Google Play.** Удалены `expo-store-review`, `src/lib/store-review.ts`, `src/lib/store-review-policy.ts`, счётчик сессий в SecureStore и вызов из `src/stores/events.ts`.
 
 Что нового в 0.2.26:
 
