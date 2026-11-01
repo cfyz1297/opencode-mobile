@@ -31,6 +31,15 @@ You need an **opencode 2.0.x** server (V2 API). V2 is installed as a native bina
    ```
 2. In the app: **Add Connection** → server address (`http://IP:4096`), user `opencode`, password from the command above.
 
+**On Android**, the server is [opencode-termux](https://github.com/cfyz1297/opencode-termux): OpenCode 2 compiled for Bionic, so it runs inside Termux with no glibc, no proot and no compatibility layer.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/cfyz1297/opencode-termux/main/install.sh | bash
+OPENCODE_SERVER_PASSWORD=yourpassword opencode serve --hostname 0.0.0.0 --port 4096
+```
+
+`opencode upgrade` (or re-running the install command) updates it. Builds from `2.2.5-r1` include the fix for the TUI crash on Android 17 (`Pointer exceeds safe integer range`); the server API is the same as the official V2 binary.
+
 V2 specifics (verified on 2.0.27): Basic authentication only as `opencode:<password>` (Bearer and an empty user both return 401), all paths under `/api/*`, paginated responses as `{data, cursor}`, SSE at `GET /api/event`.
 
 ## How the fork differs from upstream

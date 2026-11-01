@@ -31,6 +31,15 @@ APK собирается GitHub Actions из `main` этого репозито�
    ```
 2. В приложении: **Add Connection** → адрес сервера (`http://IP:4096`), логин `opencode`, пароль из команды выше.
 
+**На Android** сервер ставится из [opencode-termux](https://github.com/cfyz1297/opencode-termux): это OpenCode 2, собранный под Bionic, поэтому он работает прямо в Termux — без glibc, proot и слоёв совместимости.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/cfyz1297/opencode-termux/main/install.sh | bash
+OPENCODE_SERVER_PASSWORD=вашпароль opencode serve --hostname 0.0.0.0 --port 4096
+```
+
+Обновление — `opencode upgrade` или повторный запуск команды установки. Сборки начиная с `2.2.5-r1` содержат исправление падения TUI на Android 17 (`Pointer exceeds safe integer range`); API сервера тот же, что у официального бинарника V2.
+
 Формат V2 (проверено на 2.0.27): Basic-аутентификация только в виде `opencode:<пароль>` (Bearer и пустой пользователь = 401), все пути `/api/*`, страничные ответы `{data, cursor}`, SSE `GET /api/event`.
 
 ## Чем форк отличается от оригинала
