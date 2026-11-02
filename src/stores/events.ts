@@ -86,6 +86,69 @@ let lastStreamActivityAt = 0
 const sessionActivityAt = new Map<string, number>()
 const sessionResyncedAt = new Map<string, number>()
 
+// Streamed deltas arrive far faster than the UI can render them (one
+// `message.part.updated` per token). Applying each one wrote the sessions
+// store immediately, so the chat rebuilt its whole list — and re-parsed the
+// answer's markdown — dozens of times a second, which is quadratic work in the
+// length of the answer. Buffer them here and write once per flush window.
+const STREAM_FLUSH_MS = 60
+
+let streamFlushTimer: ReturnType<typeof setTimeout> | null = null
+// Keyed by part id: a later delta for the same part replaces the earlier one,
+// while insertion order keeps a message's parts in the order they first
+// appeared (which is the order the server assigns them).
+const pendingParts = new Map<string, Part>()
+const pendingMessages = new Map<string, Message>()
+// Last part seen per session — the status line only needs the latest one.
+const pendingStatus = new Map<string, Part>()
+
+function dropStreamBuffer() {
+  if (streamFlushTimer !== null) {
+    clearTimeout(streamFlushTimer)
+    streamFlushTimer = null
+  }
+  pendingParts.clear()
+  pendingMessages.clear()
+  pendingStatus.clear()
+}
+
+/** Write everything buffered so far. Safe to call at any time. */
+function flushStream() {
+  if (streamFlushTimer !== null) {
+    clearTimeout(streamFlushTimer)
+    streamFlushTimer = null
+  }
+  if (!pendingParts.size && !pendingMessages.size && !pendingStatus.size) return
+
+  const messages = [...pendingMessages.values()]
+  const statusParts = [...pendingStatus]
+  const parts = [...pendingParts.values()]
+  pendingMessages.clear()
+  pendingParts.clear()
+  pendingStatus.clear()
+
+  if (messages.length || parts.length) useSessions.getState().applyStreamBatch(messages, parts)
+
+  if (!statusParts.length) return
+  const state = useEvents.getState()
+  let statusText = state.statusText
+  for (const [sessionID, part] of statusParts) {
+    // Idle is terminal: a delta buffered before the status event must not
+    // resurrect the "Working..." line that event just cleared.
+    if (state.sessionStatus[sessionID]?.type === "idle") continue
+    const text = statusFromPart(part)
+    if (statusText[sessionID] === text) continue
+    if (statusText === state.statusText) statusText = { ...statusText }
+    statusText[sessionID] = text
+  }
+  // set, not setState-with-no-change: an unchanged map must not notify anyone.
+  if (statusText !== state.statusText) useEvents.setState({ statusText })
+}
+
+function scheduleStreamFlush() {
+  if (streamFlushTimer === null) streamFlushTimer = setTimeout(flushStream, STREAM_FLUSH_MS)
+}
+
 /** Record that this session produced a live event, so its run is not silent. */
 function markSessionActivity(sessionID: string | undefined) {
   if (!sessionID) return
@@ -272,6 +335,8 @@ export const useEvents = create<EventsState>((set, get) => ({
       clearTimeout(reconnectTimer)
       reconnectTimer = null
     }
+    // Leftovers from a previous connection belong to a stream that is gone.
+    dropStreamBuffer()
 
     const client = useConnections.getState().client
     if (!client) return
@@ -386,6 +451,10 @@ export const useEvents = create<EventsState>((set, get) => ({
 
           switch (type) {
             case "session.status": {
+              // Apply buffered deltas first: an idle transition triggers a
+              // transcript refetch, and a stale delta landing after it would
+              // overwrite what the server just returned.
+              flushStream()
               const sessionID = props.sessionID as string
               const status = props.status as SessionStatus
               if (!sessionID) break
@@ -451,24 +520,21 @@ export const useEvents = create<EventsState>((set, get) => ({
               const info = props.info as Message | undefined
               if (!info) break
               markSessionActivity(info.sessionID)
-              useSessions.getState().handleEvent({ type, properties: { info } } as any)
+              pendingMessages.set(info.id, info)
+              scheduleStreamFlush()
               break
             }
 
             case "message.part.updated": {
               const part = props.part as Part | undefined
               if (!part) break
-              markSessionActivity((part as any).sessionID)
-
-              // Update status text from the latest part
               const sessionID = (part as any).sessionID as string
-              if (sessionID) {
-                set((state) => ({
-                  statusText: { ...state.statusText, [sessionID]: statusFromPart(part) },
-                }))
-              }
+              markSessionActivity(sessionID)
 
-              useSessions.getState().handleEvent({ type, properties: { part } } as any)
+              // Status line follows the latest part of this session.
+              if (sessionID) pendingStatus.set(sessionID, part)
+              pendingParts.set(part.id, part)
+              scheduleStreamFlush()
               break
             }
 
@@ -492,6 +558,7 @@ export const useEvents = create<EventsState>((set, get) => ({
             }
 
             case "session.error": {
+              flushStream()
               const error = props.error as { message?: string } | undefined
               const sessionID = props.sessionID as string
               if (!sessionID) break
@@ -615,6 +682,9 @@ export const useEvents = create<EventsState>((set, get) => ({
       } finally {
         clearTimeout(stableTimer)
         clearInterval(stallWatchdog)
+        // The last tokens of a dropped stream must still reach the screen.
+        if (!currentController.signal.aborted) flushStream()
+        else dropStreamBuffer()
         if (currentController.signal.aborted) {
           console.log("[SSE] Disconnected (aborted)")
         }
@@ -630,6 +700,7 @@ export const useEvents = create<EventsState>((set, get) => ({
     }
     controller?.abort()
     controller = null
+    dropStreamBuffer()
     erroredSessions.clear()
     abortedSessions.clear()
     sessionActivityAt.clear()

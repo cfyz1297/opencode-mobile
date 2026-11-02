@@ -13,7 +13,7 @@ import { useEvents } from "../src/stores/events"
 import { useCatalog } from "../src/stores/catalog"
 import { useSettings } from "../src/stores/settings"
 import { useSessions } from "../src/stores/sessions"
-import { offlineHistory } from "../src/lib/history-storage"
+import { offlineHistory, historyEnabled } from "../src/lib/history-storage"
 import { historySnapshot } from "../src/lib/offline-history"
 import { AuthGate } from "../src/components/AuthGate"
 import { ErrorBoundary } from "../src/components/ErrorBoundary"
@@ -40,11 +40,17 @@ function RootLayout() {
       if (!state.currentSession) return
       const connection = useConnections.getState().activeConnection?.id
       if (!connection) return
-      const snapshot = historySnapshot(state.currentSession, state.messages, state.parts)
+      // Build the snapshot when the debounce fires, not on every store write:
+      // during streaming this subscription runs on every flush, and building a
+      // transcript snapshot per token was pure waste — it used to be computed
+      // even for users who never enabled offline history.
       timer = setTimeout(() => {
         void (async () => {
+          if (!(await historyEnabled())) return
           if (useConnections.getState().activeConnection?.id !== connection) return
-          await offlineHistory.capture(connection, snapshot)
+          const current = useSessions.getState()
+          if (!current.currentSession) return
+          await offlineHistory.capture(connection, historySnapshot(current.currentSession, current.messages, current.parts))
         })().catch(() => console.warn('Offline history could not be saved'))
       }, 1000)
     })

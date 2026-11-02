@@ -60,6 +60,8 @@ interface SessionsState {
 
   // Event handling
   handleEvent: (event: Event) => void
+  /** Apply many streamed updates in one store write (see events.ts batching). */
+  applyStreamBatch: (messageUpdates: Message[], partUpdates: Part[]) => void
 }
 
 export type RevertResult = ({ ok: true } & PromptFromParts) | { ok: false; reason: "unsupported" | "auth" | "error" }
@@ -498,6 +500,46 @@ export const useSessions = create<SessionsState>((set, get) => ({
       console.error("Failed to unrevert session:", err)
       set({ error: "Failed to restore reverted messages" })
     }
+  },
+
+  applyStreamBatch: (messageUpdates, partUpdates) => {
+    const state = get()
+    const sessionID = state.currentSession?.id
+    if (!sessionID) return
+
+    let messages = state.messages
+    for (const message of messageUpdates) {
+      if (!isLiveEventForSession(message.sessionID, sessionID)) continue
+      messages = mergeIncomingMessage(messages, message)
+    }
+
+    let parts = state.parts
+    if (partUpdates.length) {
+      // One copy per message, not one per part: a streaming turn sends a
+      // handful of deltas per flush and `parts` holds every message.
+      const byMessage = new Map<string, Part[]>()
+      for (const part of partUpdates) {
+        if (part.sessionID && part.sessionID !== sessionID) continue
+        const list = byMessage.get(part.messageID)
+        if (list) list.push(part)
+        else byMessage.set(part.messageID, [part])
+      }
+      if (byMessage.size) {
+        parts = { ...state.parts }
+        for (const [messageID, updates] of byMessage) {
+          const list = [...(state.parts[messageID] || [])]
+          for (const part of updates) {
+            const index = list.findIndex((p) => p.id === part.id)
+            if (index === -1) list.push(part)
+            else list[index] = part
+          }
+          parts[messageID] = list
+        }
+      }
+    }
+
+    if (messages === state.messages && parts === state.parts) return
+    set({ messages, parts, isLoading: false })
   },
 
   handleEvent: (event) => {

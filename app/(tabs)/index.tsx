@@ -238,18 +238,24 @@ export default function SessionsScreen() {
   const creatingInFlight = useRef(false)
   const [serverProjects, setServerProjects] = useState<Project[]>([])
 
-  const { sessions, isLoading, error, loadSessions, createSession, deleteSession } = useSessions()
-  const {
-    activeConnection,
-    client,
-    currentProject,
-    serverHome,
-    refreshProject,
-    clientForDirectory,
-    switchDirectory,
-    addRecentDirectory,
-    recentDirectories,
-  } = useConnections()
+  // Per-field selectors: this screen stays mounted under a pushed session, and
+  // a whole-store subscription re-rendered the entire session list on every
+  // streamed token written by the chat screen.
+  const sessions = useSessions((s) => s.sessions)
+  const isLoading = useSessions((s) => s.isLoading)
+  const error = useSessions((s) => s.error)
+  const loadSessions = useSessions((s) => s.loadSessions)
+  const createSession = useSessions((s) => s.createSession)
+  const deleteSession = useSessions((s) => s.deleteSession)
+  const activeConnection = useConnections((s) => s.activeConnection)
+  const client = useConnections((s) => s.client)
+  const currentProject = useConnections((s) => s.currentProject)
+  const serverHome = useConnections((s) => s.serverHome)
+  const refreshProject = useConnections((s) => s.refreshProject)
+  const clientForDirectory = useConnections((s) => s.clientForDirectory)
+  const switchDirectory = useConnections((s) => s.switchDirectory)
+  const addRecentDirectory = useConnections((s) => s.addRecentDirectory)
+  const recentDirectories = useConnections((s) => s.recentDirectories)
   const authError = useEvents((s) => s.authError)
   const reconnect = useEvents((s) => s.connect)
   const loadCatalog = useCatalog((s) => s.load)

@@ -121,3 +121,19 @@ test('disable and removal invalidate pending captures inside the storage queue',
   await h.capture('a', snapshot('removed'))
   assert.deepEqual(await h.list('a'), [])
 })
+test('consent is read once instead of on every capture, and disabling it stops writes', async () => {
+  const s = storage()
+  let reads = 0
+  const counted = { ...s, get: async (k: string) => { if (k === 'opencode_history_enabled') reads++; return s.get(k) } }
+  const h = createHistory(counted)
+  assert.equal(await h.enabled(), false)
+  assert.equal(await h.enabled(), false)
+  assert.equal(reads, 1, 'a capture must not hit Keystore once consent is known')
+  await h.setEnabled(true)
+  await h.capture('a', snapshot())
+  assert.equal(reads, 1)
+  assert.equal((await h.list('a')).length, 1)
+  await h.setEnabled(false)
+  await h.capture('a', snapshot('late'))
+  assert.deepEqual((await h.list('a'))[0].id, 's1')
+})

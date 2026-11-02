@@ -67,7 +67,7 @@ function harness() {
     },
   }
 
-  const stats = { messageCalls: 0, pendingCalls: 0, refreshCalls: 0, applied: 0, handled: [] as string[] }
+  const stats = { messageCalls: 0, pendingCalls: 0, refreshCalls: 0, applied: 0, handled: [] as string[], batches: 0, batchedParts: [] as string[], order: [] as string[] }
   // Transcript the fake server returns. `null` means "run still in progress".
   let transcript: Array<{ info: Record<string, unknown>; parts: unknown[] }> | null = COMPLETED_TRANSCRIPT
   let failWith: { status: number } | null = null
@@ -135,9 +135,17 @@ function harness() {
     sending: {},
     refreshMessages: async () => {
       stats.refreshCalls++
+      stats.order.push("refresh")
     },
     applyServerMessages: () => {
       stats.applied++
+    },
+    // Live streaming deltas take this path instead of handleEvent: they are
+    // coalesced by events.ts and applied in one store write per flush.
+    applyStreamBatch: (_messages: unknown[], parts: Array<{ id: string }>) => {
+      stats.batches++
+      stats.order.push("batch")
+      for (const part of parts) stats.batchedParts.push(part.id)
     },
     handleEvent: (event: { type: string }) => {
       stats.handled.push(event.type)
@@ -155,7 +163,7 @@ function harness() {
     "./sessions": { useSessions: sessions, abortedSessions: new Set<string>() },
     "../lib/notifications": { send: () => {} },
     "../lib/notify-format": { sanitizeBody: (_title: unknown, fallback: string) => fallback },
-    "../lib/status-labels": { statusFromPart: () => "" },
+    "../lib/status-labels": { statusFromPart: (part: { text?: string }) => part.text ?? "" },
     "../lib/api-error": { isAuthError: () => false },
     "../lib/session-status-reconcile": { isSessionActuallyIdle },
     "../lib/stream-watchdog": { isStreamStalled },
@@ -473,4 +481,81 @@ test("a reconnect resyncs the open session even when the server has nothing to s
   // parsed event would never run: the client would stay stale after a drop
   // whose busy -> idle transition happened while it was offline.
   assert.ok(app.stats.refreshCalls >= 1, "a reconnected stream catches up on its own")
+})
+
+// --- Streaming deltas are coalesced -----------------------------------------
+// A streamed answer arrives as one `message.part.updated` per token. Applying
+// each one synchronously rebuilt the chat's whole message list and its
+// markdown, so the work grew with the square of the answer length.
+
+const delta = (id: string, text: string) => ({
+  type: "message.part.updated",
+  properties: { part: { id, messageID: "a1", sessionID: SESSION, type: "text", text } },
+})
+
+test("a burst of streamed deltas costs one store write", async () => {
+  const app = harness()
+  app.heartbeatEvery(15_000)
+  app.connect()
+  await app.settle()
+
+  for (let i = 0; i < 20; i++) await app.push(delta(`a1_text${i % 3}`, "x".repeat(i)))
+  assert.equal(app.stats.batches, 0, "nothing is written until the flush window closes")
+
+  await app.advance(60)
+  assert.equal(app.stats.batches, 1, "20 deltas -> one store write")
+  assert.deepEqual(
+    app.stats.batchedParts,
+    ["a1_text0", "a1_text1", "a1_text2"],
+    "one entry per part, in first-seen order",
+  )
+  assert.deepEqual(app.stats.handled, [], "deltas no longer take the per-event store path")
+})
+
+test("an idle transition applies buffered deltas before refetching the transcript", async () => {
+  const app = harness()
+  app.heartbeatEvery(15_000)
+  app.connect()
+  await app.settle()
+  await app.push(busyEvent)
+  await app.push(delta("a1_text0", "partial"))
+
+  assert.equal(app.stats.batches, 0)
+  await app.push({ type: "session.status", properties: { sessionID: SESSION, status: { type: "idle" } } })
+
+  // A stale delta landing after the refetch would overwrite the fresh
+  // transcript the idle transition just requested.
+  assert.deepEqual(app.stats.order.slice(-2), ["batch", "refresh"])
+})
+
+test("the status line follows the newest delta and is not resurrected after idle", async () => {
+  const app = harness()
+  app.heartbeatEvery(15_000)
+  app.connect()
+  await app.settle()
+  await app.push(busyEvent)
+
+  await app.push(delta("a1_text0", "Reading file"))
+  await app.push(delta("a1_text0", "Writing file"))
+  await app.advance(60)
+  assert.equal(app.events.getState().statusText[SESSION], "Writing file")
+
+  // Buffered, then idle in the same window: idle is terminal.
+  await app.push(delta("a1_text0", "stale"))
+  await app.push({ type: "session.status", properties: { sessionID: SESSION, status: { type: "idle" } } })
+  assert.equal(app.events.getState().statusText[SESSION], "")
+  await app.advance(60)
+  assert.equal(app.events.getState().statusText[SESSION], "", "a stale delta must not put the spinner line back")
+})
+
+test("deltas buffered when the stream drops still reach the screen", async () => {
+  const app = harness()
+  app.heartbeatEvery(15_000)
+  app.connect()
+  await app.settle()
+  await app.push(delta("a1_text0", "final answer"))
+  assert.equal(app.stats.batches, 0)
+
+  await app.breakStream()
+  assert.equal(app.stats.batches, 1, "the last tokens are applied before the reconnect loop starts")
 })

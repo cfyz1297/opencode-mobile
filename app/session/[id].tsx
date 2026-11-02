@@ -100,6 +100,10 @@ function getShortDir(dir?: string): string | null {
   return parts[parts.length - 1] || null
 }
 
+// Selectors must return a stable reference: a fresh array on every call makes
+// React re-render endlessly, so a non-array catalog value falls back to this.
+const EMPTY: never[] = []
+
 export default function SessionScreen() {
   const { id, directory } = useLocalSearchParams<{ id: string; directory?: string }>()
   const router = useRouter()
@@ -130,26 +134,28 @@ export default function SessionScreen() {
   const questionSentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const questionRemoveTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
-  const {
-    currentSession,
-    messages,
-    parts,
-    isLoading,
-    loadingMore,
-    hasMore,
-    selectSession,
-    sendMessage,
-    abortSession,
-    loadOlderMessages,
-    revertToMessage,
-    unrevertSession,
-  } = useSessions()
+  // Per-field selectors: a single-field write (e.g. `sending`) must not
+  // re-render the whole chat screen, which is what a whole-store subscription
+  // did on every notify.
+  const currentSession = useSessions((s) => s.currentSession)
+  const messages = useSessions((s) => s.messages)
+  const parts = useSessions((s) => s.parts)
+  const isLoading = useSessions((s) => s.isLoading)
+  const loadingMore = useSessions((s) => s.loadingMore)
+  const hasMore = useSessions((s) => s.hasMore)
+  const selectSession = useSessions((s) => s.selectSession)
+  const sendMessage = useSessions((s) => s.sendMessage)
+  const abortSession = useSessions((s) => s.abortSession)
+  const loadOlderMessages = useSessions((s) => s.loadOlderMessages)
+  const revertToMessage = useSessions((s) => s.revertToMessage)
+  const unrevertSession = useSessions((s) => s.unrevertSession)
 
   // Derive sending state for this specific session
   const isSending = useSessions((s) => !!(currentSession && s.sending[currentSession.id]))
 
-  const { authenticateForMessage } = useAuth()
-  const { client, clientForDirectory } = useConnections()
+  const authenticateForMessage = useAuth((s) => s.authenticateForMessage)
+  const client = useConnections((s) => s.client)
+  const clientForDirectory = useConnections((s) => s.clientForDirectory)
 
   // Use directory-aware client for sessions that belong to a project other than the active one
   const sessionClient = useMemo(
@@ -158,16 +164,18 @@ export default function SessionScreen() {
   )
 
   // Catalog
-  const catalog = useCatalog()
-  const agents = Array.isArray(catalog.agents) ? catalog.agents : []
-  const serverCommands = Array.isArray(catalog.commands) ? catalog.commands : []
-  const providers = Array.isArray(catalog.providers) ? catalog.providers : []
-  const agent = catalog.agent || ""
-  const model = catalog.model
-  const setModel = catalog.setModel
-  const variant = catalog.variant
-  const setVariant = catalog.setVariant
-  const cycleAgent = catalog.cycleAgent
+  const catalogAgents = useCatalog((s) => s.agents)
+  const catalogCommands = useCatalog((s) => s.commands)
+  const catalogProviders = useCatalog((s) => s.providers)
+  const agents = Array.isArray(catalogAgents) ? catalogAgents : EMPTY
+  const serverCommands = Array.isArray(catalogCommands) ? catalogCommands : EMPTY
+  const providers = Array.isArray(catalogProviders) ? catalogProviders : EMPTY
+  const agent = useCatalog((s) => s.agent) || ""
+  const model = useCatalog((s) => s.model)
+  const setModel = useCatalog((s) => s.setModel)
+  const variant = useCatalog((s) => s.variant)
+  const setVariant = useCatalog((s) => s.setVariant)
+  const cycleAgent = useCatalog((s) => s.cycleAgent)
 
   // Raw soft-keyboard height for exact composer avoidance (edge-to-edge)
   const kbHeight = useKeyboardHeight()
@@ -416,6 +424,10 @@ export default function SessionScreen() {
     if (!shouldPollPending || !sessionID || !sessionClient) return
     void refreshPending(sessionClient, sessionID)
     const timer = setInterval(() => {
+      // The screen stays mounted in the background, where polling only spends
+      // radio wakeups on prompts nobody can see — the AppState "active"
+      // listener above already refetches on return.
+      if (AppState.currentState !== "active") return
       void refreshPending(sessionClient, sessionID)
     }, 5000)
     return () => clearInterval(timer)

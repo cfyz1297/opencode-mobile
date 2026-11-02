@@ -33,6 +33,14 @@ export function createHistory(storage: Storage) {
   let queue: Promise<unknown> = Promise.resolve()
   let captureEpoch = 0
   const blocked = new Set<string>()
+  // Consent is read once per process and kept in sync by setEnabled(): every
+  // capture used to hit Keystore, which put a native round-trip in the
+  // streaming path (capture runs after each debounced transcript change).
+  let consent: boolean | null = null
+  const consentEnabled = async () => {
+    if (consent === null) consent = (await storage.get(CONSENT_KEY)) === 'true'
+    return consent
+  }
   const run = <T>(action: () => Promise<T>): Promise<T> => {
     const result = queue.then(action)
     queue = result.catch(() => undefined)
@@ -112,10 +120,18 @@ export function createHistory(storage: Storage) {
     await storage.remove(`${base}_pending`)
   }
   return {
-    enabled: () => run(async () => (await storage.get(CONSENT_KEY)) === 'true'),
+    enabled: () => run(consentEnabled),
     setEnabled: (enabled: boolean) => {
       captureEpoch++ // Synchronous cancellation of flag reads already in flight.
-      return run(() => storage.set(CONSENT_KEY, String(enabled)))
+      consent = enabled
+      return run(async () => {
+        try {
+          await storage.set(CONSENT_KEY, String(enabled))
+        } catch (error) {
+          consent = null // unknown again — re-read from storage on next use
+          throw error
+        }
+      })
     },
     block: (connection: string) => { key(connection); blocked.add(connection) },
     unblock: (connection: string) => { blocked.delete(connection) },
@@ -123,8 +139,8 @@ export function createHistory(storage: Storage) {
       const epoch = captureEpoch
       return run(async () => {
         const base = key(connection)
-        const enabled = await storage.get(CONSENT_KEY)
-        if (epoch !== captureEpoch || enabled !== 'true' || blocked.has(connection)) return
+        const enabled = await consentEnabled()
+        if (epoch !== captureEpoch || !enabled || blocked.has(connection)) return
         await write(base, [session, ...(await read(base)).filter(s => s.id !== session.id)])
       })
     },
