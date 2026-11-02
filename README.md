@@ -4,7 +4,7 @@
 
 A fork of [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile) — an Expo/React Native client for a self-hosted `opencode serve`. The fork runs on **OpenCode API V2** (server 2.0.x) and ships as an APK from GitHub Releases; app stores are not used.
 
-Version **0.2.27 (61)** continues the 0.2.20 user line. It installs over the previous build — no uninstall needed.
+Version **0.2.28 (62)** continues the 0.2.20 user line. It installs over the previous build — no uninstall needed.
 
 > **Important:** the 0.2.20 features (tunnel wizard, tablet layout, offline history) have still **not been verified by the user** on a real device against a real server. There are automated tests and an Android CUA smoke run on an emulator; that is not a substitute for manual checking.
 
@@ -49,7 +49,7 @@ The base is upstream [dzianisv/opencode-mobile](https://github.com/dzianisv/open
 | What | Upstream | Fork |
 |---|---|---|
 | Server API | API 1.x (`/session`, `/global/*`) | **V2 only** (`/api/*`), server 2.0.x |
-| Version | 0.4.x | 0.2.x line, currently 0.2.27 (61) |
+| Version | 0.4.x | 0.2.x line, currently 0.2.28 (62) |
 | Signing and updates | new debug key per build in old versions | permanent keystore, installs in place |
 | Channels | Google Play, self-hosted F-Droid, APK, EAS | APK from GitHub Releases only |
 | Telemetry | Sentry (crash reports) + PostHog | both dependencies removed |
@@ -113,7 +113,12 @@ A separate pure-Java client without Gradle (`aapt → ecj → d8 → apksigner`)
 ## Updates
 
 <details>
-<summary>Changelog by version (0.2.11 – 0.2.27)</summary>
+<summary>Changelog by version (0.2.11 – 0.2.28)</summary>
+
+### 0.2.28
+
+- **Message cost is back on servers 2.2.5 and newer.** The server now passes the provider's own billing amount through as-is, and `opencode-go` reports zero, so the footer had `$0.00` to show and hid the line entirely. When the reported cost is zero the app prices the step from the model catalog — input, output, reasoning and cache rates, the same formula the server uses.
+- **The chat no longer freezes after the app has been in the background for a while.** While the app was suspended the event stream queued up; on return the whole backlog was applied in one burst, and each update re-rendered and re-parsed the markdown of the entire message, so the JS thread never got a turn — taps and navigation died until the run finished. Part updates are now coalesced, and the stream yields after every chunk.
 
 ### 0.2.27
 
