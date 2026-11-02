@@ -1,23 +1,28 @@
 # OpenCode Mobile — мастер-документ (форк cfyz1297)
 
-Актуально на **2026-10-31**.
+Актуально на **2026-11-03**.
 - App: **`cc.agentlabs.opencode`** — Expo/React Native Android-клиент к собственному серверу `opencode serve` (V2 API).
 - Репозиторий форка: **`cfyz1297/opencode-mobile`**. Апстрим для справки: `dzianisv/opencode-mobile`.
 - Пользователь запускает сервер в Termux на телефоне; приложение — клиент к нему.
 
-## Состояние на 2026-10-31
+## Состояние на 2026-11-03
 
 | Что | Значение |
 |---|---|
-| Версия | **0.2.27**, versionCode **61** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
+| Версия | **0.2.28**, versionCode **62** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
 | Ветки | `main` = `master` (релизный коммит — см. `git log -1`) |
-| Тег | `v0.2.27` |
-| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.27 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
-| APK | 86 394 471 байт, SHA256 `29a18bc50eccfc4a53aa6f5f10101bcb1c94785fbe49d9d0e9ccb6ecce8a0418` |
-| Подпись | production keystore, сертификат тот же, что у 0.2.20/0.2.22/0.2.23 → установка поверх без удаления |
+| Тег | `v0.2.28` |
+| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.28 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
+| APK | 86 396 177 байт, SHA256 `3c8a2bd1811beb244066026ac996659c0fd901b841fba8ebced75e51902b69a5` |
+| Подпись | production keystore, сертификат тот же, что у 0.2.20/0.2.22/0.2.23/0.2.27 → установка поверх без удаления |
 | Каналы | только `Build Android APK` и `Security scan`. Play / F-Droid / App Store не используются, на тег `v*` не запускаются |
-| Тесты | `npm test` — **559 passed, 0 failed**; `npm run typecheck` чисто; `npm run check:versions` — 0.2.27 (61) |
+| Тесты | `npm test` — **565 passed, 0 failed**; `npm run typecheck` чисто; `npm run check:versions` — 0.2.28 (62) |
 | Документация | `README.md` — английский (основной), `README.ru.md` — русский, оба ссылаются друг на друга |
+
+Что нового в 0.2.28:
+
+- **Стоимость вернулась на серверах 2.2.5+.** Сервер передаёт цену провайдера как есть, а `opencode-go` присылает `0` («a reported zero is authoritative» в `SessionUsage.record`), поэтому футер скрывал строку. `runTotals` (`src/lib/message-run.ts`) при нулевой цене считает шаг по каталогу модели — input / output+reasoning / cache read / cache write, та же формула `calculateCost`. Цены каталога приходят в `ProviderModel.cost` (`src/stores/catalog.ts`, `src/lib/v2-compat.ts`) и подставляются в `app/session/[id].tsx`. Старые сессии, где сервер считал цену сам, дают ту же сумму. Тесты — `src/lib/message-run.test.ts`.
+- **Чат не зависает после долгого сворачивания.** В фоне SSE копит события; при возврате `reader.read()` резолвится сразу, цикл идёт микрозадачами, и каждая дельта (она несёт полный накопленный текст) перерисовывала пузырь и заново парсила markdown — JS не отдавал поток ни тапам, ни навигации до конца прогона. Теперь дельты склеиваются (`src/lib/part-batch.ts`, одна запись в стор на ~40 мс, вызов через `applyParts` в `src/stores/sessions.ts`), а поток уступает макрозадачу после каждого чанка (`src/lib/sdk.ts`). Тесты — `src/lib/part-batch.test.ts`.
 
 Что нового в 0.2.27:
 
