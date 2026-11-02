@@ -78,3 +78,51 @@ test("run totals stay undefined when the server sent no usage", () => {
   assert.deepEqual(runTotals([{ role: "assistant" }, { role: "user" }]), [undefined, undefined])
   assert.deepEqual(runTotals([]), [])
 })
+
+// V2.2.5 reports cost 0 for every step even on paid models, so the footer went
+// blank. The catalog price is the only remaining source — apply it client-side.
+test("a reported cost of zero falls back to the catalog price", () => {
+  const totals = runTotals(
+    [
+      {
+        role: "assistant",
+        providerID: "opencode-go",
+        modelID: "deepseek-v4.1-flash",
+        tokens: { input: 1_000_000, output: 1_000_000, cache: { read: 0, write: 0 } },
+        cost: 0,
+      },
+      { role: "user" },
+    ],
+    (m) => (m.modelID === "deepseek-v4.1-flash" ? { input: 0.15, output: 0.6 } : undefined),
+  )
+  assert.equal(totals[0]?.tokens, 2_000_000)
+  assert.equal(totals[0]?.cost, 0.75)
+})
+
+test("catalog fallback prices cached tokens at the cache rate when it is known", () => {
+  const totals = runTotals(
+    [
+      {
+        role: "assistant",
+        modelID: "m",
+        tokens: { input: 0, output: 0, reasoning: 0, cache: { read: 1_000_000, write: 0 } },
+        cost: 0,
+      },
+    ],
+    () => ({ input: 1, output: 1, cache: { read: 0.1 } }),
+  )
+  assert.equal(totals[0]?.cost, 0.1)
+})
+
+test("a reported cost wins over the catalog price", () => {
+  const totals = runTotals(
+    [{ role: "assistant", modelID: "m", tokens: { input: 10, output: 10 }, cost: 2 }],
+    () => ({ input: 1000, output: 1000 }),
+  )
+  assert.equal(totals[0]?.cost, 2)
+})
+
+test("no catalog price leaves the cost at zero", () => {
+  const totals = runTotals([{ role: "assistant", modelID: "unknown", tokens: { input: 10, output: 10 }, cost: 0 }])
+  assert.equal(totals[0]?.cost, 0)
+})

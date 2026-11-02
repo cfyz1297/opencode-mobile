@@ -5,6 +5,7 @@ import { useSettings } from "./settings"
 import { extractPromptFromParts, type PromptFromParts } from "../lib/prompt-from-parts"
 import { mergeIncomingMessage, reconcileTemps } from "../lib/message-merge"
 import { isColdSessionLoad, isLiveEventForSession } from "../lib/session-load-reconcile"
+import { createPartBatcher } from "../lib/part-batch"
 import { offlineHistory } from '../lib/history-storage'
 
 // Helper to convert API response to our internal format
@@ -22,6 +23,28 @@ function parseMessages(response: MessageWithParts[]): { messages: Message[]; par
 
 function pageSize(): number {
   return useSettings.getState().pageSize
+}
+
+// Batched `message.part.updated` application — see part-batch.ts.
+const partBatcher = createPartBatcher<Part>((part) => part.id, (batch) => applyParts(batch))
+
+function applyParts(batch: Part[]) {
+  useSessions.setState((state) => {
+    if (!state.currentSession) return {}
+    const parts = { ...state.parts }
+    let applied = false
+    for (const part of batch) {
+      if (part.sessionID && part.sessionID !== state.currentSession.id) continue
+      const messageParts = parts[part.messageID] || []
+      const exists = messageParts.some((p) => p.id === part.id)
+      parts[part.messageID] = exists ? messageParts.map((p) => (p.id === part.id ? part : p)) : [...messageParts, part]
+      applied = true
+    }
+    if (!applied) return {}
+    // A live part update is proof of life — clear any stuck spinner (see
+    // message.updated in handleEvent).
+    return { parts, isLoading: false }
+  })
 }
 
 interface SessionsState {
@@ -527,22 +550,10 @@ export const useSessions = create<SessionsState>((set, get) => ({
         if (!part) return
         // Only handle parts for current session
         if (part.sessionID && part.sessionID !== currentSession.id) return
-
-        set((state) => {
-          const messageParts = state.parts[part.messageID] || []
-          const exists = messageParts.some((p) => p.id === part.id)
-          return {
-            parts: {
-              ...state.parts,
-              [part.messageID]: exists
-                ? messageParts.map((p) => (p.id === part.id ? part : p))
-                : [...messageParts, part],
-            },
-            // See message.updated above — a live part update is just as
-            // much proof of life as a message update.
-            isLoading: false,
-          }
-        })
+        // Queued, not applied: a delta carries the whole accumulated text, and
+        // a backgrounded session resumes with thousands of them at once (see
+        // part-batch.ts).
+        partBatcher.push(part)
         break
       }
 
@@ -579,5 +590,6 @@ useConnections.subscribe((state, previous) => {
   selectSeq++
   loadOlderSeq++
   refreshSeqCounter++
+  partBatcher.dispose()
   useSessions.setState({ sessions: [], currentSession: null, messages: [], parts: {}, sending: {}, isLoading: false, hasMore: false, loadingMore: false, error: null })
 })

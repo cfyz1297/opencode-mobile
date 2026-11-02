@@ -10,6 +10,9 @@ export interface ProviderModel {
   reasoning: boolean
   attachment: boolean
   free?: boolean
+  // Catalog prices per million tokens — the chat footer falls back to these
+  // when the server reports cost 0 (see message-run.runTotals).
+  cost?: { input: number; output: number; cache?: { read: number; write: number } }
   limit?: { context: number; output: number }
   variants?: Record<string, { reasoningEffort?: string }>
 }
@@ -99,6 +102,7 @@ export const useCatalog = create<CatalogState>((set, get) => ({
                 reasoning: m.reasoning ?? false,
                 attachment: m.attachment ?? false,
                 free: isFreeModel(m.cost),
+                cost: m.cost,
                 limit: m.limit,
                 variants: m.variants,
               })),
