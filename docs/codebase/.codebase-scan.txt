@@ -1,0 +1,449 @@
+
+=== DIRECTORY TREE (max depth 3, source files only) ===
+.agents
+.agents/retro.md
+.github
+.github/workflows
+.github/workflows/build.yml
+.github/workflows/security-scan.yml
+.gitignore
+.hallmark
+.hallmark/salt
+.npmrc
+AGENTS.md
+HANDOFF.md
+LICENSE
+README.md
+README.ru.md
+android
+android/.gitignore
+android/app
+android/app/build.gradle
+android/app/proguard-rules.pro
+android/app/src
+android/app/src/debug
+android/app/src/debugOptimized
+android/app/src/main
+android/build.gradle
+android/gradle
+android/gradle/wrapper
+android/gradle/wrapper/gradle-wrapper.jar
+android/gradle/wrapper/gradle-wrapper.properties
+android/gradle.properties
+android/gradlew
+android/gradlew.bat
+android/sentry.properties
+android/settings.gradle
+app
+app/(tabs)
+app/(tabs)/_layout.tsx
+app/(tabs)/connections.tsx
+app/(tabs)/index.tsx
+app/(tabs)/settings.tsx
+app/_layout.tsx
+app/connection
+app/connection/[id].tsx
+app/connection/add.tsx
+app/connection/tunnel.tsx
+app/demo.tsx
+app/history.tsx
+app/models.tsx
+app/providers
+app/providers/connect.tsx
+app/providers/custom.tsx
+app/providers/index.tsx
+app/session
+app/session/[id].tsx
+app.json
+assets
+assets/adaptive-icon.json
+assets/adaptive-icon.png
+assets/favicon.json
+assets/icon-appstore.png
+assets/icon.json
+assets/icon.png
+assets/splash-icon.json
+assets/splash-icon.png
+docs
+docs/codebase
+docs/codebase/.codebase-scan.txt
+docs/connection-status-validation.md
+docs/model-visibility-validation.md
+docs/run-resync-validation.md
+docs/security-review-0.2.21.md
+metro.config.js
+package-lock.json
+package.json
+plugins
+plugins/with-tablet-config-changes.js
+scripts
+scripts/check-version-parity.mjs
+scripts/cua-roadmap-smoke.mjs
+scripts/run-tests.mjs
+scripts/run-tests.test.mjs
+src
+src/components
+src/components/AuthGate.tsx
+src/components/ErrorBoundary.tsx
+src/components/TabletSessions.tsx
+src/components/UpdateBanner.tsx
+src/components/chat
+src/components/chat/CompactionCard.tsx
+src/components/chat/DiffView.tsx
+src/components/chat/DirectoryBrowserSheet.tsx
+src/components/chat/DirectorySwitcher.tsx
+src/components/chat/ImageAttachments.tsx
+src/components/chat/MessageBubble.tsx
+src/components/chat/ModelPicker.tsx
+src/components/chat/ModelPickerModal.tsx
+src/components/chat/PermissionPrompt.tsx
+src/components/chat/QuestionPrompt.tsx
+src/components/chat/ReasoningBlock.tsx
+src/components/chat/SessionInfo.tsx
+src/components/chat/SlashPopover.tsx
+src/components/chat/StatusIndicator.tsx
+src/components/chat/ToolCallCard.tsx
+src/components/chat/ToolRun.tsx
+src/components/chat/VariantPicker.tsx
+src/components/chat/diff-compute.test.ts
+src/components/chat/diff-compute.ts
+src/components/chat/index.ts
+src/components/markdown
+src/components/markdown/CodeBlock.tsx
+src/components/markdown/Markdown.tsx
+src/components/markdown/index.tsx
+src/components/wide-content-scroll.regression.test.ts
+src/lib
+src/lib/adaptive-layout.test.ts
+src/lib/adaptive-layout.ts
+src/lib/api-error.test.ts
+src/lib/api-error.ts
+src/lib/auth.test.ts
+src/lib/auth.ts
+src/lib/chatwoot.test.ts
+src/lib/chatwoot.ts
+src/lib/connection-bootstrap.test.ts
+src/lib/connection-health.test.ts
+src/lib/connection-health.ts
+src/lib/connection-security.test.ts
+src/lib/connection-security.ts
+src/lib/connections-screen.test.ts
+src/lib/custom-provider.test.ts
+src/lib/custom-provider.ts
+src/lib/demo-analytics.ts
+src/lib/demo-script.test.ts
+src/lib/demo-script.ts
+src/lib/diagnostics-classify.test.ts
+src/lib/diagnostics-classify.ts
+src/lib/diagnostics.ts
+src/lib/dialog-back-gesture.regression.test.ts
+src/lib/directory-client.test.ts
+src/lib/directory-client.ts
+src/lib/file-roots.test.ts
+src/lib/file-roots.ts
+src/lib/headers.test.ts
+src/lib/headers.ts
+src/lib/history-storage.ts
+src/lib/i18n
+src/lib/i18n/catalog-parity.test.ts
+src/lib/i18n/config.ts
+src/lib/i18n/en.json
+src/lib/i18n/locale-resolve.test.ts
+src/lib/i18n/locale-resolve.ts
+src/lib/i18n/ru.json
+src/lib/i18n/zh-Hans.json
+src/lib/keyboard-inset.test.ts
+src/lib/keyboard-inset.ts
+src/lib/links.test.ts
+src/lib/links.ts
+src/lib/logbuffer.test.ts
+src/lib/logbuffer.ts
+src/lib/message-merge.test.ts
+src/lib/message-merge.ts
+src/lib/message-run.test.ts
+src/lib/message-run.ts
+src/lib/model-picker-filter.test.ts
+src/lib/model-picker-filter.ts
+src/lib/model-selection.test.ts
+src/lib/model-selection.ts
+src/lib/model-visibility.test.ts
+src/lib/model-visibility.ts
+src/lib/models-screen.test.ts
+src/lib/notifications.ts
+src/lib/notify-format.test.ts
+src/lib/notify-format.ts
+src/lib/offline-history.test.ts
+src/lib/offline-history.ts
+src/lib/part-batch.test.ts
+src/lib/part-batch.ts
+src/lib/part-runs.test.ts
+src/lib/part-runs.ts
+src/lib/path-utils.test.ts
+src/lib/path-utils.ts
+src/lib/pending-questions.test.ts
+src/lib/pending-questions.ts
+src/lib/persisted-keys.test.ts
+src/lib/prompt-from-parts.test.ts
+src/lib/prompt-from-parts.ts
+src/lib/provider-auth.test.ts
+src/lib/provider-auth.ts
+src/lib/provider-connect-screen.smoke.test.ts
+src/lib/providers-navigation.smoke.test.ts
+src/lib/providers-screen.integration.test.ts
+src/lib/providers-ui.test.ts
+src/lib/providers-ui.ts
+src/lib/question-answers.test.ts
+src/lib/question-answers.ts
+src/lib/quick-connect-url.test.ts
+src/lib/quick-connect-url.ts
+src/lib/revert-filter.test.ts
+src/lib/revert-filter.ts
+src/lib/run-watchdog.test.ts
+src/lib/run-watchdog.ts
+
+=== STACK DETECTION (manifest files) ===
+
+--- package-lock.json ---
+{
+  "name": "@opencode-ai/mobile",
+  "version": "0.2.27",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "@opencode-ai/mobile",
+      "version": "0.2.27",
+      "dependencies": {
+        "@expo/vector-icons": "^15.0.3",
+        "@gorhom/bottom-sheet": "5.2.8",
+        "@react-native-async-storage/async-storage": "2.2.0",
+        "@react-navigation/native": "^7.0.14",
+        "@tanstack/react-query": "^5.62.0",
+        "expo": "^54.0.0",
+        "expo-clipboard": "8.0.8",
+        "expo-crypto": "~15.0.9",
+        "expo-device": "~8.0.10",
+        "expo-image-manipulator": "~14.0.8",
+        "expo-image-picker": "17.0.10",
+        "expo-linking": "~8.0.11",
+        "expo-local-authentication": "~17.0.8",
+        "expo-localization": "~17.0.9",
+        "expo-notifications": "~0.32.16",
+        "expo-router": "~6.0.22",
+        "expo-secure-store": "~15.0.8",
+        "expo-speech-recognition": "3.0.1",
+        "expo-status-bar": "~3.0.9",
+        "i18next": "^26.3.6",
+        "react": "19.1.0",
+        "react-i18next": "^17.0.10",
+        "react-native": "0.81.5",
+        "react-native-gesture-handler": "~2.28.0",
+        "react-native-marked": "8.0.0",
+        "react-native-reanimated": "~4.1.1",
+        "react-native-safe-area-context": "~5.6.0",
+        "react-native-screens": "~4.16.0",
+        "react-native-svg": "15.15.1",
+        "react-native-worklets": "0.5.1",
+        "zustand": "^5.0.2"
+      },
+      "devDependencies": {
+        "@types/react": "~19.1.10",
+        "typescript": "~5.9.2"
+      }
+    },
+    "node_modules/@0no-co/graphql.web": {
+      "version": "1.3.4",
+      "resolved": "https://registry.npmjs.org/@0no-co/graphql.web/-/graphql.web-1.3.4.tgz",
+      "integrity": "sha512-imSwulOeDQodRy/olQmVEo2PiY6ntjkZ9eiGdw6lMYylh/tay9b7MusyJBmEnkL8GiKRKr6ltr+D42mY5bd8Bg==",
+      "license": "MIT",
+      "peerDependencies": {
+        "graphql": "^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0"
+      },
+      "peerDependenciesMeta": {
+        "graphql": {
+          "optional": true
+        }
+      }
+    },
+    "node_modules/@babel/code-frame": {
+      "version": "7.29.7",
+      "resolved": "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.29.7.tgz",
+      "integrity": "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==",
+      "license": "MIT",
+      "dependencies": {
+        "@babel/helper-validator-identifier": "^7.29.7",
+        "js-tokens": "^4.0.0",
+        "picocolors": "^1.1.1"
+      },
+      "engines": {
+        "node": ">=6.9.0"
+      }
+    },
+    "node_modules/@babel/compat-data": {
+      "version": "7.29.7",
+      "resolved": "https://registry.npmjs.org/@babel/compat-data/-/compat-data-7.29.7.tgz",
+      "integrity": "sha512-locTkQyKvwIEgBzVrn8693ebc97F2U8ZHjbXwDXJ5Fn2TCpNwTlKcaKLkdHop5c/icOFE7qt7Q9JC5hnKNa6Gg==",
+      "license": "MIT",
+
+[TRUNCATED] Showing first 80 of 10200 lines.
+--- package.json ---
+{
+  "name": "@opencode-ai/mobile",
+  "version": "0.2.28",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "start:clear": "expo start --clear",
+    "ios": "expo run:ios",
+    "android": "expo run:android",
+    "typecheck": "tsc --noEmit",
+    "check:versions": "node scripts/check-version-parity.mjs",
+    "test": "node scripts/run-tests.mjs",
+    "test:coverage": "node scripts/run-tests.mjs --experimental-test-coverage --test-coverage-exclude=tests/** --test-coverage-exclude=**/*.test.* --test-coverage-lines=80 --test-coverage-branches=80 --test-coverage-functions=80"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.3",
+    "@gorhom/bottom-sheet": "5.2.8",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-navigation/native": "^7.0.14",
+    "@tanstack/react-query": "^5.62.0",
+    "expo": "^54.0.0",
+    "expo-clipboard": "8.0.8",
+    "expo-crypto": "~15.0.9",
+    "expo-device": "~8.0.10",
+    "expo-image-manipulator": "~14.0.8",
+    "expo-image-picker": "17.0.10",
+    "expo-linking": "~8.0.11",
+    "expo-local-authentication": "~17.0.8",
+    "expo-localization": "~17.0.9",
+    "expo-notifications": "~0.32.16",
+    "expo-router": "~6.0.22",
+    "expo-secure-store": "~15.0.8",
+    "expo-speech-recognition": "3.0.1",
+    "expo-status-bar": "~3.0.9",
+    "i18next": "^26.3.6",
+    "react": "19.1.0",
+    "react-i18next": "^17.0.10",
+    "react-native": "0.81.5",
+    "react-native-gesture-handler": "~2.28.0",
+    "react-native-marked": "8.0.0",
+    "react-native-reanimated": "~4.1.1",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-svg": "15.15.1",
+    "react-native-worklets": "0.5.1",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.10",
+    "typescript": "~5.9.2"
+  },
+  "expo": {
+    "install": {
+      "exclude": []
+    },
+    "autolinking": {
+      "buildFromSource": [
+        ".*"
+      ]
+    }
+  }
+}
+
+
+=== ENTRY POINTS ===
+No common entry points found. Check 'main' or 'scripts.start' in manifest files above.
+
+=== LINTING AND FORMATTING CONFIG ===
+Found: tsconfig.json
+
+=== ENVIRONMENT VARIABLE TEMPLATES ===
+No .env.example or .env.template found. Identify required environment variables by searching the code and config for environment variable reads.
+
+=== TODO / FIXME / HACK (production code only, test dirs excluded) ===
+src/components/chat/MessageBubble.tsx:42: // TODO: Replace with streamdown-rn once React 19 types PR lands - it has
+
+=== GIT RECENT COMMITS (last 20) ===
+5837958 docs: record 0.2.28 release in HANDOFF
+0cf0833 chore(release): 0.2.28 (62)
+6ab3ae4 fix(chat): keep per-run cost and stay responsive after resume (#4)
+b030b44 docs: install the server from opencode-termux on Android
+6169e54 docs: record 0.2.27 release in HANDOFF
+69e0f4d docs: split README into English and Russian
+25c9195 chore(release): 0.2.27 (61)
+63a5bb9 fix(chat): interleave thoughts and tools like the desktop
+02cf2f9 feat(chat): one tool row and total cost per run
+6c8950a chore: keep 0.2.26 (60) version metadata
+d820a68 feat(chat): compact timeline for assistant steps
+1cb3d5c feat(sessions): newest-first ordering, project grouping kept
+9cd0d2c fix(chat): dismissable action sheets, selectable assistant text, compact tool runs
+9dce3c2 feat: select sessions with checkboxes and delete them in bulk
+99e7535 docs: lead with install and spell out how the fork differs from upstream
+6ff6ca3 docs: record the 0.2.26 release artifact
+8688969 fix: stop the prompt area from eating the free space
+f05a82e docs: record the 0.2.25 release artifact
+e502329 fix: keep the composer on screen while a question card is shown
+ea3730a fix: shrink the root view under the keyboard instead of padding in JS
+
+=== HIGH-CHURN FILES (last 90 days, top 20) ===
+  25 package.json
+  24 app.json
+  23 android/app/build.gradle
+  22 README.md
+  18 .github/workflows/build.yml
+  18 app/session/[id].tsx
+  14 src/lib/sdk.ts
+  13 distribution/whatsnew/whatsnew-en-US
+  13 scripts/cua-roadmap-smoke.mjs
+  12 HANDOFF.md
+  10 src/lib/i18n/en.json
+  10 src/lib/i18n/ru.json
+  10 src/lib/i18n/zh-Hans.json
+   9 src/stores/sessions.ts
+   9 src/stores/events.ts
+   9 BUGS.md
+   9 src/stores/connections.ts
+   8 src/lib/v2-compat.ts
+   8 src/components/chat/MessageBubble.tsx
+   8 app/(tabs)/index.tsx
+
+=== MONOREPO SIGNALS ===
+No monorepo signals detected.
+
+=== CODE METRICS ===
+Total files scanned: 252
+Total lines of code: 39409
+
+Files by language:
+  TypeScript: 145
+  Other: 64
+  TypeScript/React: 39
+  JavaScript: 2
+  Kotlin: 2
+
+Top 10 largest files:
+package-lock.json: 375.4KB
+android/app/src/main/res/drawable-xxxhdpi/splashscreen_logo.png: 65.0KB
+app/session/[id].tsx: 52.4KB
+app/(tabs)/index.tsx: 52.1KB
+assets/icon-appstore.png: 51.1KB
+android/app/src/main/res/drawable-xxhdpi/splashscreen_logo.png: 46.0KB
+android/gradle/wrapper/gradle-wrapper.jar: 42.7KB
+src/lib/i18n/ru.json: 37.3KB
+src/lib/v2-compat.ts: 35.2KB
+app/connection/add.tsx: 30.8KB
+
+=== CI/CD PIPELINES ===
+CI/CD: GitHub Actions
+
+=== CONTAINERS & ORCHESTRATION ===
+No containerization configs detected.
+
+=== SECURITY & COMPLIANCE ===
+No security configs detected.
+
+=== PERFORMANCE & TESTING ===
+No performance testing configs detected.
+
+=== SCAN COMPLETE ===
