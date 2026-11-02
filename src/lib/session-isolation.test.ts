@@ -21,6 +21,11 @@ function harness() {
     '../lib/message-merge': { mergeIncomingMessage: () => [], reconcileTemps: () => ({ messages: [], parts: {} }) },
     '../lib/session-load-reconcile': { isColdSessionLoad: () => true, isLiveEventForSession: () => true },
     '../lib/part-batch': { createPartBatcher: () => ({ push: () => {}, dispose: () => {} }) },
+    '../lib/message-page': {
+      countTurns: () => 1,
+      messageLimitForTurns: () => 200,
+      trimToTurns: (messages: unknown[]) => ({ messages, trimmed: false }),
+    },
     '../lib/history-storage': { offlineHistory: { remove: async (id: string) => { removed.push(id) } } },
   }
   vm.runInNewContext(code, { exports, require: (name: string) => { assert.ok(name in deps, name); return deps[name] }, console, setTimeout, clearTimeout })

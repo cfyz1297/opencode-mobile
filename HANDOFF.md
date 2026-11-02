@@ -1,6 +1,7 @@
 # OpenCode Mobile — мастер-документ (форк cfyz1297)
 
 Актуально на **2026-11-03**.
+
 - App: **`cc.agentlabs.opencode`** — Expo/React Native Android-клиент к собственному серверу `opencode serve` (V2 API).
 - Репозиторий форка: **`cfyz1297/opencode-mobile`**. Апстрим для справки: `dzianisv/opencode-mobile`.
 - Пользователь запускает сервер в Termux на телефоне; приложение — клиент к нему.
@@ -9,15 +10,21 @@
 
 | Что | Значение |
 |---|---|
-| Версия | **0.2.28**, versionCode **62** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
+| Версия | **0.2.29**, versionCode **63** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
 | Ветки | `main` = `master` (релизный коммит — см. `git log -1`) |
-| Тег | `v0.2.28` |
-| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.28 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
-| APK | 86 396 177 байт, SHA256 `3c8a2bd1811beb244066026ac996659c0fd901b841fba8ebced75e51902b69a5` |
-| Подпись | production keystore, сертификат тот же, что у 0.2.20/0.2.22/0.2.23/0.2.27 → установка поверх без удаления |
+| Тег | `v0.2.29` |
+| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.29 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
+| APK | (см. `gh release view v0.2.29`) |
+| Подпись | production keystore, сертификат тот же, что у 0.2.20/0.2.22/0.2.23/0.2.27/0.2.28 → установка поверх без удаления |
 | Каналы | только `Build Android APK` и `Security scan`. Play / F-Droid / App Store не используются, на тег `v*` не запускаются |
-| Тесты | `npm test` — **565 passed, 0 failed**; `npm run typecheck` чисто; `npm run check:versions` — 0.2.28 (62) |
+| Тесты | `npm test` — **582 passed, 0 failed**; `npm run typecheck` чисто; `npm run check:versions` — 0.2.29 (63) |
 | Документация | `README.md` — английский (основной), `README.ru.md` — русский, оба ссылаются друг на друга |
+
+Что нового в 0.2.29:
+
+- **Уточнение можно отправить во время работы агента.** `handleSend` блокировался по `isSending` — флагу прогона, который SSE снимает только при переходе сессии в idle, поэтому до конца прогона отправка молча ничего не делала. Теперь блокируется только запрос в полёте (`sendInFlight`), сервер ставит следующий промпт в очередь. Тест — `src/lib/composer-and-questions.test.ts`.
+- **Отвеченные вопросы остаются в диалоге.** Сервер удаляет форму по `question.replied`, и карточка исчезала, оставляя эхо на 2.5 с. Теперь ответ пишется в `answeredQuestions` (`src/lib/answered-questions.ts`, стор `src/stores/events.ts`), а `AnsweredQuestionCard` (`src/components/chat/AnsweredQuestion.tsx`) рисует карточку на месте вопроса: свёрнута в строку, по нажатию раскрывает варианты с отмеченными ответами. Хранится только в памяти (не персистится). Тесты — `src/lib/answered-questions.test.ts`.
+- **«Сообщений на странице» → запросы.** Один промпт даёт десятки записей (шаг на вызов инструмента), поэтому 50 «сообщений» часто были одним обращением. `src/lib/message-page.ts`: `messageLimitForTurns` (20 сообщений на запрос, потолок API 200), `trimToTurns` (страница начинается с промпта пользователя), `hasMore` = страница обрезана; если один запрос не покрывает N обращений, `selectSession` дозагружает сессию целиком. Значения 5/10/25/50, по умолчанию 10. `settingsVersion: 2` — старые значения в сообщениях несопоставимы, поэтому берётся дефолт (остальные настройки сохраняются). Тесты — `src/lib/message-page.test.ts`, `src/lib/settings-persistence.test.ts`.
 
 Что нового в 0.2.28:
 

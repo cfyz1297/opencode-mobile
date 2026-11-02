@@ -6,6 +6,7 @@ import { extractPromptFromParts, type PromptFromParts } from "../lib/prompt-from
 import { mergeIncomingMessage, reconcileTemps } from "../lib/message-merge"
 import { isColdSessionLoad, isLiveEventForSession } from "../lib/session-load-reconcile"
 import { createPartBatcher } from "../lib/part-batch"
+import { countTurns, messageLimitForTurns, trimToTurns } from "../lib/message-page"
 import { offlineHistory } from '../lib/history-storage'
 
 // Helper to convert API response to our internal format
@@ -183,17 +184,35 @@ export const useSessions = create<SessionsState>((set, get) => ({
         sending: { ...state.sending, [sessionID]: false },
       }))
 
-      const [session, messagesResponse] = await Promise.all([
+      const turns = pageSize()
+      const limit = messageLimitForTurns(turns)
+      const [session, firstPage] = await Promise.all([
         client.session.get(sessionID),
-        client.session.messages(sessionID, { limit: pageSize() }),
+        client.session.messages(sessionID, { limit }),
       ])
 
       // A newer selectSession started while we were fetching — discard this
       // stale result so it can't clobber the newer selection.
       if (seq !== selectSeq) return
 
+      // One prompt can produce many records (a step per tool call), so a full
+      // page may still hold fewer exchanges than requested. The API caps a page
+      // at 200 messages, so in that case ask for the session once without a
+      // limit rather than paging blindly.
+      let response = firstPage
+      if (firstPage.length >= limit && countTurns(parseMessages(firstPage).messages) < turns) {
+        response = await client.session.messages(sessionID)
+        if (seq !== selectSeq) return
+      }
+
       // Parse the API response format: array of { info, parts }
-      const { messages, parts } = parseMessages(messagesResponse)
+      const parsed = parseMessages(response)
+      // The page is measured in exchanges, not messages (see message-page.ts).
+      const page = trimToTurns(parsed.messages, turns)
+      const messages = page.messages
+      const parts: Record<string, Part[]> = {}
+      for (const message of messages) parts[message.id] = parsed.parts[message.id] || []
+
       // Reconcile optimistic temp messages with the server list: a temp whose
       // real copy is now in the list is dropped (otherwise the message shows
       // twice, and reloads accumulate the dupes), in-flight temps are kept.
@@ -205,8 +224,8 @@ export const useSessions = create<SessionsState>((set, get) => ({
         messages: merged.messages,
         parts: { ...merged.parts },
         isLoading: false,
-        // If we got exactly PAGE_SIZE messages, there are probably more
-        hasMore: messagesResponse.length >= pageSize(),
+        // Older exchanges were left out — offer "load older".
+        hasMore: page.trimmed,
       })
     } catch (err) {
       if (seq !== selectSeq) return

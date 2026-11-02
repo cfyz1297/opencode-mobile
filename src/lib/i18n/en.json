@@ -250,8 +250,8 @@
     "header": "Tap to switch, long press for options",
     "preferences": {
       "title": "Preferences",
-      "pageSizeLabel": "Messages per page",
-      "pageSizeHint": "How many messages to load when opening a session. Lower = faster."
+      "pageSizeLabel": "Prompts per session",
+      "pageSizeHint": "How many of your prompts a session opens with. One prompt can produce many messages, so this is counted in prompts, not messages. Lower = faster."
     }
   },
   "sessionsList": {
@@ -394,6 +394,8 @@
       "submit": "Submit",
       "sending": "Sending answer...",
       "sent": "Answer sent",
+      "answered": "Answered",
+      "dismissed": "Dismissed (no answer)",
       "sendFailed": "Answer not sent. Try again."
     },
     "statusIndicator": {

@@ -8,7 +8,9 @@ import { useSettings } from "../../src/stores/settings"
 import { probeConnection, type ConnectionHealth } from "../../src/lib/connection-health"
 import type { ServerConnection } from "../../src/lib/types"
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200] as const
+// How many of the user's prompts a session opens with. The store keeps this in
+// exchanges, not raw messages — one prompt can produce dozens of them.
+const PAGE_SIZE_OPTIONS = [5, 10, 25, 50] as const
 // Re-probe while the tab is open so a server started or stopped in Termux
 // shows up without leaving and reopening the screen.
 const PROBE_INTERVAL_MS = 15_000

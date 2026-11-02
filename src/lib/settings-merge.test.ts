@@ -1,25 +1,12 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { clampPageSize, mergeStoredSettings } from "./settings-merge.ts"
+import { mergeStoredSettings } from "./settings-merge.ts"
 
 const DEFAULTS = {
-  pageSize: 25,
+  pageSize: 10,
   notifications: { idle: true, error: true, permission: false },
 }
 
-test("clampPageSize keeps in-range values unchanged", () => {
-  assert.equal(clampPageSize(25), 25)
-  assert.equal(clampPageSize(10), 10)
-  assert.equal(clampPageSize(200), 200)
-})
-
-test("clampPageSize floors below 10 and caps above 200", () => {
-  assert.equal(clampPageSize(0), 10)
-  assert.equal(clampPageSize(-5), 10)
-  assert.equal(clampPageSize(9), 10)
-  assert.equal(clampPageSize(201), 200)
-  assert.equal(clampPageSize(99999), 200)
-})
 
 test("empty stored settings yield the defaults", () => {
   assert.deepEqual(mergeStoredSettings(DEFAULTS, {}), DEFAULTS)

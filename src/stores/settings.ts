@@ -1,7 +1,8 @@
 import { create } from "zustand"
 import * as SecureStore from "expo-secure-store"
 import { type Category, defaultPreferences } from "../lib/notifications"
-import { clampPageSize, mergeStoredSettings } from "../lib/settings-merge"
+import { mergeStoredSettings } from "../lib/settings-merge"
+import { clampTurns } from "../lib/message-page"
 import { setAppLocale } from "../lib/i18n/config"
 import type { LocalePreference } from "../lib/i18n/locale-resolve"
 
@@ -18,13 +19,16 @@ function parseStoredJSON<T>(raw: string, fallback: T | null): T | null {
 }
 
 interface Settings {
+  settingsVersion: number
+  // Exchanges (user prompts) a session opens with — see lib/message-page.ts.
   pageSize: number
   notifications: Record<Category, boolean>
   locale: LocalePreference
 }
 
 const DEFAULTS: Settings = {
-  pageSize: 25,
+  settingsVersion: 2,
+  pageSize: 10,
   notifications: { ...defaultPreferences },
   locale: "system",
 }
@@ -38,7 +42,12 @@ interface SettingsState extends Settings {
 }
 
 function snapshot(get: () => SettingsState): Settings {
-  return { pageSize: get().pageSize, notifications: get().notifications, locale: get().locale }
+  return {
+    settingsVersion: DEFAULTS.settingsVersion,
+    pageSize: get().pageSize,
+    notifications: get().notifications,
+    locale: get().locale,
+  }
 }
 
 async function persist(settings: Settings) {
@@ -55,6 +64,10 @@ export const useSettings = create<SettingsState>((set, get) => ({
       const parsed = parseStoredJSON<Partial<Settings>>(raw, null)
       // Merge stored settings with defaults so new fields/categories get their default
       const merged = parsed ? mergeStoredSettings(DEFAULTS, parsed) : DEFAULTS
+      // v1 stored pageSize in raw messages; v2 counts exchanges. An old 25 meant
+      // about one prompt, so the numbers are not comparable — start from the
+      // default rather than opening long sessions in full.
+      if ((parsed?.settingsVersion ?? 1) < 2) merged.pageSize = DEFAULTS.pageSize
       set({ ...merged, loaded: true })
       setAppLocale(merged.locale)
       return
@@ -63,7 +76,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   },
 
   setPageSize: async (size) => {
-    const clamped = clampPageSize(size)
+    const clamped = clampTurns(size)
     set({ pageSize: clamped })
     await persist({ ...snapshot(get), pageSize: clamped })
   },

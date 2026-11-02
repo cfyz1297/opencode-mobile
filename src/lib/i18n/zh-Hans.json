@@ -250,8 +250,8 @@
     "header": "点击切换，长按查看更多选项",
     "preferences": {
       "title": "偏好设置",
-      "pageSizeLabel": "每页消息数",
-      "pageSizeHint": "打开会话时加载的消息数量。数值越小加载越快。"
+      "pageSizeLabel": "每次打开的对话轮数",
+      "pageSizeHint": "打开会话时显示多少轮你的提问。一次提问可能产生很多条消息，所以按提问数计算，而不是消息数。数值越小越快。"
     }
   },
   "sessionsList": {
@@ -394,6 +394,8 @@
       "submit": "提交",
       "sending": "正在发送答案...",
       "sent": "答案已发送",
+      "answered": "已答",
+      "dismissed": "已忽略，未作答",
       "sendFailed": "答案未发送，请重试。"
     },
     "statusIndicator": {

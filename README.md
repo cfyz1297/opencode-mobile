@@ -4,7 +4,7 @@
 
 A fork of [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile) — an Expo/React Native client for a self-hosted `opencode serve`. The fork runs on **OpenCode API V2** (server 2.0.x) and ships as an APK from GitHub Releases; app stores are not used.
 
-Version **0.2.28 (62)** continues the 0.2.20 user line. It installs over the previous build — no uninstall needed.
+Version **0.2.29 (63)** continues the 0.2.20 user line. It installs over the previous build — no uninstall needed.
 
 > **Important:** the 0.2.20 features (tunnel wizard, tablet layout, offline history) have still **not been verified by the user** on a real device against a real server. There are automated tests and an Android CUA smoke run on an emulator; that is not a substitute for manual checking.
 
@@ -49,7 +49,7 @@ The base is upstream [dzianisv/opencode-mobile](https://github.com/dzianisv/open
 | What | Upstream | Fork |
 |---|---|---|
 | Server API | API 1.x (`/session`, `/global/*`) | **V2 only** (`/api/*`), server 2.0.x |
-| Version | 0.4.x | 0.2.x line, currently 0.2.28 (62) |
+| Version | 0.4.x | 0.2.x line, currently 0.2.29 (63) |
 | Signing and updates | new debug key per build in old versions | permanent keystore, installs in place |
 | Channels | Google Play, self-hosted F-Droid, APK, EAS | APK from GitHub Releases only |
 | Telemetry | Sentry (crash reports) + PostHog | both dependencies removed |
@@ -113,7 +113,13 @@ A separate pure-Java client without Gradle (`aapt → ecj → d8 → apksigner`)
 ## Updates
 
 <details>
-<summary>Changelog by version (0.2.11 – 0.2.28)</summary>
+<summary>Changelog by version (0.2.11 – 0.2.29)</summary>
+
+### 0.2.29
+
+- **A follow-up can be sent while the agent is still working.** The composer refused to send until the whole run finished, so the only way to add a thought mid-run was to wait for the answer. Now only the send already in flight is guarded; the server queues the next prompt as it always could.
+- **Answered questions stay in the transcript.** The question card used to disappear as soon as the server accepted the reply, leaving a 2.5-second echo as the only memory of what was picked. It now stays where the question was, collapsed to one line, and expands to show the options with your answers marked.
+- **"Messages per page" counts prompts, not messages.** One prompt typically produces dozens of records (a step per tool call), so the setting looked like it did nothing — 50 "messages" was often a single exchange. The page is now measured in your prompts, and a page always starts at one of them. Sessions opened before this version fall back to the default because the old numbers are not comparable.
 
 ### 0.2.28
 

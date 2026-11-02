@@ -9,6 +9,8 @@ import { isSessionActuallyIdle } from "../lib/session-status-reconcile"
 import { isStreamStalled } from "../lib/stream-watchdog"
 import { runsNeedingResync } from "../lib/run-watchdog"
 import { reconcilePendingQuestions } from "../lib/pending-questions"
+import { recordAnswered, type AnsweredQuestion } from "../lib/answered-questions"
+import type { QuestionRequest } from "../lib/v2-compat"
 import type { Client, Part, Session, Message } from "../lib/sdk"
 
 // Session status from the server
@@ -54,6 +56,10 @@ interface EventsState {
       tool?: { messageID: string; callID: string }
     }>
   >
+  // Questions already answered, kept so the card can stay in the transcript
+  // after the server drops the request (see lib/answered-questions.ts).
+  answeredQuestions: Record<string, Array<AnsweredQuestion<QuestionRequest>>>
+  recordQuestionAnswer: (sessionID: string, request: QuestionRequest, answers: string[][]) => void
 
   connect: () => void
   disconnect: () => void
@@ -264,6 +270,15 @@ export const useEvents = create<EventsState>((set, get) => ({
   statusText: {},
   permissions: {},
   questions: {},
+  answeredQuestions: {},
+
+  recordQuestionAnswer: (sessionID, request, answers) =>
+    set((state) => ({
+      answeredQuestions: {
+        ...state.answeredQuestions,
+        [sessionID]: recordAnswered(state.answeredQuestions[sessionID] || [], request, answers),
+      },
+    })),
 
   connect: () => {
     controller?.abort()
@@ -643,6 +658,7 @@ export const useEvents = create<EventsState>((set, get) => ({
       statusText: {},
       permissions: {},
       questions: {},
+      answeredQuestions: {},
     })
   },
 }))

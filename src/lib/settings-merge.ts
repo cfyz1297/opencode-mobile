@@ -1,11 +1,7 @@
-// Pure settings helpers extracted from stores/settings.ts so the clamp + the
-// forward-compatible merge (the upgrade path: stored data from an older app
-// version that predates a newer notification category) are unit-testable without
-// pulling in zustand / expo-secure-store.
-
-export function clampPageSize(size: number): number {
-  return Math.max(10, Math.min(200, size))
-}
+// Pure helper extracted from stores/settings.ts so the forward-compatible
+// merge (the upgrade path: stored data from an older app version that predates
+// a newer notification category) is unit-testable without pulling in zustand /
+// expo-secure-store.
 
 /**
  * Merge stored settings over defaults. Stored values win, but any top-level field

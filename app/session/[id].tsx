@@ -29,6 +29,7 @@ import {
   MessageBubble,
   PermissionPrompt,
   QuestionPrompt,
+  AnsweredQuestionCard,
   StatusIndicator,
   SlashPopover,
   ModelPicker,
@@ -123,12 +124,6 @@ export default function SessionScreen() {
   const [input, setInput] = useState("")
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [showInfo, setShowInfo] = useState(false)
-  // A short-lived confirmation after a question reply. The prompt can be
-  // removed by the server's `question.replied` event before the user sees the
-  // "sent" state inside the card, so echo the submitted answer here as well.
-  const [questionSentText, setQuestionSentText] = useState<string | null>(null)
-  const questionSentTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const questionRemoveTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
   const {
     currentSession,
@@ -176,6 +171,7 @@ export default function SessionScreen() {
   const sessionID = currentSession?.id
   const permissions = useEvents((s) => (sessionID ? s.permissions[sessionID] : undefined)) || []
   const questions = useEvents((s) => (sessionID ? s.questions[sessionID] : undefined)) || []
+  const answeredQuestions = useEvents((s) => (sessionID ? s.answeredQuestions[sessionID] : undefined)) || []
   const sessionBusy = useEvents((s) => (sessionID ? s.sessionStatus[sessionID]?.type === "busy" : false))
   // Poll while the run is active, including the optimistic window right after
   // sending a message when the busy-status event may not have arrived yet.
@@ -430,14 +426,6 @@ export default function SessionScreen() {
     return () => clearInterval(timer)
   }, [shouldPollPending, sessionID, sessionClient])
 
-  useEffect(() => {
-    return () => {
-      if (questionSentTimer.current) clearTimeout(questionSentTimer.current)
-      for (const timer of questionRemoveTimers.current.values()) clearTimeout(timer)
-      questionRemoveTimers.current.clear()
-    }
-  }, [])
-
   // Sync model chip from latest assistant message
   useEffect(() => {
     if (!messages || messages.length === 0) return
@@ -621,11 +609,27 @@ export default function SessionScreen() {
   }, [])
 
   // --- Send ---
+  // Only the request in flight is blocked, not the whole run: the server queues
+  // a follow-up prompt while the agent is working, and the user could always
+  // type one. Guarding on `isSending` (the run's optimistic flag, cleared only
+  // when the session goes idle) made the composer silently ignore every
+  // follow-up until the run finished.
+  const sendInFlight = useRef(false)
+
   const handleSend = async () => {
     if (!input.trim() && attachments.length === 0) return
     // BUG-018: in-flight guard — prevent double-send from rapid taps or
     // biometric retry while a previous send is still in progress.
-    if (isSending) return
+    if (sendInFlight.current) return
+    sendInFlight.current = true
+    try {
+      await sendNow()
+    } finally {
+      sendInFlight.current = false
+    }
+  }
+
+  const sendNow = async () => {
     const authenticated = await authenticateForMessage()
     if (!authenticated) {
       Alert.alert(t("session.alerts.authRequiredTitle"), t("session.alerts.authRequiredMessage"))
@@ -739,10 +743,8 @@ export default function SessionScreen() {
   const handleQuestionReply = async (requestID: string, answers: string[][]) => {
     if (!sessionClient || !sessionID) throw new Error("No active session")
 
-    // Do NOT remove the prompt optimistically. The card stays mounted so the
-    // user can see their typed custom answer and the "sending/sent" state; it
-    // is removed only after the server confirms the reply. On failure the
-    // prompt stays and QuestionPrompt re-enables retry.
+    // The prompt stays mounted while the reply is in flight, so a failure can
+    // re-enable retry; on success its place is taken by the answered card.
     try {
       await sessionClient.question.reply(sessionID, requestID, answers)
     } catch (err) {
@@ -751,31 +753,19 @@ export default function SessionScreen() {
       throw err
     }
 
-    // Echo the submitted answer outside the prompt too: the server's
-    // `question.replied` event often removes the card immediately, which is
-    // exactly when the user otherwise loses sight of what was sent.
-    const answerText = answers
-      .flat()
-      .map((answer) => answer.trim())
-      .filter(Boolean)
-      .join(" · ")
-    if (questionSentTimer.current) clearTimeout(questionSentTimer.current)
-    setQuestionSentText(answerText)
-    questionSentTimer.current = setTimeout(() => setQuestionSentText(null), 2500)
-
-    // Fallback removal if the volatile `question.replied` event never arrives.
-    const pendingRemoval = questionRemoveTimers.current.get(requestID)
-    if (pendingRemoval) clearTimeout(pendingRemoval)
-    const removal = setTimeout(() => {
-      questionRemoveTimers.current.delete(requestID)
-      useEvents.setState((state) => ({
-        questions: {
-          ...state.questions,
-          [sessionID]: (state.questions[sessionID] || []).filter((q) => q.id !== requestID),
-        },
-      }))
-    }, 1200)
-    questionRemoveTimers.current.set(requestID, removal)
+    // Keep the answered question in the transcript. The server drops the form
+    // as soon as the reply lands and the prompt disappears with it; the card
+    // used to survive as a 2.5s echo only, so a minute later the user could no
+    // longer check what they had picked.
+    const request = (useEvents.getState().questions[sessionID] || []).find((q) => q.id === requestID)
+    if (!request) return
+    useEvents.getState().recordQuestionAnswer(sessionID, request, answers)
+    useEvents.setState((state) => ({
+      questions: {
+        ...state.questions,
+        [sessionID]: (state.questions[sessionID] || []).filter((q) => q.id !== requestID),
+      },
+    }))
   }
 
   const handleQuestionReject = async (requestID: string) => {
@@ -787,6 +777,8 @@ export default function SessionScreen() {
       Alert.alert(t("session.alerts.rejectFailedTitle"), t("session.alerts.rejectFailedMessage"))
       throw err
     }
+    const request = (useEvents.getState().questions[sessionID] || []).find((q) => q.id === requestID)
+    if (request) useEvents.getState().recordQuestionAnswer(sessionID, request, [])
     useEvents.setState((state) => ({
       questions: {
         ...state.questions,
@@ -990,22 +982,16 @@ export default function SessionScreen() {
             />
           ))}
 
-          {/* Question reply confirmation — survives the prompt's removal */}
-          {questionSentText !== null && (
-            <View style={[s.questionSent, isDark && s.questionSentDark]}>
-              <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
-              <View style={s.questionSentBody}>
-                <Text style={[s.questionSentTitle, isDark && s.questionSentTitleDark]}>
-                  {t("chat.questionPrompt.sent")}
-                </Text>
-                {questionSentText ? (
-                  <Text style={[s.questionSentAnswer, isDark && s.metaDark]} numberOfLines={2}>
-                    {questionSentText}
-                  </Text>
-                ) : null}
-              </View>
-            </View>
-          )}
+          {/* Answered questions stay in place — the user can re-read what
+              they picked at any point in the run, not for 2.5 seconds. */}
+          {answeredQuestions.map((item) => (
+            <AnsweredQuestionCard
+              key={item.request.id}
+              request={item.request}
+              answers={item.answers}
+              isDark={isDark}
+            />
+          ))}
 
           {questions.map((q) => (
             <QuestionPrompt
@@ -1214,24 +1200,8 @@ const s = StyleSheet.create({
   metaDark: { color: "#666666" },
   textWhite: { color: "#ffffff" },
 
-  // Question reply confirmation (survives prompt removal)
-  questionSent: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    marginHorizontal: 12,
-    marginTop: 8,
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    backgroundColor: "#ecfdf5",
-    borderColor: "#a7f3d0",
-  },
-  questionSentDark: { backgroundColor: "#052e16", borderColor: "#166534" },
-  questionSentBody: { flex: 1 },
-  questionSentTitle: { fontSize: 13, fontWeight: "600", color: "#166534" },
-  questionSentTitleDark: { color: "#86efac" },
-  questionSentAnswer: { fontSize: 12, color: "#374151", marginTop: 2 },
+  // Answered questions are rendered by AnsweredQuestionCard (see
+  // components/chat/AnsweredQuestion.tsx) — no floating echo anymore.
 
   // Toolbar
   toolbar: {

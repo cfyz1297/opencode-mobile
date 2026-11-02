@@ -161,6 +161,7 @@ function harness() {
     "../lib/stream-watchdog": { isStreamStalled },
     "../lib/run-watchdog": { runsNeedingResync },
     "../lib/pending-questions": { reconcilePendingQuestions: (local: unknown) => local },
+    "../lib/answered-questions": { recordAnswered: (list: unknown) => list },
   }
 
   const source = readFileSync(new URL("../stores/events.ts", import.meta.url), "utf8")
