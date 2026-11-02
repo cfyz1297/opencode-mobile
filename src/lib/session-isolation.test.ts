@@ -20,6 +20,7 @@ function harness() {
     '../lib/prompt-from-parts': { extractPromptFromParts: () => ({ text: '' }) },
     '../lib/message-merge': { mergeIncomingMessage: () => [], reconcileTemps: () => ({ messages: [], parts: {} }) },
     '../lib/session-load-reconcile': { isColdSessionLoad: () => true, isLiveEventForSession: () => true },
+    '../lib/part-batch': { createPartBatcher: () => ({ push: () => {}, dispose: () => {} }) },
     '../lib/history-storage': { offlineHistory: { remove: async (id: string) => { removed.push(id) } } },
   }
   vm.runInNewContext(code, { exports, require: (name: string) => { assert.ok(name in deps, name); return deps[name] }, console, setTimeout, clearTimeout })

@@ -258,8 +258,17 @@ export default function SessionScreen() {
   // Consecutive assistant steps (one per tool call) render as one run: shared
   // header at the top, totals at the bottom, no repeated chrome per step.
   const flags = useMemo(() => bubbleFlags(messageData.map((item) => item.message.role)), [messageData])
-  // The footer reports what the whole run cost, not just its last step.
-  const totals = useMemo(() => runTotals(messageData.map((item) => item.message)), [messageData])
+  // The footer reports what the whole run cost, not just its last step. Since
+  // V2.2.5 the server reports cost 0 for paid models too, so price the steps
+  // from the catalog instead.
+  const prices = useMemo(
+    () => new Map(providers.flatMap((p) => p.models.map((m) => [`${p.id}/${m.id}`, m.cost] as const))),
+    [providers],
+  )
+  const totals = useMemo(
+    () => runTotals(messageData.map((item) => item.message), (m) => prices.get(`${m.providerID}/${m.modelID}`)),
+    [messageData, prices],
+  )
   // Drop cached items when switching sessions so the map cannot grow across
   // every session visited in one app run.
   useEffect(() => {

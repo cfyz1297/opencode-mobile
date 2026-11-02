@@ -418,6 +418,13 @@ export function createClient(config: ClientConfig) {
                 yield mapped
               }
             }
+
+            // A resume from the background delivers the buffered backlog in a
+            // single burst: reader.read() resolves immediately, so every
+            // iteration is a microtask and no screen update, tap or navigation
+            // gets a turn until the whole backlog is drained. One macrotask per
+            // chunk (a few per second while streaming live) keeps the UI alive.
+            await new Promise((resolve) => setTimeout(resolve, 0))
           }
         } finally {
           reader.releaseLock()

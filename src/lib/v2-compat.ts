@@ -335,7 +335,7 @@ export interface ProviderCatalog {
         attachment: boolean
         reasoning: boolean
         tool_call: boolean
-        cost?: { input: number; output: number }
+        cost?: { input: number; output: number; cache?: { read: number; write: number } }
         limit: { context: number; output: number }
         status?: "alpha" | "beta" | "deprecated" | "active"
         variants?: Record<string, { reasoningEffort?: string }>
@@ -371,7 +371,9 @@ export function mapProviders(list: unknown, defaultModel: unknown): ProviderCata
       grouped.set(providerID, provider)
     }
     const caps = m.capabilities as { tools?: boolean; input?: string[] } | undefined
-    const cost = aFirst(m.cost as Array<{ input?: number; output?: number }>)
+    const cost = aFirst(
+      m.cost as Array<{ input?: number; output?: number; cache?: { read?: number; write?: number } }>,
+    )
     const limit = m.limit as { context?: number; output?: number } | undefined
     const variants = Array.isArray(m.variants) ? m.variants : []
     provider.models[modelID] = {
@@ -380,7 +382,14 @@ export function mapProviders(list: unknown, defaultModel: unknown): ProviderCata
       attachment: Boolean(caps?.input?.includes("image")),
       reasoning: variants.length > 0,
       tool_call: Boolean(caps?.tools),
-      cost: cost != null ? { input: cost.input ?? 0, output: cost.output ?? 0 } : undefined,
+      cost:
+        cost != null
+          ? {
+              input: cost.input ?? 0,
+              output: cost.output ?? 0,
+              cache: { read: cost.cache?.read ?? 0, write: cost.cache?.write ?? 0 },
+            }
+          : undefined,
       limit: { context: limit?.context ?? 0, output: limit?.output ?? 0 },
       status: (m.status as never) ?? undefined,
       variants: Object.fromEntries(
