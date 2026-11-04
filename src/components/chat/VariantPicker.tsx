@@ -54,6 +54,10 @@ export function VariantPicker({ variants, selected, isDark, onSelect, sheetRef }
       // static snapPoints (issue #104): without it the sheet can never open.
       enableDynamicSizing={false}
       enablePanDownToClose
+      // Same as the model and directory sheets: without these the sheet stays
+      // put when the IME is up and its lower rows sit under the keyboard.
+      keyboardBehavior="interactive"
+      android_keyboardInputMode="adjustResize"
       backgroundStyle={isDark ? s.sheetDark : s.sheet}
       handleIndicatorStyle={{ backgroundColor: isDark ? "#666666" : "#cccccc" }}
       backdropComponent={(props) => (

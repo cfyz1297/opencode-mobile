@@ -5,12 +5,14 @@ import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { useConnections } from "../../src/stores/connections"
 import { useSettings } from "../../src/stores/settings"
+import { ALL_TURNS } from "../../src/lib/message-page"
 import { probeConnection, type ConnectionHealth } from "../../src/lib/connection-health"
 import type { ServerConnection } from "../../src/lib/types"
 
 // How many of the user's prompts a session opens with. The store keeps this in
 // exchanges, not raw messages — one prompt can produce dozens of them.
-const PAGE_SIZE_OPTIONS = [5, 10, 25, 50] as const
+// ALL_TURNS is the maximum: load the whole session, no trimming.
+const PAGE_SIZE_OPTIONS = [5, 10, 25, 50, ALL_TURNS] as const
 // Re-probe while the tab is open so a server started or stopped in Termux
 // shows up without leaving and reopening the screen.
 const PROBE_INTERVAL_MS = 15_000
@@ -240,7 +242,7 @@ export default function ConnectionsScreen() {
                         pageSize === size && styles.pageOptionTextActive,
                       ]}
                     >
-                      {size}
+                      {size === ALL_TURNS ? t("connectionsList.preferences.pageSizeAll") : size}
                     </Text>
                   </TouchableOpacity>
                 ))}

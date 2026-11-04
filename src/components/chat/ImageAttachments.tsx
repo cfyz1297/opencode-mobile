@@ -59,8 +59,10 @@ const s = StyleSheet.create({
   },
   remove: {
     position: "absolute",
-    top: -6,
-    right: -6,
+    // Inside the thumbnail: the ScrollView clips its content, so the old
+    // -6/-6 offset cut the top and right of the badge off.
+    top: 2,
+    right: 2,
     width: 22,
     height: 22,
     borderRadius: 11,

@@ -481,6 +481,26 @@ describe("V2EventAdapter", () => {
     assert.equal(donePart.state.output, "out\n")
   })
 
+  it("keeps the progress title so a running tool says what it is doing", () => {
+    // session.tool.progress carries only metadata.title; it was accepted by
+    // toolPartUpdated and then dropped, leaving a blank row for long runs.
+    const a = adapter()
+    a.adapt({ type: "session.step.started", created: 1, data: { sessionID: "s", assistantMessageID: "m1", agent: "build", model: { id: "m", providerID: "p" } } })
+    a.adapt({
+      type: "session.tool.input.started", created: 2,
+      data: { sessionID: "s", assistantMessageID: "m1", id: "t1", name: "shell" },
+    })
+    const progress = a.adapt({
+      type: "session.tool.progress", created: 3,
+      data: { sessionID: "s", assistantMessageID: "m1", id: "t1", metadata: { title: "npm test" } },
+    })
+    const part = progress.find((e) => e.type === "message.part.updated")?.properties.part
+    assert.equal(part.state.title, "npm test")
+    assert.equal(part.state.status, "running")
+    // The earlier empty input must survive as a started marker, not overwrite it.
+    assert.deepEqual(part.state.input, {})
+  })
+
   it("maps permission.asked to the app's permission shape", () => {
     const a = adapter()
     const out = a.adapt({

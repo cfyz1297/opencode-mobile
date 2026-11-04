@@ -94,6 +94,8 @@ function screen(health: (client: unknown) => Promise<Health>) {
       useConnections: () => store,
     },
     '../../src/stores/settings': { useSettings: () => settings },
+    // Only the "all prompts" sentinel is used by the screen.
+    '../../src/lib/message-page': { ALL_TURNS: 0 },
     '../../src/lib/connection-health': {
       probeConnection: (client: unknown) => {
         probed.push(client)

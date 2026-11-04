@@ -14,7 +14,8 @@
       "notifications": "Notifications",
       "privacy": "Privacy",
       "providers": "Providers",
-      "about": "About"
+      "about": "About",
+      "server": "Server"
     },
     "providers": {
       "row": {
@@ -60,6 +61,14 @@
         "label": "Documentation",
         "description": "Learn how to use OpenCode"
       }
+    },
+    "serverApi": {
+      "label": "Server API",
+      "title": "Server API version",
+      "description": "Auto detects the server when connecting (v1 for opencode 1.x, v2 for opencode 2.x). Force a version only to work around a server problem.",
+      "auto": "Auto (recommended)",
+      "v1": "v1 (opencode 1.x)",
+      "v2": "v2 (opencode 2.x)"
     },
     "language": {
       "label": "Language",
@@ -128,7 +137,9 @@
       "imageFailedTitle": "Image not attached",
       "imageFailedMessage": "One or more images could not be processed. Please try a different photo.",
       "speechErrorTitle": "Voice input failed",
-      "speechErrorMessage": "Could not use voice input. Check your microphone permission and try again."
+      "speechErrorMessage": "Could not use voice input. Check your microphone permission and try again.",
+      "abortFailedTitle": "Could not stop the run",
+      "abortFailedMessage": "The server did not accept the interrupt. The run is still going — check the server."
     }
   },
   "connection": {
@@ -251,7 +262,8 @@
     "preferences": {
       "title": "Preferences",
       "pageSizeLabel": "Prompts per session",
-      "pageSizeHint": "How many of your prompts a session opens with. One prompt can produce many messages, so this is counted in prompts, not messages. Lower = faster."
+      "pageSizeHint": "How many of your prompts a session opens with. One prompt can produce many messages, so this is counted in prompts, not messages. Lower = faster; All shows the whole session.",
+      "pageSizeAll": "All"
     }
   },
   "sessionsList": {
@@ -411,7 +423,9 @@
       "serverDefault": "Server default",
       "empty": "No connected providers yet",
       "manageModels": "Manage models",
-      "freeBadge": "Free"
+      "freeBadge": "Free",
+      "favorites": "Favorites",
+      "favoriteToggle": "Add or remove from favorites"
     },
     "message": {
       "copy": "Copy",
@@ -490,7 +504,10 @@
         "minutesAgo": "{{count}}m ago",
         "hoursAgo": "{{count}}h ago",
         "daysAgo": "{{count}}d ago"
-      }
+      },
+      "open": "Session info and context usage",
+      "totalCost": "Total spent on this session",
+      "freeSession": "no cost"
     }
   },
   "providers": {

@@ -106,6 +106,49 @@ test("SDK loads global sessions, filters roots and searches before limiting", as
   assert.deepEqual(rows.map((s) => s.id), ["new"])
   assert.equal(calls[0].headers["x-opencode-directory"], undefined)
 })
+test("SDK walks the session cursor so the list is not capped at the server's newest 50", async () => {
+  // The server defaults to the newest 50 and answers with a `next` cursor; the
+  // Recent list has no "load more", so an unread cursor means sessions that the
+  // TUI lists are invisible in the app (upstream #188 / #182).
+  reply = { data: [{ id: "s1", title: "one", time: { updated: 2 } }], cursor: { next: "page-2" } }
+  const first = await createClient({ baseUrl: base }).session.list({ roots: true })
+  assert.deepEqual(first.map((s) => s.id), ["s1"])
+  assert.equal(calls[0].path, "/api/session?limit=200")
+
+  // A second page that is short ends the walk.
+  reply = { data: [{ id: "s2", title: "two", time: { updated: 1 } }], cursor: { next: "page-3" } }
+  const second = await createClient({ baseUrl: base }).session.list({ roots: true })
+  assert.deepEqual(second.map((s) => s.id), ["s2"])
+})
+
+test("SDK stops paging when the server reports no next cursor", async () => {
+  reply = { data: [{ id: "s1", title: "one", time: { updated: 2 } }], cursor: { next: null } }
+  await createClient({ baseUrl: base }).session.list()
+  assert.equal(calls.length, 1)
+})
+
+test("allMessages asks for the largest page, not the server's default 50", async () => {
+  // load-older used to call messages() with no limit: the server answers the
+  // newest 50 and the store then set hasMore=false, so everything older was
+  // unreachable (the reported "chat shows fewer messages than it should").
+  reply = { data: [{ id: "m1", type: "user", time: { created: 1 } }], cursor: { previous: null } }
+  const all = await createClient({ baseUrl: base }).session.allMessages("s1")
+  assert.equal(all.length, 1)
+  assert.equal(calls[0].path, "/api/session/s1/message?limit=200")
+})
+
+test("allMessages follows the cursor only while it returns new rows", async () => {
+  // The message cursor answers an empty page on some server builds; following
+  // it regardless would loop, so an empty page ends the walk.
+  reply = {
+    data: [{ id: "m2", type: "assistant", time: { created: 2 } }],
+    cursor: { previous: "older" },
+  }
+  await createClient({ baseUrl: base }).session.allMessages("s1")
+  assert.equal(calls.length, 2)
+  assert.equal(calls[1].path, "/api/session/s1/message?limit=200&cursor=older")
+})
+
 test("SDK message paging clamps limits and orders server messages chronologically", async () => {
   reply = { data: [{ id: "a", type: "assistant", content: [{ type: "text", text: "answer" }] }, { id: "u", type: "user", text: "question" }] }
   const rows = await createClient({ baseUrl: base }).session.messages("s", { limit: 999 })

@@ -1,6 +1,6 @@
 # OpenCode Mobile — AGENTS.md
 
-Форк `cfyz1297/opencode-mobile`: Expo/React Native Android-клиент к собственному серверу `opencode serve` (V2 API). Приложение не публикуется в магазинах — только APK через GitHub Releases. Текущее состояние, версия и порядок релиза: [HANDOFF.md](HANDOFF.md). Уроки прошлых задач: [.agents/retro.md](.agents/retro.md).
+Форк `cfyz1297/opencode-v1-v2-mobile`: Expo/React Native Android-клиент к собственному серверу `opencode serve` (V2 API). Приложение не публикуется в магазинах — только APK через GitHub Releases. Текущее состояние, версия и порядок релиза: [HANDOFF.md](HANDOFF.md). Уроки прошлых задач: [.agents/retro.md](.agents/retro.md).
 
 ## Карта проекта
 

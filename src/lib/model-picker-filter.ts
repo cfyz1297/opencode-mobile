@@ -24,6 +24,9 @@ export function buildModelPickerSections(opts: {
   query: string
   hidden?: readonly string[]
   selected: { providerID: string; modelID: string } | null
+  /** modelKey() values marked as favorite; they also get a section on top. */
+  favorites?: readonly string[]
+  favoritesTitle?: string
 }): ModelPickerSection[] {
   const list = Array.isArray(opts.providers) ? opts.providers : []
   const q = (opts.query || "").toLowerCase().trim()
@@ -63,12 +66,25 @@ export function buildModelPickerSections(opts: {
     })
     .filter((s) => s.data.length > 0)
 
+  const favoriteSet = new Set(opts.favorites ?? [])
+
   if (selected) {
     result.sort((a, b) => {
       const aHas = a.data.some((m) => m.providerID === selected.providerID && m.modelID === selected.modelID)
       const bHas = b.data.some((m) => m.providerID === selected.providerID && m.modelID === selected.modelID)
       return aHas === bHas ? 0 : aHas ? -1 : 1
     })
+  }
+
+  // Built last so the selected-provider sort above cannot push it down: the
+  // starred models are the point of the section, they belong at the top.
+  if (favoriteSet.size > 0) {
+    const starred = result
+      .flatMap((section) => section.data)
+      .filter((m) => favoriteSet.has(JSON.stringify([m.providerID, m.modelID])))
+    // A favorite stays in its provider section too: hiding it from there made
+    // the list jump around while starring several models.
+    if (starred.length > 0) result.unshift({ title: opts.favoritesTitle ?? "Favorites", data: starred })
   }
 
   return result

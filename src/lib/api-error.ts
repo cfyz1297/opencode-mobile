@@ -8,6 +8,19 @@
 // server is briefly unreachable" — a 401 got treated like any transient
 // failure and retried forever (see events.ts's reconnect loop / issue #76).
 
+/** Thrown by request()/events() on any non-2xx response. Carries the HTTP
+ *  status so callers can distinguish e.g. 404 (older server, endpoint missing)
+ *  from other failures without parsing the message string. Lives here rather
+ *  than sdk.ts so the v1 and v2 transports can share it without a cycle. */
+export class ApiError extends Error {
+  readonly status: number
+  constructor(status: number, body: string) {
+    super(`API Error: ${status} - ${body}`)
+    this.name = "ApiError"
+    this.status = status
+  }
+}
+
 /** Thrown by sdk.ts's request()/events() when the server responds 401/403,
  *  so call sites can distinguish "bad credentials" from any other failure
  *  (network error, 5xx, timeout) instead of catching a generic Error. */

@@ -9,8 +9,11 @@
 import { fetch as expoFetch } from "expo/fetch"
 import { buildRequestHeaders } from "./headers"
 import { SSEParser } from "./sse"
-import { apiErrorFor, isAuthStatus } from "./api-error"
+import { ApiError, apiErrorFor, isAuthStatus } from "./api-error"
+import { detectServerApi, type ProbeRequest, type ServerApi, type ServerIdentity } from "./api-detect"
+import { createV1Client } from "./sdk-v1"
 import { normalizeSessions } from "./session-list"
+import { MAX_MESSAGE_LIMIT } from "./message-page"
 import type { FileRoot } from "./file-roots"
 import {
   buildFormAnswer,
@@ -40,6 +43,10 @@ export interface ClientConfig {
     username: string
     password: string
   }
+  // Which server API this connection speaks. Omitted means V2 (the app's
+  // original transport); stores/connections.ts probes the server once and
+  // records the answer on the connection.
+  api?: ServerApi
 }
 
 export interface Session {
@@ -61,6 +68,16 @@ export interface Session {
     additions: number
     deletions: number
     files: number
+  }
+  // Session-wide totals reported by the server (V2 `/api/session/{id}`). The
+  // message page is not the whole session, so this is what "spent on the whole
+  // session" has to come from.
+  cost?: number
+  tokens?: {
+    input: number
+    output: number
+    reasoning?: number
+    cache?: { read: number; write: number }
   }
   // Present while a message (and everything after it) is pending revert —
   // the server keeps the underlying messages until the next prompt/summarize
@@ -206,17 +223,7 @@ export interface HealthResponse {
 
 const REQUEST_TIMEOUT_MS = 30_000
 
-// Thrown by request() on a non-2xx response. Carries the HTTP status so
-// callers can distinguish e.g. 404 (older server, endpoint missing) from
-// other failures without parsing the message string.
-export class ApiError extends Error {
-  status: number
-  constructor(status: number, body: string) {
-    super(`API Error: ${status} - ${body}`)
-    this.name = "ApiError"
-    this.status = status
-  }
-}
+export { ApiError }
 
 function createHeaders(config: ClientConfig): HeadersInit {
   return buildRequestHeaders(config)
@@ -297,7 +304,7 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
   }
 }
 
-export function createClient(config: ClientConfig) {
+function createV2Client(config: ClientConfig) {
   // Session IDs and switch choices belong to this connection. Sharing this
   // cache across clients can skip the first model switch on another server.
   const lastSwitch = new Map<string, string>()
@@ -319,17 +326,30 @@ export function createClient(config: ClientConfig) {
     return mapSession(raw, config.directory)
   }
 
-  const listSessions = async (limit?: number): Promise<Session[]> => {
-    // Directory-less GET /api/session returns sessions across ALL locations
-    // (verified on V2), so the Recent Sessions list works without the user
-    // picking a folder first — same reason V1 preferred
-    // /experimental/session. Query params (limit/search) are optional in V2;
-    // sorting/filtering happens client-side in normalizeSessions.
-    const query = new URLSearchParams()
-    if (limit) query.set("limit", String(limit))
-    const qs = query.toString()
-    const raw = unwrapData<V2SessionInfo[]>(await request(config, `/api/session${qs ? `?${qs}` : ""}`))
-    return (raw ?? []).map((s) => mapSession(s, config.directory))
+  // Directory-less GET /api/session returns sessions across ALL locations
+  // (verified on V2), so the Recent Sessions list works without the user
+  // picking a folder first — same reason V1 preferred /experimental/session.
+  // The server defaults to the newest 50, which silently hid older sessions
+  // that the TUI still lists, so walk the cursor until the list is complete
+  // (or the cap is reached). The UI has no "load more" affordance.
+  const SESSION_PAGE_SIZE = 200
+  const SESSION_PAGES = 4
+  const listSessions = async (): Promise<Session[]> => {
+    const out: V2SessionInfo[] = []
+    let cursor: string | null | undefined
+    for (let page = 0; page < SESSION_PAGES; page++) {
+      const query = new URLSearchParams({ limit: String(SESSION_PAGE_SIZE) })
+      if (cursor) query.set("cursor", cursor)
+      const body = await request<{ data?: V2SessionInfo[]; cursor?: { next?: string | null } }>(
+        config,
+        `/api/session?${query.toString()}`,
+      )
+      const rows = Array.isArray(body?.data) ? body.data : []
+      out.push(...rows)
+      cursor = body?.cursor?.next ?? null
+      if (!cursor || rows.length < SESSION_PAGE_SIZE) break
+    }
+    return out.map((s) => mapSession(s, config.directory))
   }
 
   // Shape the raw global list the way the list UI expects (roots filter +
@@ -542,6 +562,37 @@ export function createClient(config: ClientConfig) {
           await request(config, `/api/session/${sessionID}/message${qs ? `?${qs}` : ""}`),
         )
         return mapMessages(raw, sessionID)
+      },
+
+      /**
+       * The whole transcript, for the "whole session" page size and for
+       * load-older. `messages()` with no limit gets the server default, which
+       * is 50 — the old "load all" path asked for that and then set
+       * hasMore=false, so anything past the newest 50 messages was unreachable.
+       */
+      allMessages: async (sessionID: string): Promise<MessageWithParts[]> => {
+        const out: V2MessageBody[] = []
+        const seen = new Set<string>()
+        let cursor: string | undefined
+        for (let page = 0; page < 10; page++) {
+          const query = new URLSearchParams({ limit: String(MAX_MESSAGE_LIMIT) })
+          if (cursor) query.set("cursor", cursor)
+          const body = await request<{ data?: V2MessageBody[]; cursor?: { previous?: string | null } }>(
+            config,
+            `/api/session/${sessionID}/message?${query.toString()}`,
+          )
+          const rows = Array.isArray(body?.data) ? body.data : []
+          const fresh = rows.filter((row) => row?.id && !seen.has(row.id))
+          for (const row of fresh) seen.add(row.id)
+          out.push(...fresh)
+          // The message cursor does not advance on every server build (it can
+          // answer an empty page), so a page with no new rows ends the walk
+          // rather than relying on the cursor alone.
+          const previous = body?.cursor?.previous ?? undefined
+          if (!previous || previous === cursor || fresh.length === 0) break
+          cursor = previous
+        }
+        return mapMessages(out, sessionID)
       },
 
       // Which sessions this server is executing right now. Authoritative for
@@ -805,7 +856,36 @@ export function createClient(config: ClientConfig) {
   }
 }
 
-export type Client = ReturnType<typeof createClient>
+// A probe is a diagnostic, not a session call: it should answer in about a
+// second on a LAN and give up before the onboarding flow's own timeout.
+const PROBE_TIMEOUT_MS = 8_000
+
+/** Probe a connection and report which server API it speaks (see api-detect.ts). */
+export async function probeServer(config: ClientConfig): Promise<ServerIdentity> {
+  const normalized: ClientConfig = { ...config, baseUrl: config.baseUrl.replace(/\/+$/, "") }
+  const headers = createHeaders(normalized)
+  const probe: ProbeRequest = async (path) => {
+    const response = await fetchWithTimeout(`${normalized.baseUrl}${path}`, { headers }, PROBE_TIMEOUT_MS)
+    const contentType = response.headers.get("content-type") ?? ""
+    const body = await response.text().catch(() => "")
+    return { status: response.status, contentType, body }
+  }
+  return detectServerApi(probe)
+}
+
+export function createClient(config: ClientConfig): Client {
+  if (config.api === "v1") {
+    // Both clients implement the same runtime contract (session, project,
+    // permission, question, provider, config). The cast covers the one place
+    // their types differ nominally: v1's /question and /permission lists hand
+    // back untyped records while the v2 mappers produce shaped requests, and
+    // events.ts already treats both as records when reconciling.
+    return createV1Client(config) as unknown as Client
+  }
+  return createV2Client(config)
+}
+
+export type Client = ReturnType<typeof createV2Client>
 
 // Note: `permission.reply` changed signature in V2 (session- and request-
 // scoped). Callers that only knew (requestID, reply) must now pass the

@@ -16,6 +16,9 @@ import { useTranslation } from "react-i18next"
 import { PROVIDERS_ROUTE } from "../../src/lib/providers-ui"
 import { useAuth } from "../../src/stores/auth"
 import { useSettings } from "../../src/stores/settings"
+import { useConnections } from "../../src/stores/connections"
+import { useEvents } from "../../src/stores/events"
+import type { ServerApiPreference } from "../../src/stores/settings"
 import {
   categories,
   categoryMeta,
@@ -77,7 +80,7 @@ export default function SettingsScreen() {
   const { t } = useTranslation()
 
   const { settings, hasBiometrics, updateSettings, lock } = useAuth()
-  const { notifications, setNotification, locale, setLocale } = useSettings()
+  const { notifications, setNotification, locale, setLocale, serverApi, setServerApi } = useSettings()
   const [osGranted, setOsGranted] = useState<boolean | null>(null)
 
   // Settings is where a user goes to ask "what am I running?". Answer it, and if
@@ -136,6 +139,33 @@ export default function SettingsScreen() {
       { text: t("common.cancel"), style: "cancel" },
     ])
   }, [t, setLocale, localeLabels])
+
+  const apiLabels: Record<ServerApiPreference, string> = {
+    auto: t("settings.serverApi.auto"),
+    v1: t("settings.serverApi.v1"),
+    v2: t("settings.serverApi.v2"),
+  }
+
+  const applyServerApi = useCallback(
+    async (preference: ServerApiPreference) => {
+      await setServerApi(preference)
+      // Rebuild the active client so the transport changes now instead of on
+      // the next launch, then restart the event stream against that client.
+      const active = useConnections.getState().activeConnection
+      if (active) await useConnections.getState().updateConnection(active.id, {})
+      useEvents.getState().connect()
+    },
+    [setServerApi],
+  )
+
+  const handleServerApiPress = useCallback(() => {
+    Alert.alert(t("settings.serverApi.title"), t("settings.serverApi.description"), [
+      { text: apiLabels.auto, onPress: () => void applyServerApi("auto") },
+      { text: apiLabels.v1, onPress: () => void applyServerApi("v1") },
+      { text: apiLabels.v2, onPress: () => void applyServerApi("v2") },
+      { text: t("common.cancel"), style: "cancel" },
+    ])
+  }, [t, applyServerApi, apiLabels])
 
   return (
     <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={styles.content}>
@@ -222,6 +252,17 @@ export default function SettingsScreen() {
           isDark={isDark}
           onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
           right={<Ionicons name="open-outline" size={20} color={isDark ? "#666666" : "#999999"} />}
+        />
+      </SettingSection>
+
+      <SettingSection title={t("settings.sections.server")} isDark={isDark}>
+        <SettingRow
+          icon="server-outline"
+          label={t("settings.serverApi.label")}
+          description={apiLabels[serverApi]}
+          isDark={isDark}
+          onPress={handleServerApiPress}
+          right={<Ionicons name="chevron-forward" size={20} color={isDark ? "#666666" : "#999999"} />}
         />
       </SettingSection>
 

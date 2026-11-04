@@ -6,7 +6,7 @@ import { extractPromptFromParts, type PromptFromParts } from "../lib/prompt-from
 import { mergeIncomingMessage, reconcileTemps } from "../lib/message-merge"
 import { isColdSessionLoad, isLiveEventForSession } from "../lib/session-load-reconcile"
 import { createPartBatcher } from "../lib/part-batch"
-import { countTurns, messageLimitForTurns, trimToTurns } from "../lib/message-page"
+import { countTurns, isWholeSession, keepLoadedHistory, messageLimitForTurns, trimToTurns } from "../lib/message-page"
 import { offlineHistory } from '../lib/history-storage'
 
 // Helper to convert API response to our internal format
@@ -21,6 +21,10 @@ function parseMessages(response: MessageWithParts[]): { messages: Message[]; par
 
   return { messages, parts }
 }
+
+// Most sessions one Recent list renders. Well above the old 50, which silently
+// dropped sessions that were reachable from the TUI.
+const SESSION_LIST_LIMIT = 800
 
 function pageSize(): number {
   return useSettings.getState().pageSize
@@ -73,7 +77,8 @@ interface SessionsState {
     files?: Array<{ uri: string; mime: string; filename?: string; base64?: string }>,
     variant?: string,
   ) => Promise<void>
-  abortSession: () => Promise<void>
+  /** Returns false when the server refused: the run is still going. */
+  abortSession: () => Promise<boolean>
   refreshMessages: () => Promise<void>
   /** Apply a transcript that the caller already fetched, without a second GET. */
   applyServerMessages: (response: MessageWithParts[]) => void
@@ -140,7 +145,9 @@ export const useSessions = create<SessionsState>((set, get) => ({
       set({ isLoading: true, error: null })
       // A directory-less list includes sessions across projects. Each row carries
       // its own directory into the session route so subsequent operations stay scoped.
-      const sessions = await client.session.list({ roots: true, limit: 50 })
+      // The cap only bounds what one screen renders; the transport pages through
+      // the server's cursor, and 50 used to hide older sessions the TUI still has.
+      const sessions = await client.session.list({ roots: true, limit: SESSION_LIST_LIMIT })
       if (epoch !== connectionEpoch) return
       // BUG-010: merge by ID instead of wholesale replace — a session.created SSE
       // event that landed mid-flight must not be clobbered by a stale list fetch.
@@ -174,6 +181,10 @@ export const useSessions = create<SessionsState>((set, get) => ({
     // until the user backs out and re-enters (issue #150). Only a
     // genuinely new/different session needs the blocking spinner.
     const isColdLoad = isColdSessionLoad(get().currentSession?.id, sessionID)
+    // Captured before the reset below: a session whose whole transcript is
+    // already in the store (loadOlderMessages cleared hasMore) must not lose
+    // its older messages to this refresh's trimmed page.
+    const alreadyLoadedAll = !isColdLoad && !get().hasMore && get().messages.length > 0
     try {
       // Reset optimistic sending — SSE sessionStatus is the source of truth
       set((state) => ({
@@ -186,9 +197,11 @@ export const useSessions = create<SessionsState>((set, get) => ({
 
       const turns = pageSize()
       const limit = messageLimitForTurns(turns)
+      // "Whole session" is the setting's max: ask for the transcript itself
+      // instead of a page, then trimToTurns keeps all of it.
       const [session, firstPage] = await Promise.all([
         client.session.get(sessionID),
-        client.session.messages(sessionID, { limit }),
+        isWholeSession(turns) ? client.session.allMessages(sessionID) : client.session.messages(sessionID, { limit }),
       ])
 
       // A newer selectSession started while we were fetching — discard this
@@ -200,7 +213,7 @@ export const useSessions = create<SessionsState>((set, get) => ({
       // at 200 messages, so in that case ask for the session once without a
       // limit rather than paging blindly.
       let response = firstPage
-      if (firstPage.length >= limit && countTurns(parseMessages(firstPage).messages) < turns) {
+      if (!isWholeSession(turns) && firstPage.length >= limit && countTurns(parseMessages(firstPage).messages) < turns) {
         response = await client.session.messages(sessionID)
         if (seq !== selectSeq) return
       }
@@ -209,14 +222,16 @@ export const useSessions = create<SessionsState>((set, get) => ({
       const parsed = parseMessages(response)
       // The page is measured in exchanges, not messages (see message-page.ts).
       const page = trimToTurns(parsed.messages, turns)
-      const messages = page.messages
+      const prevMessages = get().currentSession?.id === sessionID ? get().messages : []
+      const messages = keepLoadedHistory(page.messages, prevMessages, alreadyLoadedAll)
       const parts: Record<string, Part[]> = {}
-      for (const message of messages) parts[message.id] = parsed.parts[message.id] || []
+      for (const message of messages) {
+        parts[message.id] = parsed.parts[message.id] ?? get().parts[message.id] ?? []
+      }
 
       // Reconcile optimistic temp messages with the server list: a temp whose
       // real copy is now in the list is dropped (otherwise the message shows
       // twice, and reloads accumulate the dupes), in-flight temps are kept.
-      const prevMessages = get().currentSession?.id === sessionID ? get().messages : []
       const merged = reconcileTemps(messages, parts, prevMessages, get().parts)
 
       set({
@@ -224,8 +239,9 @@ export const useSessions = create<SessionsState>((set, get) => ({
         messages: merged.messages,
         parts: { ...merged.parts },
         isLoading: false,
-        // Older exchanges were left out — offer "load older".
-        hasMore: page.trimmed,
+        // Older exchanges were left out — offer "load older". Nothing is older
+        // when the refresh kept the history it already had.
+        hasMore: messages.length > page.messages.length ? false : page.trimmed,
       })
     } catch (err) {
       if (seq !== selectSeq) return
@@ -247,8 +263,10 @@ export const useSessions = create<SessionsState>((set, get) => ({
     try {
       set({ loadingMore: true })
 
-      // Fetch ALL messages for this session
-      const response = await client.session.messages(session.id)
+      // Fetch the whole transcript. `messages()` without a limit returned the
+      // server default of 50, and this path then set hasMore=false — everything
+      // older than that page became unreachable with no way to ask again.
+      const response = await client.session.allMessages(session.id)
       if (loadSeq !== loadOlderSeq) return // stale result — discard
 
       const { messages: all, parts: allParts } = parseMessages(response)
@@ -437,18 +455,20 @@ export const useSessions = create<SessionsState>((set, get) => ({
     const epoch = connectionEpoch
     const client = clientFor(get().currentSession?.directory)
     const session = get().currentSession
-    if (!client || !session) return
+    if (!client || !session) return false
 
     try {
       await client.session.abort(session.id)
-      if (epoch !== connectionEpoch) return
+      if (epoch !== connectionEpoch) return false
       // Mark only after the abort request succeeded — if it failed, the run
       // continues and any eventual completion is a genuine response.
       abortedSessions.add(session.id)
       set((state) => ({ sending: { ...state.sending, [session.id]: false } }))
+      return true
     } catch {
-      if (epoch !== connectionEpoch) return
+      if (epoch !== connectionEpoch) return false
       set({ error: "Failed to abort session" })
+      return false
     }
   },
 

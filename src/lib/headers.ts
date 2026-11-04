@@ -23,6 +23,13 @@ function toBase64Utf8(str: string): string {
 export function buildRequestHeaders(config: HeaderConfig): Record<string, string> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    // Tunnels interpose their own browser page on unmarked requests: ngrok
+    // answers HTML/401 with an interstitial instead of proxying the API, and
+    // the reminder header tells localtunnel-style tunnels the request is from a
+    // client. Without these an otherwise working tunnel reads as "wrong
+    // password" or as a server that is not an opencode API at all (#219).
+    "Bypass-Tunnel-Reminder": "true",
+    "ngrok-skip-browser-warning": "true",
   }
 
   if (config.directory) {

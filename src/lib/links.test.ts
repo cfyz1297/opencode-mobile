@@ -11,7 +11,7 @@ import { ORIGINAL_REPO_URL, PRIVACY_POLICY_URL, PROJECT_REPO_URL, SETUP_GUIDE_UR
 import appJson from "../../app.json" with { type: "json" }
 
 test("project links point at the fork's repo", () => {
-  assert.equal(PROJECT_REPO_URL, "https://github.com/cfyz1297/opencode-mobile")
+  assert.equal(PROJECT_REPO_URL, "https://github.com/cfyz1297/opencode-v1-v2-mobile")
 })
 
 test("upstream original stays linked for credits/history", () => {

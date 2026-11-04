@@ -53,8 +53,10 @@ function RootLayout() {
 
   useEffect(() => {
     initAuth()
-    loadConnections()
-    useSettings.getState().load()
+    // Settings first: the stored server-API preference decides which transport
+    // loadConnections builds, so reading it after the load would apply a forced
+    // version only on the next launch.
+    void useSettings.getState().load().then(() => loadConnections())
 
     // Connect notification preferences to the notification module
     notifications.configure(() => useSettings.getState().notifications)

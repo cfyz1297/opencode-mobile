@@ -44,8 +44,8 @@ export const CURRENT_VERSION = (appJson as { expo?: { version?: string } }).expo
 // Fork releases live in the fork's repo (tags "0.2.x") — checking the
 // upstream repo would compare against foreign versioning and either never
 // prompt or prompt with the wrong APK.
-const RELEASES_API = "https://api.github.com/repos/cfyz1297/opencode-mobile/releases/latest"
-const RELEASES_PAGE = "https://github.com/cfyz1297/opencode-mobile/releases/latest"
+const RELEASES_API = "https://api.github.com/repos/cfyz1297/opencode-v1-v2-mobile/releases/latest"
+const RELEASES_PAGE = "https://github.com/cfyz1297/opencode-v1-v2-mobile/releases/latest"
 const TIMEOUT_MS = 8000
 
 const storage: UpdateStorage = {

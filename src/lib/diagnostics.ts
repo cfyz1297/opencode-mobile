@@ -7,7 +7,8 @@ import * as Device from "expo-device"
 import * as SecureStore from "expo-secure-store"
 import appJson from "../../app.json"
 import { log, formatLogLines } from "./logbuffer"
-import { type Classification, type ProbeAttempt, type ParsedUrl, parseUrl, classify } from "./diagnostics-classify"
+import { type Classification, type ProbeAttempt, type ParsedUrl, parseUrl, classify, chooseHealthProbe } from "./diagnostics-classify"
+import type { ServerApi } from "./api-detect"
 import { chatwootConfigured, sendSupportReport } from "./chatwoot"
 import { redactHostAndUrls } from "./scrub"
 
@@ -32,6 +33,9 @@ export interface DiagnosticReport {
     model: string
     appVersion: string
   }
+  // Which API the health probe identified (absent when the server could not be
+  // classified, e.g. unreachable or answering neither known route).
+  serverApi?: ServerApi
   timestamp: string
 }
 
@@ -41,14 +45,23 @@ export interface DiagnosticReport {
 // made classify() short-circuit to "connection actually works now" even when
 // auth failed or the server errored. The root probe only checks reachability
 // (any HTTP response, even an error status, proves something is listening).
-async function timedFetch(name: string, target: string, init?: RequestInit, opts?: { requireOk?: boolean }): Promise<ProbeAttempt> {
+async function timedFetch(name: string, target: string, init?: RequestInit, opts?: { requireOk?: boolean; requireJson?: boolean }): Promise<ProbeAttempt> {
   const requireOk = opts?.requireOk ?? true
   const start = Date.now()
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS)
   try {
     const res = await fetch(target, { ...init, signal: controller.signal })
-    return { name, target, ok: requireOk ? res.ok : true, status: res.status, durationMs: Date.now() - start }
+    const contentType = res.headers.get("content-type") ?? ""
+    const isJson = contentType.includes("application/json")
+    return {
+      name,
+      target,
+      ok: requireOk ? res.ok && (!opts?.requireJson || isJson) : true,
+      status: res.status,
+      contentType,
+      durationMs: Date.now() - start,
+    }
   } catch (error: unknown) {
     const err = error as { name?: string; message?: string; cause?: unknown }
     const aborted = err?.name === "AbortError"
@@ -81,20 +94,31 @@ export async function probeConnection(url: string, auth?: { username: string; pa
   let health: ProbeAttempt
   let root: ProbeAttempt
   let internet: ProbeAttempt
+  let serverApi: ServerApi | undefined
 
   if (parsed.valid) {
     const base = `${parsed.scheme}://${parsed.host}:${parsed.port}`
-    ;[health, root, internet] = await Promise.all([
-      // V2 moved the health endpoint to /api/info; fall back to the V1 path
-      // so diagnostics still pass against older servers.
+    const [chosen, rootAttempt, internetAttempt] = await Promise.all([
+      // A route that exists answers JSON; an unknown route on either server
+      // generation falls through to the web SPA (200 text/html). Probing V2
+      // first and V1 only when that answer is neither JSON nor an auth
+      // rejection keeps the old fallback but stops HTML from reading as
+      // "healthy".
       (async () => {
-        const attempt = await timedFetch("health", `${base}/api/info`, { headers })
-        if (attempt.ok || attempt.status !== 404) return attempt
-        return timedFetch("health", `${base}/global/health`, { headers })
+        const v2Attempt = await timedFetch("health", `${base}/api/info`, { headers }, { requireJson: true })
+        if (v2Attempt.ok || v2Attempt.status === 401 || v2Attempt.status === 403) {
+          return chooseHealthProbe(v2Attempt, v2Attempt)
+        }
+        const v1Attempt = await timedFetch("health", `${base}/global/health`, { headers }, { requireJson: true })
+        return chooseHealthProbe(v2Attempt, v1Attempt)
       })(),
       timedFetch("server-root", `${base}/`, { headers }, { requireOk: false }),
       timedFetch("internet", INTERNET_CHECK_URL),
     ])
+    health = chosen.attempt
+    serverApi = chosen.api
+    root = rootAttempt
+    internet = internetAttempt
   } else {
     const skipped: ProbeAttempt = { name: "health", target: url, ok: false, durationMs: 0, error: "skipped: malformed url" }
     health = skipped
@@ -119,6 +143,7 @@ export async function probeConnection(url: string, auth?: { username: string; pa
       model: Device.modelName || "unknown",
       appVersion: (appJson as { expo?: { version?: string } }).expo?.version || "unknown",
     },
+    serverApi,
     timestamp: new Date().toISOString(),
   }
 
@@ -135,6 +160,7 @@ export function formatReport(report: DiagnosticReport): string {
   lines.push("")
   lines.push(`Target URL:  ${report.url}`)
   lines.push(`  scheme=${report.scheme} host=${report.host} port=${report.port} hostname=${report.isHostname}`)
+  if (report.serverApi) lines.push(`Server API:  ${report.serverApi}`)
   lines.push("")
   lines.push("Probes:")
   for (const a of report.attempts) {

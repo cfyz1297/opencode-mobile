@@ -2,7 +2,7 @@ import { create } from "zustand"
 import { useConnections } from "./connections"
 import { useSessions, abortedSessions } from "./sessions"
 import { send as notify } from "../lib/notifications"
-import { sanitizeBody } from "../lib/notify-format"
+import { PERMISSION_NOTIFICATION_BODY, QUESTION_NOTIFICATION_BODY, sanitizeBody } from "../lib/notify-format"
 import { statusFromPart } from "../lib/status-labels"
 import { isAuthError } from "../lib/api-error"
 import { isSessionActuallyIdle } from "../lib/session-status-reconcile"
@@ -548,14 +548,9 @@ export const useEvents = create<EventsState>((set, get) => ({
               notify({
                 category: "permissions",
                 title: "Agent needs approval",
-                body: sanitizeBody(
-                  req.permission
-                    ? req.patterns?.length
-                      ? `${req.permission}: ${req.patterns.join(", ")}`
-                      : req.permission
-                    : req.patterns?.join(", "),
-                  "A tool needs your approval",
-                ),
+                // Fixed body: the tool name, resources and command text are
+                // server-supplied and must not reach the lock screen.
+                body: PERMISSION_NOTIFICATION_BODY,
                 sessionId: req.sessionID,
                 dedupeKey: `perm-${req.id}`,
                 dedupeCooldownMs: 60_000,
@@ -589,8 +584,10 @@ export const useEvents = create<EventsState>((set, get) => ({
               }))
               notify({
                 category: "questions",
-                title: req.questions?.[0]?.header || "Input needed",
-                body: sanitizeBody(req.questions?.[0]?.question, "The assistant has a question"),
+                // Fixed title and body: the header/question text is
+                // server-supplied (see PERMISSION_NOTIFICATION_BODY).
+                title: "Input needed",
+                body: QUESTION_NOTIFICATION_BODY,
                 sessionId: req.sessionID,
                 dedupeKey: `question-${req.id}`,
                 dedupeCooldownMs: 60_000,

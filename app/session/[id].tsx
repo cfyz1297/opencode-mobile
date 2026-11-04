@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   AppState,
+  Keyboard,
   useWindowDimensions,
 } from "react-native"
 import { useLocalSearchParams, Stack, useRouter, useFocusEffect } from "expo-router"
@@ -36,10 +37,12 @@ import {
   VariantPicker,
   ImageAttachments,
   SessionInfo,
+  ContextRing,
   type SlashCommand,
   type Attachment,
 } from "../../src/components/chat"
 import { useSessions } from "../../src/stores/sessions"
+import { computeSessionStats } from "../../src/lib/session-stats"
 import { useEvents, refreshPending } from "../../src/stores/events"
 import { useConnections } from "../../src/stores/connections"
 import { useAuth } from "../../src/stores/auth"
@@ -173,6 +176,14 @@ export default function SessionScreen() {
   const questions = useEvents((s) => (sessionID ? s.questions[sessionID] : undefined)) || []
   const answeredQuestions = useEvents((s) => (sessionID ? s.answeredQuestions[sessionID] : undefined)) || []
   const sessionBusy = useEvents((s) => (sessionID ? s.sessionStatus[sessionID]?.type === "busy" : false))
+  const canStop = isSending || sessionBusy
+
+  const handleAbort = useCallback(async () => {
+    // The store only sets a string error; without this the tap looked ignored.
+    if (!(await abortSession())) {
+      Alert.alert(t("session.alerts.abortFailedTitle"), t("session.alerts.abortFailedMessage"))
+    }
+  }, [abortSession, t])
   // Poll while the run is active, including the optimistic window right after
   // sending a message when the busy-status event may not have arrived yet.
   const shouldPollPending = sessionBusy || isSending
@@ -542,23 +553,40 @@ export default function SessionScreen() {
     }
   }
 
+  // Launching the picker while one is already open (a double tap) or while the
+  // keyboard is still animating makes Android return a canceled result, which
+  // is indistinguishable from the user backing out: the + looked dead.
+  const pickingRef = useRef(false)
+
   const pickFromLibrary = useCallback(async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsMultipleSelection: true,
-      selectionLimit: 10,
-      quality: 1, // full quality - we compress in manipulator
-    })
-    if (result.canceled) return
-    const settled = await Promise.allSettled(result.assets.map((a) => toJpeg(a.uri, a.width, a.height)))
-    const items = settled.filter((r) => r.status === "fulfilled").map((r) => r.value)
-    if (items.length) setAttachments((prev) => [...prev, ...items])
-    if (settled.some((r) => r.status === "rejected")) {
-      console.error(
-        "Failed to process image(s):",
-        settled.filter((r) => r.status === "rejected").map((r) => r.reason),
-      )
+    if (pickingRef.current) return
+    pickingRef.current = true
+    try {
+      Keyboard.dismiss()
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsMultipleSelection: true,
+        selectionLimit: 10,
+        quality: 1, // full quality - we compress in manipulator
+      })
+      if (result.canceled) return
+      const settled = await Promise.allSettled(result.assets.map((a) => toJpeg(a.uri, a.width, a.height)))
+      const items = settled.filter((r) => r.status === "fulfilled").map((r) => r.value)
+      if (items.length) setAttachments((prev) => [...prev, ...items])
+      if (settled.some((r) => r.status === "rejected")) {
+        console.error(
+          "Failed to process image(s):",
+          settled.filter((r) => r.status === "rejected").map((r) => r.reason),
+        )
+        Alert.alert(t("session.alerts.imageFailedTitle"), t("session.alerts.imageFailedMessage"))
+      }
+    } catch (err) {
+      // Previously an unhandled rejection here: the picker never opened and the
+      // button silently did nothing.
+      console.error("Failed to open image picker:", err)
       Alert.alert(t("session.alerts.imageFailedTitle"), t("session.alerts.imageFailedMessage"))
+    } finally {
+      pickingRef.current = false
     }
   }, [t])
 
@@ -581,27 +609,34 @@ export default function SessionScreen() {
   }, [t])
 
   const pasteFromClipboard = useCallback(async () => {
-    // Try image first
-    const hasImage = await Clipboard.hasImageAsync()
-    if (hasImage) {
-      const img = await Clipboard.getImageAsync({ format: "png" })
-      if (img?.data) {
-        const uri = img.data.startsWith("data:") ? img.data : `data:image/png;base64,${img.data}`
-        const item = await toJpeg(uri, img.size.width, img.size.height)
-        setAttachments((prev) => [...prev, item])
-        return
+    try {
+      // Try image first
+      const hasImage = await Clipboard.hasImageAsync()
+      if (hasImage) {
+        const img = await Clipboard.getImageAsync({ format: "png" })
+        if (img?.data) {
+          const uri = img.data.startsWith("data:") ? img.data : `data:image/png;base64,${img.data}`
+          const item = await toJpeg(uri, img.size.width, img.size.height)
+          setAttachments((prev) => [...prev, item])
+          return
+        }
       }
-    }
-    // Fall back to text
-    const hasText = await Clipboard.hasStringAsync()
-    if (hasText) {
-      const text = await Clipboard.getStringAsync()
-      if (text) {
-        setInput((prev) => prev + text)
-        return
+      // Fall back to text
+      const hasText = await Clipboard.hasStringAsync()
+      if (hasText) {
+        const text = await Clipboard.getStringAsync()
+        if (text) {
+          setInput((prev) => prev + text)
+          return
+        }
       }
+      Alert.alert(t("session.alerts.emptyClipboardTitle"), t("session.alerts.emptyClipboardMessage"))
+    } catch (err) {
+      // A failed clipboard read used to be an unhandled rejection: the button
+      // did nothing and said nothing.
+      console.error("Failed to read clipboard:", err)
+      Alert.alert(t("session.alerts.imageFailedTitle"), t("session.alerts.imageFailedMessage"))
     }
-    Alert.alert(t("session.alerts.emptyClipboardTitle"), t("session.alerts.emptyClipboardMessage"))
   }, [t])
 
   const removeAttachment = useCallback((index: number) => {
@@ -807,6 +842,13 @@ export default function SessionScreen() {
     return found?.variants
   }, [model, providers])
 
+  // Same numbers as the info panel (session-stats.ts), so the ring and the
+  // percentage in the panel can never disagree.
+  const contextPercent = useMemo(
+    () => computeSessionStats(messages || [], providers, currentSession).percent,
+    [messages, providers, currentSession],
+  )
+
   return (
     <>
       <Stack.Screen
@@ -820,13 +862,13 @@ export default function SessionScreen() {
                   <Text style={[s.dirText, isDark && s.dirTextDark]}>{shortDir}</Text>
                 </View>
               )}
-              <TouchableOpacity onPress={() => setShowInfo((v) => !v)} hitSlop={8}>
-                <Ionicons
-                  name={showInfo ? "stats-chart" : "stats-chart-outline"}
-                  size={20}
-                  color={showInfo ? "#3b82f6" : isDark ? "#888888" : "#666666"}
-                />
-              </TouchableOpacity>
+              <ContextRing
+                percent={contextPercent}
+                isDark={isDark}
+                active={showInfo}
+                onPress={() => setShowInfo((v) => !v)}
+                accessibilityLabel={t("chat.sessionInfo.open")}
+              />
             </View>
           ),
         }}
@@ -1035,7 +1077,13 @@ export default function SessionScreen() {
           {currentModelVariants && Object.keys(currentModelVariants).length > 0 && (
             <TouchableOpacity
               style={[s.variantChip, isDark && s.variantChipDark, variant && s.variantChipActive]}
-              onPress={() => variantSheetRef.current?.expand()}
+              onPress={() => {
+                // The picker has no text input, so the keyboard is pure
+                // obstruction: with it up the sheet rendered behind the IME
+                // and the last option ("High") was unreachable.
+                Keyboard.dismiss()
+                variantSheetRef.current?.expand()
+              }}
               testID="variant-chip"
             >
               <Ionicons name="flash-outline" size={14} color={variant ? "#8b5cf6" : isDark ? "#888888" : "#666666"} />
@@ -1091,9 +1139,14 @@ export default function SessionScreen() {
               testID="chat-message-input"
             />
             {/* Stop button: when busy — regardless of input, so a follow-up
-                typed mid-run can still be aborted (BUG-022). */}
-            {isSending && !speech.listening && (
-              <TouchableOpacity style={s.stopBtn} onPress={abortSession}>
+                typed mid-run can still be aborted (BUG-022). `sessionBusy` is
+                the server's status, so a run that this screen did not start
+                (opened mid-run, app restarted, SSE reconnected while it kept
+                going) can be interrupted too; before, only the optimistic
+                send flag showed the button, and a long tool call running
+                server-side had no way to be stopped. */}
+            {canStop && !speech.listening && (
+              <TouchableOpacity style={s.stopBtn} onPress={handleAbort} testID="chat-stop-button">
                 <Ionicons name="stop" size={20} color="#ffffff" />
               </TouchableOpacity>
             )}

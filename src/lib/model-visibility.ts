@@ -1,6 +1,10 @@
 /** Only connection IDs and provider/model IDs are persisted. Never server credentials. */
 export type HiddenModels = Array<[string, string[]]>
 const STORAGE_KEY = 'opencode_model_visibility_v1'
+/** Favorites are the same `[[scope, keys]]` set under a different key, so one
+ *  parser and one storage discipline cover both. */
+export const FAVORITES_STORAGE_KEY = 'opencode_model_favorites_v1'
+export const FAVORITES_SCOPE = 'favorites'
 const MAX_IDS = 10000
 
 export function modelKey(providerID: string, modelID: string): string {
@@ -34,13 +38,13 @@ export function parseHiddenModels(raw: string | null): HiddenModels {
 export function createModelVisibility(storage: {
   getItem: (key: string) => Promise<string | null>
   setItem: (key: string, value: string) => Promise<void>
-}, changed: (value: HiddenModels) => void = () => {}) {
+}, changed: (value: HiddenModels) => void = () => {}, storageKey: string = STORAGE_KEY) {
   let state = new Map<string, string[]>()
   let loading: Promise<void> | undefined
   let queue: Promise<void> = Promise.resolve()
   const load = () => {
     if (!loading) {
-      loading = storage.getItem(STORAGE_KEY).then(raw => {
+      loading = storage.getItem(storageKey).then(raw => {
         state = new Map(parseHiddenModels(raw))
         changed([...state])
       }).catch(error => { loading = undefined; throw error })
@@ -65,7 +69,7 @@ export function createModelVisibility(storage: {
         if (next.size > 100) throw new Error('Too many connections')
         const serialized = JSON.stringify([...next])
         if (serialized.length > 4_000_000) throw new Error('Model preferences too large')
-        await storage.setItem(STORAGE_KEY, serialized)
+        await storage.setItem(storageKey, serialized)
         state = next
         changed([...state])
       })

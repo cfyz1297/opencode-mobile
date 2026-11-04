@@ -71,7 +71,7 @@ export type PriceLookup = (message: Usage) => Price | undefined
 
 const ZERO_PRICE: Price = { input: 0, output: 0 }
 
-function estimateCost(price: Price, usage: RunTokens): number {
+export function estimateCost(price: Price, usage: RunTokens): number {
   const cache = price.cache
   return (
     (usage.input * price.input +

@@ -1,9 +1,9 @@
 // Project links used across the app.
 //
-// The app is the cfyz1297/opencode-mobile fork: "about"/update links point at
+// The app is the cfyz1297/opencode-v1-v2-mobile fork: "about"/update links point at
 // the fork's own repo and releases, the original upstream app stays one tap
 // away for history and credits.
-export const PROJECT_REPO_URL = "https://github.com/cfyz1297/opencode-mobile"
+export const PROJECT_REPO_URL = "https://github.com/cfyz1297/opencode-v1-v2-mobile"
 export const ORIGINAL_REPO_URL = "https://github.com/dzianisv/opencode-mobile"
 
 // Privacy and setup pages used to live on the original's GitHub Pages

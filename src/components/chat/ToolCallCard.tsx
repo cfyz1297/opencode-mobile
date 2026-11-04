@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import type { Part } from "../../lib/sdk"
 import { DiffView } from "./DiffView"
+import { isShellTool, toolCommand, toolDetailText, toolTitle } from "../../lib/tool-view"
 
 const TOOL_ICONS: Record<string, string> = {
   read: "glasses-outline",
@@ -15,6 +16,7 @@ const TOOL_ICONS: Record<string, string> = {
   write: "create-outline",
   apply_patch: "git-merge-outline",
   bash: "terminal-outline",
+  shell: "terminal-outline",
   task: "git-branch-outline",
   todowrite: "checkbox-outline",
   todoread: "checkbox-outline",
@@ -233,15 +235,8 @@ function TodoDetail({ input, isDark }: { input: unknown; isDark: boolean }) {
 }
 
 function GenericDetail({ input, output, isDark }: { input: unknown; output: unknown; isDark: boolean }) {
-  const text =
-    typeof output === "string"
-      ? output
-      : output !== undefined && output !== null
-        ? JSON.stringify(output, null, 2)
-        : typeof input === "object" && input !== null
-          ? JSON.stringify(input, null, 2)
-          : undefined
-  if (!text || text.length === 0) return null
+  const text = toolDetailText(input, output)
+  if (!text) return null
   return (
     <View style={s.detailSection}>
       <View style={[s.codeBlock, isDark && s.codeBlockDark]}>
@@ -260,6 +255,7 @@ function ToolDetail({ tool, isDark }: { tool: Part; isDark: boolean }) {
 
   switch (name) {
     case "bash":
+    case "shell":
       return <BashDetail input={input} output={output} isDark={isDark} />
     case "read":
       return <ReadDetail input={input} isDark={isDark} />
@@ -320,16 +316,14 @@ export function ToolCallCard({ tool, isDark }: Props) {
   const color = statusColor(status)
   const error = tool.state?.error?.message
   const elapsed = duration(tool.state?.time?.start, tool.state?.time?.end)
-  const hasDetail = tool.state?.input !== undefined || tool.state?.output !== undefined || error
-  const command =
-    tool.tool === "bash" && typeof tool.state?.input === "object" && tool.state?.input !== null
-      ? (tool.state?.input as Record<string, unknown>).command
-      : undefined
-  const title =
-    (typeof command === "string" && command) ||
-    tool.state?.title ||
-    tool.tool ||
-    t("chat.toolCallCard.fallbackTitle")
+  // An empty object is what a tool sends at input.started, before any argument
+  // has arrived: counting it as detail gave a chevron that opened onto nothing.
+  const hasDetail =
+    toolDetailText(tool.state?.input, tool.state?.output) !== undefined ||
+    isShellTool(tool.tool) ||
+    !!error
+  const title = toolTitle(tool, t("chat.toolCallCard.fallbackTitle"))
+  const isCommand = isShellTool(tool.tool) && !!toolCommand(tool.state?.input)
 
   const toggle = useCallback(() => {
     if (hasDetail) setExpanded((v) => !v)
@@ -346,7 +340,7 @@ export function ToolCallCard({ tool, isDark }: Props) {
         <View style={s.headerLeft}>
           <Ionicons name={icon as any} size={14} color={color} />
           <Text
-            style={[s.name, isDark && s.nameDark, typeof command === "string" && command ? s.nameMono : null]}
+            style={[s.name, isDark && s.nameDark, isCommand ? s.nameMono : null]}
             numberOfLines={1}
           >
             {title}

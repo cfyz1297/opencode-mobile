@@ -5,8 +5,13 @@ import { mergeStoredSettings } from "../lib/settings-merge"
 import { clampTurns } from "../lib/message-page"
 import { setAppLocale } from "../lib/i18n/config"
 import type { LocalePreference } from "../lib/i18n/locale-resolve"
+import type { ServerApi } from "../lib/api-detect"
 
 const SETTINGS_KEY = "opencode_settings"
+
+/** "auto" probes each connection once and remembers the answer. The explicit
+ *  values force a transport, e.g. to reproduce a server-side bug. */
+export type ServerApiPreference = "auto" | ServerApi
 
 // Parse JSON from SecureStore, tolerating corrupted data (BUG-016).
 function parseStoredJSON<T>(raw: string, fallback: T | null): T | null {
@@ -24,6 +29,8 @@ interface Settings {
   pageSize: number
   notifications: Record<Category, boolean>
   locale: LocalePreference
+  // Which server transport connections default to (see ServerApiPreference).
+  serverApi: ServerApiPreference
 }
 
 const DEFAULTS: Settings = {
@@ -31,6 +38,7 @@ const DEFAULTS: Settings = {
   pageSize: 10,
   notifications: { ...defaultPreferences },
   locale: "system",
+  serverApi: "auto",
 }
 
 interface SettingsState extends Settings {
@@ -39,6 +47,7 @@ interface SettingsState extends Settings {
   setPageSize: (size: number) => Promise<void>
   setNotification: (category: Category, enabled: boolean) => Promise<void>
   setLocale: (locale: LocalePreference) => Promise<void>
+  setServerApi: (preference: ServerApiPreference) => Promise<void>
 }
 
 function snapshot(get: () => SettingsState): Settings {
@@ -47,6 +56,7 @@ function snapshot(get: () => SettingsState): Settings {
     pageSize: get().pageSize,
     notifications: get().notifications,
     locale: get().locale,
+    serverApi: get().serverApi,
   }
 }
 
@@ -68,6 +78,9 @@ export const useSettings = create<SettingsState>((set, get) => ({
       // about one prompt, so the numbers are not comparable — start from the
       // default rather than opening long sessions in full.
       if ((parsed?.settingsVersion ?? 1) < 2) merged.pageSize = DEFAULTS.pageSize
+      if (merged.serverApi !== "auto" && merged.serverApi !== "v1" && merged.serverApi !== "v2") {
+        merged.serverApi = DEFAULTS.serverApi
+      }
       set({ ...merged, loaded: true })
       setAppLocale(merged.locale)
       return
@@ -76,6 +89,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   },
 
   setPageSize: async (size) => {
+    // ALL_TURNS (0) is a valid value, clampTurns passes it through.
     const clamped = clampTurns(size)
     set({ pageSize: clamped })
     await persist({ ...snapshot(get), pageSize: clamped })
@@ -91,5 +105,10 @@ export const useSettings = create<SettingsState>((set, get) => ({
     set({ locale })
     setAppLocale(locale) // applies immediately
     await persist({ ...snapshot(get), locale })
+  },
+
+  setServerApi: async (preference) => {
+    set({ serverApi: preference })
+    await persist({ ...snapshot(get), serverApi: preference })
   },
 }))

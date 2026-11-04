@@ -11,6 +11,8 @@ import { buildModelPickerSections } from "../../lib/model-picker-filter"
 // screen's BottomSheet-based ModelPicker from inside it. This twin covers that
 // case with the same search + grouping as the session picker.
 import { useHiddenModels } from "../../stores/model-visibility"
+import { useFavoriteModels } from "../../stores/model-favorites"
+import { modelKey } from "../../lib/model-visibility"
 
 interface Provider {
   id: string
@@ -33,10 +35,19 @@ export function ModelPickerModal({ visible, providers, selected, isDark, onClose
   const { t } = useTranslation()
   const [search, setSearch] = useState("")
   const { hidden, loaded } = useHiddenModels()
+  const { favorites, toggle } = useFavoriteModels()
 
   const sections = useMemo(
-    () => buildModelPickerSections({ providers: loaded ? providers : [], query: search, selected, hidden }),
-    [providers, search, selected, hidden, loaded],
+    () =>
+      buildModelPickerSections({
+        providers: loaded ? providers : [],
+        query: search,
+        selected,
+        hidden,
+        favorites,
+        favoritesTitle: t("chat.modelPicker.favorites"),
+      }),
+    [providers, search, selected, hidden, loaded, favorites, t],
   )
 
   const handleSelect = useCallback(
@@ -92,6 +103,7 @@ export function ModelPickerModal({ visible, providers, selected, isDark, onClose
                 </View>
                 {section.data.map((model) => {
                   const active = selected?.providerID === model.providerID && selected?.modelID === model.modelID
+                  const starred = favorites.includes(modelKey(model.providerID, model.modelID))
                   return (
                     <TouchableOpacity
                       key={`${model.providerID}/${model.modelID}`}
@@ -116,6 +128,18 @@ export function ModelPickerModal({ visible, providers, selected, isDark, onClose
                           {model.providerName}
                         </Text>
                       </View>
+                      <TouchableOpacity
+                        onPress={() => toggle(model.providerID, model.modelID)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        testID={`model-favorite-${model.providerID}-${model.modelID}`}
+                        accessibilityLabel={t("chat.modelPicker.favoriteToggle")}
+                      >
+                        <Ionicons
+                          name={starred ? "star" : "star-outline"}
+                          size={17}
+                          color={starred ? "#f59e0b" : isDark ? "#555555" : "#c0c0c0"}
+                        />
+                      </TouchableOpacity>
                       {active && <Ionicons name="checkmark-circle" size={20} color="#8b5cf6" />}
                     </TouchableOpacity>
                   )
