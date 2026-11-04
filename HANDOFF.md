@@ -15,7 +15,7 @@
 | Ветки | `main` = `master` (релизный коммит — см. `git log -1`) |
 | Тег | `v0.2.30` |
 | Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.30 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
-| APK | см. `SHA256SUMS.txt` в релизе |
+| APK | 86 401 676 байт, SHA256 `cdeab566d04d52ecccc70208abbc178230941f6eaead20a7901bae9e36773d51` |
 | Подпись | production keystore, сертификат тот же, что у 0.2.20/0.2.22/0.2.23/0.2.27/0.2.28/0.2.29 → установка поверх без удаления |
 | Каналы | только `Build Android APK` и `Security scan`. Play / F-Droid / App Store не используются, на тег `v*` не запускаются |
 | Тесты | `npm test` — **585 passed, 0 failed**; `npm run typecheck` чисто; `npm run check:versions` — 0.2.30 (64) |
