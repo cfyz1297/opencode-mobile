@@ -417,7 +417,8 @@
       "copy": "复制",
       "copied": "已复制",
       "tokens": "tokens",
-      "revertHere": "重置到此消息"
+      "revertHere": "重置到此消息",
+      "failed": "运行失败"
     },
     "variantPicker": {
       "title": "推理强度",

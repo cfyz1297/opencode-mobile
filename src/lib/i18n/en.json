@@ -417,7 +417,8 @@
       "copy": "Copy",
       "copied": "Copied",
       "tokens": "tokens",
-      "revertHere": "Reset to this point"
+      "revertHere": "Reset to this point",
+      "failed": "Run failed"
     },
     "variantPicker": {
       "title": "Reasoning Effort",

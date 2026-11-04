@@ -1,24 +1,29 @@
 # OpenCode Mobile — мастер-документ (форк cfyz1297)
 
-Актуально на **2026-11-03**.
+Актуально на **2026-11-04**.
 
 - App: **`cc.agentlabs.opencode`** — Expo/React Native Android-клиент к собственному серверу `opencode serve` (V2 API).
 - Репозиторий форка: **`cfyz1297/opencode-mobile`**. Апстрим для справки: `dzianisv/opencode-mobile`.
 - Пользователь запускает сервер в Termux на телефоне; приложение — клиент к нему.
+- **Текст релиза пишется на двух языках: сначала английский, потом русский.** Правило действует с 0.2.30, распространяется на описание GitHub Release, `README.md`/`README.ru.md` и этот файл.
 
-## Состояние на 2026-11-03
+## Состояние на 2026-11-04
 
 | Что | Значение |
 |---|---|
-| Версия | **0.2.29**, versionCode **63** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
+| Версия | **0.2.30**, versionCode **64** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
 | Ветки | `main` = `master` (релизный коммит — см. `git log -1`) |
-| Тег | `v0.2.29` |
-| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.29 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
-| APK | 86 401 195 байт, SHA256 `e6f4574521b09045dfa1fa7032b8db9d31ab5546c5d51f07ad64fa537f962cb1` |
-| Подпись | production keystore, сертификат тот же, что у 0.2.20/0.2.22/0.2.23/0.2.27/0.2.28 → установка поверх без удаления |
+| Тег | `v0.2.30` |
+| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.30 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
+| APK | см. `SHA256SUMS.txt` в релизе |
+| Подпись | production keystore, сертификат тот же, что у 0.2.20/0.2.22/0.2.23/0.2.27/0.2.28/0.2.29 → установка поверх без удаления |
 | Каналы | только `Build Android APK` и `Security scan`. Play / F-Droid / App Store не используются, на тег `v*` не запускаются |
-| Тесты | `npm test` — **582 passed, 0 failed**; `npm run typecheck` чисто; `npm run check:versions` — 0.2.29 (63) |
+| Тесты | `npm test` — **585 passed, 0 failed**; `npm run typecheck` чисто; `npm run check:versions` — 0.2.30 (64) |
 | Документация | `README.md` — английский (основной), `README.ru.md` — русский, оба ссылаются друг на друга |
+
+Что нового в 0.2.30:
+
+- **Неудачный прогон показывает причину.** Сервер хранит причину падения в assistant-сообщении (`info.error`), а текста ответа у такого сообщения нет, поэтому `MessageBubble` рисовал пустой пузырь: сессия, которая на самом деле падала, выглядела зависшей и «переставшей отвечать». Наблюдаемый случай — бесплатная модель отвечала `429 Free usage limit reached`, и в приложении не появлялось ничего. Теперь причина выводится красным в пузыре, там же, где был бы ответ; данные берутся из переписки, поэтому строка остаётся и после перезахода в сессию. Если сервер не прислал текст, показывается ключ `chat.message.failed` (en/ru/zh-Hans). Тест — `src/components/chat/message-bubble-error.test.ts` (рендерит настоящий компонент с детерминированными адаптерами; без фикса красный).
 
 Что нового в 0.2.29:
 
@@ -83,7 +88,7 @@
 1. Поднять версию в четырёх местах: `package.json`, `app.json` (`expo.version` + `expo.android.versionCode`), `android/app/build.gradle` (`versionName` + `versionCode`), и проверки `versionCode='NN'` / `versionName='x.y.z'` в `.github/workflows/build.yml`.
 2. `npm run check:versions` — версии в трёх файлах должны совпасть.
 3. Слить в `main`, поставить тег `vX.Y.Z`, дождаться зелёного CI на теге.
-4. Опубликовать GitHub Release вручную с текстом изменений в описании и приложить `app-release.apk` под именем `opencode-mobile-v2.apk` (+ `SHA256SUMS.txt`): workflow Release не создаёт, а `releases/latest/download/opencode-mobile-v2.apk` используется встроенной проверкой обновлений.
+4. Опубликовать GitHub Release вручную с текстом изменений в описании и приложить `app-release.apk` под именем `opencode-mobile-v2.apk` (+ `SHA256SUMS.txt`): workflow Release не создаёт, а `releases/latest/download/opencode-mobile-v2.apk` используется встроенной проверкой обновлений. **Описание релиза — на двух языках: сначала английский, потом русский** (разделы `English` / `Русский`).
 5. Обновить `README.md` (английский, основной) и `README.ru.md` (русский), затем этот файл.
 
 ## Правила окружения этого форка

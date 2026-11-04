@@ -154,6 +154,18 @@ export const MessageBubble = memo(
           return <ToolRun key={item.key} tools={item.tools} isDark={isDark} />
         })}
 
+        {/* Why the run stopped. A failed run keeps its reason on the message
+            and renders no text, so without this row the chat looks like it
+            simply stopped answering. */}
+        {!isUser && message.error && (
+          <View style={s.errorRow}>
+            <Ionicons name="alert-circle" size={14} color="#ef4444" />
+            <Text style={s.errorText} selectable>
+              {message.error.message || t("chat.message.failed")}
+            </Text>
+          </View>
+        )}
+
         {/* User text */}
         {isUser && text.length > 0 && (
           <Text style={[s.messageText, isDark && s.textWhite]} selectable>
@@ -292,6 +304,10 @@ const s = StyleSheet.create({
   actionBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 2 },
   actionText: { fontSize: 11, color: "#777777" },
   actionTextDark: { color: "#888888" },
+
+  // Failed run: the server's reason, verbatim.
+  errorRow: { flexDirection: "row", alignItems: "flex-start", gap: 6, marginTop: 8 },
+  errorText: { fontSize: 13, lineHeight: 19, color: "#ef4444", flex: 1 },
 
   // Images
   imageScroll: { marginBottom: 8 },

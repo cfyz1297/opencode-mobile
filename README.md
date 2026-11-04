@@ -4,7 +4,7 @@
 
 A fork of [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile) — an Expo/React Native client for a self-hosted `opencode serve`. The fork runs on **OpenCode API V2** (server 2.0.x) and ships as an APK from GitHub Releases; app stores are not used.
 
-Version **0.2.29 (63)** continues the 0.2.20 user line. It installs over the previous build — no uninstall needed.
+Version **0.2.30 (64)** continues the 0.2.20 user line. It installs over the previous build — no uninstall needed.
 
 > **Important:** the 0.2.20 features (tunnel wizard, tablet layout, offline history) have still **not been verified by the user** on a real device against a real server. There are automated tests and an Android CUA smoke run on an emulator; that is not a substitute for manual checking.
 
@@ -49,7 +49,7 @@ The base is upstream [dzianisv/opencode-mobile](https://github.com/dzianisv/open
 | What | Upstream | Fork |
 |---|---|---|
 | Server API | API 1.x (`/session`, `/global/*`) | **V2 only** (`/api/*`), server 2.0.x |
-| Version | 0.4.x | 0.2.x line, currently 0.2.29 (63) |
+| Version | 0.4.x | 0.2.x line, currently 0.2.30 (64) |
 | Signing and updates | new debug key per build in old versions | permanent keystore, installs in place |
 | Channels | Google Play, self-hosted F-Droid, APK, EAS | APK from GitHub Releases only |
 | Telemetry | Sentry (crash reports) + PostHog | both dependencies removed |
@@ -113,7 +113,11 @@ A separate pure-Java client without Gradle (`aapt → ecj → d8 → apksigner`)
 ## Updates
 
 <details>
-<summary>Changelog by version (0.2.11 – 0.2.29)</summary>
+<summary>Changelog by version (0.2.11 – 0.2.30)</summary>
+
+### 0.2.30
+
+- **A failed run now says why.** When a run fails — for example a free model answering `429 Free usage limit reached` — the server stores the reason on the assistant message and sends no answer text. The chat rendered that as an empty bubble, so a session that was actually erroring looked frozen and stopped replying. The reason now shows in the bubble in red, exactly where the answer would have been, and it survives reopening the session because it comes from the transcript.
 
 ### 0.2.29
 
