@@ -230,20 +230,44 @@ export function createV1Client(config: ClientConfig) {
 
     session: {
       // Global experimental list first (all directories); falls back to the
-      // directory-scoped /session on 404 from older builds.
+      // directory-scoped /session on 404 from older builds. The route defaults
+      // to the newest 100 and silently truncates, so it is paged via its own
+      // x-next-cursor header — otherwise every session past #100 by recency is
+      // missing from the list even though the TUI still shows it.
       list: (params?: { roots?: boolean; limit?: number; search?: string }): Promise<Session[]> =>
         loadSessionList(
           {
             getExperimental: async (): Promise<Session[] | null> => {
-              const response = await fetchWithTimeout(`${config.baseUrl}/experimental/session`, {
-                headers: createHeaders(config),
-              })
-              if (response.status === 404) return null
-              if (!response.ok) {
-                const body = await response.text()
-                throw apiErrorFor(response.status, `API Error: ${response.status} - ${body}`)
+              const all: Session[] = []
+              const seen = new Set<string>()
+              let cursor: number | undefined
+              for (let page = 0; page < 10; page++) {
+                const query = new URLSearchParams({ limit: "200" })
+                if (cursor != null) query.set("cursor", String(cursor))
+                const response = await fetchWithTimeout(
+                  `${config.baseUrl}/experimental/session?${query.toString()}`,
+                  { headers: createHeaders(config) },
+                )
+                if (response.status === 404) return page === 0 ? null : all
+                if (!response.ok) {
+                  const body = await response.text()
+                  throw apiErrorFor(response.status, `API Error: ${response.status} - ${body}`)
+                }
+                const rows = (await response.json()) as Session[]
+                if (!Array.isArray(rows) || rows.length === 0) break
+                // Cursor boundaries can repeat rows on time.updated ties.
+                for (const session of rows) if (!seen.has(session.id)) {
+                  seen.add(session.id)
+                  all.push(session)
+                }
+                const raw = response.headers.get("x-next-cursor")
+                const next = raw == null ? undefined : Number(raw)
+                // No cursor, a repeated one, or a malformed one ends the walk —
+                // a server that ignores the parameter must not loop forever.
+                if (next == null || !Number.isFinite(next) || next === cursor) break
+                cursor = next
               }
-              return response.json()
+              return all
             },
             getLegacy: (query) => request<Session[]>(config, `/session${query}`),
           },

@@ -25,6 +25,7 @@ type Call = { path: string; method: string; headers: import("node:http").Incomin
 let calls: Call[] = []
 let routes: Record<string, { status?: number; body?: unknown }> = {}
 let experimentalStatus = 200
+let nextCursor: number | undefined
 let healthStatus = 200
 let eventPayload = ""
 const session = { id: "s1", slug: "s1", projectID: "p", directory: "/work", title: "S", version: "1.18.34", time: { created: 1, updated: 2 } }
@@ -39,10 +40,13 @@ const server = createServer(async (req, res) => {
     res.end(eventPayload)
     return
   }
-  if (req.url === "/experimental/session" && experimentalStatus !== 200) {
-    res.writeHead(experimentalStatus, { "Content-Type": "text/plain" })
-    res.end("no")
-    return
+  if (req.url?.startsWith("/experimental/session")) {
+    if (experimentalStatus !== 200) {
+      res.writeHead(experimentalStatus, { "Content-Type": "text/plain" })
+      res.end("no")
+      return
+    }
+    if (nextCursor != null) res.setHeader("x-next-cursor", String(nextCursor))
   }
   if (req.url === "/global/health" && healthStatus !== 200) {
     res.writeHead(healthStatus, { "Content-Type": "application/json" })
@@ -68,6 +72,7 @@ beforeEach(() => {
   calls = []
   routes = {}
   experimentalStatus = 200
+  nextCursor = undefined
   healthStatus = 200
   eventPayload = ""
 })
@@ -92,7 +97,7 @@ test("a 401 is surfaced as an auth error, a 503 as a plain API error", async () 
 })
 
 test("session list prefers /experimental/session and shapes client-side", async () => {
-  routes["/experimental/session"] = {
+  routes["/experimental/session?limit=200"] = {
     body: [
       { ...session, id: "old", parentID: "parent", time: { created: 1, updated: 1 } },
       { ...session, id: "new", time: { created: 2, updated: 9 } },
@@ -101,7 +106,37 @@ test("session list prefers /experimental/session and shapes client-side", async 
   }
   const list = await client().session.list({ roots: true, limit: 2 })
   assert.deepEqual(list.map((s) => s.id), ["new", "mid"])
-  assert.equal(calls[0].path, "/experimental/session")
+  assert.equal(calls[0].path, "/experimental/session?limit=200")
+})
+
+test("session list follows x-next-cursor instead of trusting the newest page", async () => {
+  // The route defaults to 100 rows and silently truncates; without the cursor
+  // every older session is missing from the app while the TUI still lists it.
+  routes["/experimental/session?limit=200"] = {
+    body: [{ ...session, id: "new", time: { created: 2, updated: 9 } }],
+  }
+  routes["/experimental/session?limit=200&cursor=42"] = {
+    body: [{ ...session, id: "old", time: { created: 1, updated: 1 } }],
+  }
+  nextCursor = 42
+  const list = await client().session.list({ roots: true })
+  assert.deepEqual(list.map((s) => s.id), ["new", "old"])
+  assert.deepEqual(calls.map((c) => c.path), [
+    "/experimental/session?limit=200",
+    "/experimental/session?limit=200&cursor=42",
+  ])
+})
+
+test("a repeated cursor ends the walk instead of looping on a server that ignores it", async () => {
+  routes["/experimental/session?limit=200"] = {
+    body: [{ ...session, id: "new", time: { created: 2, updated: 2 } }],
+  }
+  routes["/experimental/session?limit=200&cursor=7"] = routes["/experimental/session?limit=200"]
+  nextCursor = 7
+  await client().session.list()
+  // One page with the cursor, then the same cursor comes back: stop rather
+  // than request page 3, 4, ... forever. Rows are deduped too.
+  assert.equal(calls.filter((c) => c.path.startsWith("/experimental/session")).length, 2)
 })
 
 test("session list falls back to the legacy route when the experimental one is absent", async () => {
