@@ -30,6 +30,9 @@ export interface V2SessionInfo {
   title?: string
   parentID?: string
   projectID?: string
+  /** Cumulative for the whole session. */
+  cost?: number
+  tokens?: { input?: number; output?: number; reasoning?: number; cache?: { read?: number; write?: number } }
   location?: { directory?: string }
   time?: { created?: number; updated?: number; archived?: number }
   revert?: { messageID: string; partID?: string }
@@ -112,6 +115,15 @@ export function mapSession(raw: V2SessionInfo | null | undefined, fallbackDirect
     parentID: source.parentID,
     title: source.title ?? "",
     version: "2",
+    cost: source.cost,
+    tokens: source.tokens
+      ? {
+          input: source.tokens.input ?? 0,
+          output: source.tokens.output ?? 0,
+          reasoning: source.tokens.reasoning ?? 0,
+          cache: { read: source.tokens.cache?.read ?? 0, write: source.tokens.cache?.write ?? 0 },
+        }
+      : undefined,
     time: {
       created: source.time?.created ?? 0,
       updated: source.time?.updated ?? source.time?.created ?? 0,

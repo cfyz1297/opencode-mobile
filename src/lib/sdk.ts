@@ -13,6 +13,7 @@ import { ApiError, apiErrorFor, isAuthStatus } from "./api-error"
 import { detectServerApi, type ProbeRequest, type ServerApi, type ServerIdentity } from "./api-detect"
 import { createV1Client } from "./sdk-v1"
 import { normalizeSessions } from "./session-list"
+import { MAX_MESSAGE_LIMIT } from "./message-page"
 import type { FileRoot } from "./file-roots"
 import {
   buildFormAnswer,
@@ -67,6 +68,16 @@ export interface Session {
     additions: number
     deletions: number
     files: number
+  }
+  // Session-wide totals reported by the server (V2 `/api/session/{id}`). The
+  // message page is not the whole session, so this is what "spent on the whole
+  // session" has to come from.
+  cost?: number
+  tokens?: {
+    input: number
+    output: number
+    reasoning?: number
+    cache?: { read: number; write: number }
   }
   // Present while a message (and everything after it) is pending revert —
   // the server keeps the underlying messages until the next prompt/summarize
@@ -551,6 +562,37 @@ function createV2Client(config: ClientConfig) {
           await request(config, `/api/session/${sessionID}/message${qs ? `?${qs}` : ""}`),
         )
         return mapMessages(raw, sessionID)
+      },
+
+      /**
+       * The whole transcript, for the "whole session" page size and for
+       * load-older. `messages()` with no limit gets the server default, which
+       * is 50 — the old "load all" path asked for that and then set
+       * hasMore=false, so anything past the newest 50 messages was unreachable.
+       */
+      allMessages: async (sessionID: string): Promise<MessageWithParts[]> => {
+        const out: V2MessageBody[] = []
+        const seen = new Set<string>()
+        let cursor: string | undefined
+        for (let page = 0; page < 10; page++) {
+          const query = new URLSearchParams({ limit: String(MAX_MESSAGE_LIMIT) })
+          if (cursor) query.set("cursor", cursor)
+          const body = await request<{ data?: V2MessageBody[]; cursor?: { previous?: string | null } }>(
+            config,
+            `/api/session/${sessionID}/message?${query.toString()}`,
+          )
+          const rows = Array.isArray(body?.data) ? body.data : []
+          const fresh = rows.filter((row) => row?.id && !seen.has(row.id))
+          for (const row of fresh) seen.add(row.id)
+          out.push(...fresh)
+          // The message cursor does not advance on every server build (it can
+          // answer an empty page), so a page with no new rows ends the walk
+          // rather than relying on the cursor alone.
+          const previous = body?.cursor?.previous ?? undefined
+          if (!previous || previous === cursor || fresh.length === 0) break
+          cursor = previous
+        }
+        return mapMessages(out, sessionID)
       },
 
       // Which sessions this server is executing right now. Authoritative for

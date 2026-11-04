@@ -262,7 +262,8 @@
     "preferences": {
       "title": "偏好设置",
       "pageSizeLabel": "每次打开的对话轮数",
-      "pageSizeHint": "打开会话时显示多少轮你的提问。一次提问可能产生很多条消息，所以按提问数计算，而不是消息数。数值越小越快。"
+      "pageSizeHint": "会话打开时加载多少条提示。一条提示可能产生很多消息，因此按提示计算而不是消息。越小越快；「全部」显示整个会话。",
+      "pageSizeAll": "全部"
     }
   },
   "sessionsList": {
@@ -503,7 +504,10 @@
         "minutesAgo": "{{count}} 分钟前",
         "hoursAgo": "{{count}} 小时前",
         "daysAgo": "{{count}} 天前"
-      }
+      },
+      "open": "会话信息与上下文占用",
+      "totalCost": "本次会话总花费",
+      "freeSession": "无费用"
     }
   },
   "providers": {

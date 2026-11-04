@@ -262,7 +262,8 @@
     "preferences": {
       "title": "Preferences",
       "pageSizeLabel": "Prompts per session",
-      "pageSizeHint": "How many of your prompts a session opens with. One prompt can produce many messages, so this is counted in prompts, not messages. Lower = faster."
+      "pageSizeHint": "How many of your prompts a session opens with. One prompt can produce many messages, so this is counted in prompts, not messages. Lower = faster; All shows the whole session.",
+      "pageSizeAll": "All"
     }
   },
   "sessionsList": {
@@ -503,7 +504,10 @@
         "minutesAgo": "{{count}}m ago",
         "hoursAgo": "{{count}}h ago",
         "daysAgo": "{{count}}d ago"
-      }
+      },
+      "open": "Session info and context usage",
+      "totalCost": "Total spent on this session",
+      "freeSession": "no cost"
     }
   },
   "providers": {

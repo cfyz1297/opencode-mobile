@@ -10,16 +10,26 @@
 export const MESSAGES_PER_TURN = 20
 export const MIN_TURNS = 1
 export const MAX_TURNS = 50
+/** "Whole session": the setting's maximum, meaning show everything the server
+ *  returns instead of trimming to a number of exchanges. */
+export const ALL_TURNS = 0
 /** Server rejects a message page larger than this. */
 export const MAX_MESSAGE_LIMIT = 200
 
 export function clampTurns(turns: number): number {
+  if (turns === ALL_TURNS) return ALL_TURNS
   if (!Number.isFinite(turns)) return MIN_TURNS
   return Math.max(MIN_TURNS, Math.min(MAX_TURNS, Math.floor(turns)))
 }
 
-/** Message-page size to request for `turns` exchanges. */
+export function isWholeSession(turns: number): boolean {
+  return turns === ALL_TURNS
+}
+
+/** Message-page size to request for `turns` exchanges. "Whole session" asks for
+ *  the largest page the server accepts (200) and pages for the rest. */
 export function messageLimitForTurns(turns: number): number {
+  if (turns === ALL_TURNS) return MAX_MESSAGE_LIMIT
   return Math.min(MAX_MESSAGE_LIMIT, clampTurns(turns) * MESSAGES_PER_TURN)
 }
 
@@ -65,6 +75,7 @@ export function trimToTurns<T extends { role?: string }>(
   turns: number,
 ): { messages: T[]; trimmed: boolean } {
   const wanted = clampTurns(turns)
+  if (wanted === ALL_TURNS) return { messages: messages.slice(), trimmed: false }
   const total = countTurns(messages)
   if (total <= wanted) return { messages: messages.slice(), trimmed: false }
 

@@ -14,6 +14,7 @@ import { buildRequestHeaders } from "./headers"
 import { SSEParser } from "./sse"
 import { ApiError, apiErrorFor } from "./api-error"
 import { loadSessionList } from "./session-list"
+import { MAX_MESSAGE_LIMIT } from "./message-page"
 import type { Agent, ClientConfig, Command, Event, FileEntry, HealthResponse, MessageWithParts, Project, Session } from "./sdk"
 import type { FileRoot } from "./file-roots"
 import type { ProviderCatalog } from "./v2-compat"
@@ -296,6 +297,11 @@ export function createV1Client(config: ClientConfig) {
         const qs = query.toString()
         return request<MessageWithParts[]>(config, `/session/${sessionID}/message${qs ? `?${qs}` : ""}`)
       },
+
+      // v1 returns the transcript in one response (no message cursor), so the
+      // whole session is simply the largest page the route accepts.
+      allMessages: (sessionID: string) =>
+        request<MessageWithParts[]>(config, `/session/${sessionID}/message?limit=${MAX_MESSAGE_LIMIT}`),
 
       // The v1 API has no activity record. Throwing is the contract: callers
       // treat a missing answer as "fall back to the transcript heuristic".

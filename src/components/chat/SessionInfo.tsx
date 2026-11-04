@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import type { Message, Session } from "../../lib/sdk"
 import type { Provider } from "../../stores/catalog"
+import { computeSessionStats, fillColor } from "../../lib/session-stats"
 
 interface Props {
   session: Session | null
@@ -53,37 +54,9 @@ export function SessionInfo({
   onClose,
 }: Props) {
   const { t } = useTranslation()
-  // Match TUI: last assistant message tokens (context window), cumulative cost
-  const stats = useMemo(() => {
-    let cost = 0
-    let last: Message | null = null
-
-    for (const msg of messages) {
-      if (msg.role !== "assistant") continue
-      if (msg.cost) cost += msg.cost
-      if (msg.tokens && msg.tokens.output > 0) last = msg
-    }
-
-    // Last assistant message token breakdown (what the TUI shows)
-    const tokens = last?.tokens
-    const input = tokens?.input || 0
-    const output = tokens?.output || 0
-    const reasoning = tokens?.reasoning || 0
-    const cacheRead = tokens?.cache?.read || 0
-    const cacheWrite = tokens?.cache?.write || 0
-    const total = input + output + reasoning + cacheRead + cacheWrite
-
-    // Find context limit from provider catalog
-    let context = 0
-    if (last?.providerID && last?.modelID) {
-      const provider = providers.find((p) => p.id === last!.providerID)
-      const model = provider?.models.find((m) => m.id === last!.modelID)
-      context = model?.limit?.context || 0
-    }
-    const percent = context > 0 ? Math.round((total / context) * 100) : 0
-
-    return { cost, input, output, reasoning, cacheRead, cacheWrite, total, percent, context }
-  }, [messages, providers])
+  // Session totals come from the session record (cumulative), context from the
+  // last turn — see session-stats.ts, shared with the header ring.
+  const stats = useMemo(() => computeSessionStats(messages, providers, session), [messages, providers, session])
 
   if (!visible) return null
 
@@ -102,10 +75,22 @@ export function SessionInfo({
           {hasTokens && (
             <Text style={[s.tokens, isDark && s.textDark]}>
               {stats.total.toLocaleString()}
-              {stats.percent > 0 && <Text style={[s.percent, isDark && s.dimDark]}>{`  ${stats.percent}%`}</Text>}
+              {stats.percent > 0 && (
+                <Text style={[s.percent, { color: fillColor(stats.percent) }]}>{`  ${stats.percent}%`}</Text>
+              )}
             </Text>
           )}
-          {hasCost && <Text style={[s.cost, isDark && s.dimDark]}>({formatCost(stats.cost)})</Text>}
+          {hasCost && (
+            <Text
+              style={[s.cost, isDark && s.dimDark]}
+              accessibilityLabel={t("chat.sessionInfo.totalCost")}
+            >
+              {`· ${formatCost(stats.cost)}`}
+            </Text>
+          )}
+          {hasTokens && !hasCost ? (
+            <Text style={[s.cost, isDark && s.dimDark]}>{`· ${t("chat.sessionInfo.freeSession")}`}</Text>
+          ) : null}
           {!hasTokens && !hasCost && (
             <Text style={[s.cost, isDark && s.dimDark]}>{t("chat.sessionInfo.noUsageData")}</Text>
           )}
@@ -119,11 +104,7 @@ export function SessionInfo({
       {stats.percent > 0 && (
         <View style={[s.bar, isDark && s.barDark]}>
           <View
-            style={[
-              s.barFill,
-              { width: `${Math.min(stats.percent, 100)}%` },
-              stats.percent > 80 ? s.barWarn : stats.percent > 50 ? s.barMid : s.barOk,
-            ]}
+            style={[s.barFill, { width: `${stats.percent}%`, backgroundColor: fillColor(stats.percent) }]}
           />
         </View>
       )}
@@ -277,9 +258,6 @@ const s = StyleSheet.create({
     height: "100%",
     borderRadius: 2,
   },
-  barOk: { backgroundColor: "#3b82f6" },
-  barMid: { backgroundColor: "#f59e0b" },
-  barWarn: { backgroundColor: "#ef4444" },
   breakdown: {
     flexDirection: "row",
     flexWrap: "wrap",

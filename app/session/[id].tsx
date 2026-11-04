@@ -37,10 +37,12 @@ import {
   VariantPicker,
   ImageAttachments,
   SessionInfo,
+  ContextRing,
   type SlashCommand,
   type Attachment,
 } from "../../src/components/chat"
 import { useSessions } from "../../src/stores/sessions"
+import { computeSessionStats } from "../../src/lib/session-stats"
 import { useEvents, refreshPending } from "../../src/stores/events"
 import { useConnections } from "../../src/stores/connections"
 import { useAuth } from "../../src/stores/auth"
@@ -840,6 +842,13 @@ export default function SessionScreen() {
     return found?.variants
   }, [model, providers])
 
+  // Same numbers as the info panel (session-stats.ts), so the ring and the
+  // percentage in the panel can never disagree.
+  const contextPercent = useMemo(
+    () => computeSessionStats(messages || [], providers, currentSession).percent,
+    [messages, providers, currentSession],
+  )
+
   return (
     <>
       <Stack.Screen
@@ -853,13 +862,13 @@ export default function SessionScreen() {
                   <Text style={[s.dirText, isDark && s.dirTextDark]}>{shortDir}</Text>
                 </View>
               )}
-              <TouchableOpacity onPress={() => setShowInfo((v) => !v)} hitSlop={8}>
-                <Ionicons
-                  name={showInfo ? "stats-chart" : "stats-chart-outline"}
-                  size={20}
-                  color={showInfo ? "#3b82f6" : isDark ? "#888888" : "#666666"}
-                />
-              </TouchableOpacity>
+              <ContextRing
+                percent={contextPercent}
+                isDark={isDark}
+                active={showInfo}
+                onPress={() => setShowInfo((v) => !v)}
+                accessibilityLabel={t("chat.sessionInfo.open")}
+              />
             </View>
           ),
         }}

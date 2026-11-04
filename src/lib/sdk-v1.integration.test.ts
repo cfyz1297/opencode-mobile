@@ -166,6 +166,15 @@ test("session CRUD and messages use the v1 routes", async () => {
   assert.equal(await client().session.delete("s1"), undefined)
 })
 
+test("v1 whole-session fetch asks for the maximum page in one request", async () => {
+  // v1 has no message cursor: the transcript comes back whole, capped only by
+  // the route's limit.
+  routes["/session/s1/message?limit=200"] = { body: [{ info: { id: "m1" }, parts: [] }] }
+  const all = await client().session.allMessages("s1")
+  assert.equal(all.length, 1)
+  assert.equal(calls[0].path, "/session/s1/message?limit=200")
+})
+
 test("v1 has no activity endpoint and reports it as missing", async () => {
   await assert.rejects(client().session.active(), (error: unknown) => error instanceof ApiError && error.status === 404)
 })

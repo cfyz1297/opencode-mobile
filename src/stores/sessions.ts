@@ -6,7 +6,7 @@ import { extractPromptFromParts, type PromptFromParts } from "../lib/prompt-from
 import { mergeIncomingMessage, reconcileTemps } from "../lib/message-merge"
 import { isColdSessionLoad, isLiveEventForSession } from "../lib/session-load-reconcile"
 import { createPartBatcher } from "../lib/part-batch"
-import { countTurns, keepLoadedHistory, messageLimitForTurns, trimToTurns } from "../lib/message-page"
+import { countTurns, isWholeSession, keepLoadedHistory, messageLimitForTurns, trimToTurns } from "../lib/message-page"
 import { offlineHistory } from '../lib/history-storage'
 
 // Helper to convert API response to our internal format
@@ -197,9 +197,11 @@ export const useSessions = create<SessionsState>((set, get) => ({
 
       const turns = pageSize()
       const limit = messageLimitForTurns(turns)
+      // "Whole session" is the setting's max: ask for the transcript itself
+      // instead of a page, then trimToTurns keeps all of it.
       const [session, firstPage] = await Promise.all([
         client.session.get(sessionID),
-        client.session.messages(sessionID, { limit }),
+        isWholeSession(turns) ? client.session.allMessages(sessionID) : client.session.messages(sessionID, { limit }),
       ])
 
       // A newer selectSession started while we were fetching — discard this
@@ -211,7 +213,7 @@ export const useSessions = create<SessionsState>((set, get) => ({
       // at 200 messages, so in that case ask for the session once without a
       // limit rather than paging blindly.
       let response = firstPage
-      if (firstPage.length >= limit && countTurns(parseMessages(firstPage).messages) < turns) {
+      if (!isWholeSession(turns) && firstPage.length >= limit && countTurns(parseMessages(firstPage).messages) < turns) {
         response = await client.session.messages(sessionID)
         if (seq !== selectSeq) return
       }
@@ -261,8 +263,10 @@ export const useSessions = create<SessionsState>((set, get) => ({
     try {
       set({ loadingMore: true })
 
-      // Fetch ALL messages for this session
-      const response = await client.session.messages(session.id)
+      // Fetch the whole transcript. `messages()` without a limit returned the
+      // server default of 50, and this path then set hasMore=false — everything
+      // older than that page became unreachable with no way to ask again.
+      const response = await client.session.allMessages(session.id)
       if (loadSeq !== loadOlderSeq) return // stale result — discard
 
       const { messages: all, parts: allParts } = parseMessages(response)

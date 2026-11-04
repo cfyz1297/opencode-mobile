@@ -89,6 +89,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   },
 
   setPageSize: async (size) => {
+    // ALL_TURNS (0) is a valid value, clampTurns passes it through.
     const clamped = clampTurns(size)
     set({ pageSize: clamped })
     await persist({ ...snapshot(get), pageSize: clamped })
