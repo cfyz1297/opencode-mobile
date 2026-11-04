@@ -2,21 +2,23 @@
 
 Правила ниже выведены из фактического кода; инструментов принуждения (линтер/форматтер) в репозитории нет, поэтому единственные автоматические гейты — `tsc --noEmit` и `npm test`.
 
+Актуально на 2026-11-05, коммит `2a97e60` (0.3.0).
+
 ## Обязательные разделы
 
 ### 1) Именование
 
 | Объект | Правило | Пример | Evidence |
 |--------|---------|--------|----------|
-| Файлы `src/lib` | kebab-case, доменное имя | `run-watchdog.ts`, `message-merge.ts`, `connection-security.ts` | `src/lib/` |
+| Файлы `src/lib` | kebab-case, доменное имя | `run-watchdog.ts`, `api-detect.ts`, `sdk-v1.ts`, `session-stats.ts`, `tool-view.ts` | `src/lib/` |
 | Файлы компонентов | PascalCase | `src/components/chat/MessageBubble.tsx`, `src/components/chat/ToolCallCard.tsx`, `src/components/chat/DirectorySwitcher.tsx` | `src/components/chat/` |
-| Файлы тестов | `<модуль>.test.ts` рядом с модулем | `src/lib/run-watchdog.test.ts` | `src/lib/` |
+| Файлы тестов | `<модуль>.test.ts` рядом с модулем; регрессия — `.regression.test.ts`, HTTP — `.integration.test.ts` | `src/lib/run-watchdog.test.ts`, `src/lib/variant-picker-keyboard.regression.test.ts`, `src/lib/sdk-v1.integration.test.ts` | `src/lib/` |
 | Хуки | файл kebab-case, экспорт `useXxx` | `src/lib/use-keyboard-height.ts` → `useKeyboardHeight` | `src/lib/use-keyboard-height.ts:16 (useKeyboardHeight)` |
 | Функции/методы | camelCase, глагол в начале | `chooseModelSelection`, `reconcileTemps`, `probeConnection` | `src/lib/model-selection.ts:37 (chooseModelSelection)`, `src/lib/message-merge.ts:67 (reconcileTemps)`, `src/lib/connection-health.ts:11 (probeConnection)` |
 | Типы/интерфейсы | PascalCase; `interface` для объектных форм, `type` для объединений/алиасов | `interface PartBatcher<T>` / `type ConnectionHealth = "checking" \| "online" \| "offline"` | `src/lib/part-batch.ts:10 (PartBatcher)`, `src/lib/connection-health.ts:3 (ConnectionHealth)` |
 | Константы уровня модуля | UPPER_SNAKE | `REQUEST_TIMEOUT_MS`, `MAX_TRACKED`, `PROBE_INTERVAL_MS` | `src/lib/sdk.ts:207 (REQUEST_TIMEOUT_MS)`, `src/lib/v2-compat.ts:607 (MAX_TRACKED)`, `app/(tabs)/connections.tsx:14 (PAGE_SIZE_OPTIONS)` |
-| Ключи хранилищ | `snake_case`-строки с префиксом `opencode_` | `opencode_connections`, `opencode_settings`, `opencode_history_<id>` | `src/stores/connections.ts:15-20 (CONNECTIONS_KEY)`, `src/stores/settings.ts:8`, `src/lib/offline-history.ts:41-44 (createHistory)` |
-| Сторы | `use<Домен>` | `useSessions`, `useEvents`, `useModelVisibility` | `src/stores/*.ts` |
+| Ключи хранилищ | `snake_case`-строки с префиксом `opencode_` | `opencode_connections`, `opencode_settings`, `opencode_history_<id>`, `opencode_model_favorites_v1` | `src/stores/connections.ts` (`CONNECTIONS_KEY`), `src/stores/settings.ts`, `src/lib/model-visibility.ts:6` |
+| Сторы | `use<Домен>` | `useSessions`, `useEvents`, `useModelVisibility`, `useModelFavorites` | `src/stores/*.ts` |
 | Тестовые описания | Английский, полное предложение-утверждение | `"a hidden keyboard means no padding, even if a stale height lingers"` | `src/lib/keyboard-inset.test.ts:16` |
 
 Правило про «приватность»: префиксов `_`/`#` нет, приватность выражается `private` в классах (`src/lib/v2-compat.ts:610-614 (V2EventAdapter)`) и не-экспортируемыми функциями модуля (`function request<T>` в `src/lib/sdk.ts:228 (request)`).
@@ -26,9 +28,10 @@
 - Форматтер: **отсутствует** (нет `.prettierrc*`, `.editorconfig`).
 - Линтер: **отсутствует** (нет `.eslintrc*`, `eslint.config.*`, зависимостей eslint).
 - Фактический стиль: отступ 2 пробела; в `src/**` преобладают двойные кавычки, точки с запятой в конце строк не ставятся (`grep ';$' src/lib/*.ts` — 8 строк на весь `src/lib`); в тестах и `scripts/*.mjs` встречаются одиночные кавычки и точки с запятой (`src/lib/connections-screen.test.ts:1-5`, `scripts/check-version-parity.mjs`). Стиль не принуждается, поэтому файл-в-файл разнобой допустим.
-- `any` формально не запрещён механически, но встречается точечно (24 вхождения `as any`/`: any` в `src`+`app`), обычно на границе известных-неполных типов: `name={icon as any}` (`src/components/chat/ToolCallCard.tsx:347 (ToolCallCard)`), `(event as any).payload` (`src/stores/events.ts:398 (connect)`). `AGENTS.md` требует «без `any`» — фактически это правило нарушается в 24 местах.
+- `any` формально не запрещён механически, но встречается точечно (`as any`/`: any` в `src`+`app`), обычно на границе известных-неполных типов: `name={icon as any}` (`src/components/chat/ToolCallCard.tsx:347 (ToolCallCard)`), `(event as any).payload` (`src/stores/events.ts:398 (connect)`). `AGENTS.md` требует «без `any`» — фактически это правило нарушается в 24 местах.
 - TypeScript: `strict: true`, наследование `expo/tsconfig.base` (`tsconfig.json:2-4`). Важное следствие: `include`/`exclude` исключают тесты из проверки типов (`tsconfig.json:9-10`), то есть `*.test.ts` **не типизируются** в `npm run typecheck`.
 - Запуск: `npm run typecheck`, `npm test`, `npm run test:coverage`, `npm run check:versions`.
+- Числа на 2026-11-05: **663 теста**, покрытие **98.33 % строк / 86.43 % ветвей / 96.06 % функций**.
 
 ### 3) Импорты и модули
 
@@ -41,7 +44,7 @@
 
 ### 4) Ошибки и логирование
 
-- Транспорт (`src/lib/sdk.ts`): не-2xx → `ApiError(status, body)`; 401/403 → `ApiAuthError` (`src/lib/api-error.ts:25-32 (isAuthStatus)`); 204 и пустое тело → `undefined`; не-JSON тело → `ApiError(0, "Non-JSON response: …")` (`src/lib/sdk.ts:245-262 (request)`).
+- Транспорт: не-2xx → `ApiError(status, body)`; 401/403 → auth-ошибка (`src/lib/api-error.ts`). Класс `ApiError` живёт в `api-error.ts`, а не в `sdk.ts`, чтобы оба транспорта (`sdk.ts`, `sdk-v1.ts`) делили его без цикла. 204/пустое тело → `undefined`; не-JSON → `ApiError(0, "Non-JSON response: …")`.
 - Сторы: ошибки кладутся в строковое поле состояния (`error: string | null`) и/или логируются, наружу не пробрасываются, кроме `sendMessage`, где ошибка пробрасывается после очистки оптимистичного сообщения (`src/stores/sessions.ts:394-414 (sendMessage)`).
 - Fail-closed: недоступность, не-2xx и не-JSON трактуются как «сервер недоступен», успех требует явного признака (`src/lib/connection-health.ts:10-20 (CONNECTION_PROBE_TIMEOUT_MS)`; `AGENTS.md`, раздел «Правила работы»).
 - Логи: `console.log/warn/error` с тегом в квадратных скобках: `[SSE]`, `[Events]`, `[sendMessage]` (`src/stores/events.ts:160,339,368`, `src/lib/sdk.ts:380-399 (events)`). Плюс кольцевой буфер `src/lib/logbuffer.ts` (200 записей), который попадает в диагностический отчёт.
@@ -51,16 +54,18 @@
 ### 5) Соглашения тестирования
 
 - Каталог: тест лежит рядом с модулем (`src/lib/*.test.ts`), один тест — один файл модуля; исключение по имени: `src/lib/session-recency.test.ts` тестирует `session-grouping.ts`.
-- Раннер: встроенный `node:test`, ассерты `node:assert/strict`; `describe/it` используются редко (11 suites на 565 тестов — почти всё плоские `test(...)`).
+- Раннер: встроенный `node:test`, ассерты `node:assert/strict`; `describe/it` редки — почти всё плоские `test(...)`.
 - Моки: внедрение зависимостей (фейковое хранилище, фейковый `fetch`), подмена `expo/fetch` через `registerHooks` (`src/lib/sdk.integration.test.ts:1-17`), HTTP-заглушка для интеграционных (`tests/fixtures/mock-opencode-server.ts`), «экранный» харнесс на `vm` + `typescript` (`src/lib/connections-screen.test.ts:1-30`), статические проверки исходников регулярками для того, что нельзя отрендерить (`src/components/wide-content-scroll.regression.test.ts`, `src/lib/dialog-back-gesture.regression.test.ts`).
-- Покрытие: гейт 80 % по строкам/ветвям/функциям (`package.json:14`); фактически 98.65 / 85.83 / 96.02 (локальный прогон `npm run test:coverage` 2026-11-03).
+- Покрытие: гейт 80 % по строкам/ветвям/функциям (`package.json`); фактически 98.33 / 86.43 / 96.06 (прогон 2026-11-05).
 - Подробности — `docs/codebase/TESTING.md`.
 
 ### 6) Прочие наблюдаемые конвенции
 
 - Комментарии объясняют «почему», часто со ссылкой на issue/BUG-номер (`BUG-016`, `issue #150`, `AGE-87`): `src/stores/connections.ts:73-81 (generateId)`, `src/stores/sessions.ts:164-174 (selectSession)`.
-- Коммиты — Conventional Commits по факту истории: `feat(chat): …`, `fix(sessions): …`, `chore(release): 0.2.28 (62)`, `docs: …` (`git log`). Ветка — `main`.
-- Локализация: только фиксированные ключи переводов, три каталога с паритетом ключей (`src/lib/i18n/catalog-parity.test.ts`); строки сервера как разметка не рендерятся (`AGENTS.md`). Фактическое исключение — заголовки уведомлений в `src/stores/events.ts:456,530,550,592` захардкожены по-английски.
+- Коммиты — Conventional Commits по факту истории: `feat(chat): …`, `fix(sessions): …`, `chore: release 0.3.0 — both APIs, new name, keyboard-safe variant picker`, `docs: …` (`git log`). Ветка — `main`.
+- Локализация: только фиксированные ключи переводов, три каталога с паритетом ключей (`src/lib/i18n/catalog-parity.test.ts`); строки сервера как разметка не рендерятся (`AGENTS.md`). Новые ключи 0.3.0: `settings.serverApi.*`, `chat.modelPicker.favorites`, `chat.sessionInfo.*`, `session.alerts.abortFailed*`, `connectionsList.preferences.pageSizeAll`. Фактическое исключение — заголовки уведомлений захардкожены по-английски (текст тела при этом фиксированный, см. `notify-format.ts`).
+- Тексты уведомлений о подтверждении и вопросе — константы `PERMISSION_NOTIFICATION_BODY` / `QUESTION_NOTIFICATION_BODY` (`src/lib/notify-format.ts`), серверные имена инструментов и текст вопроса в тело не попадают (аудит upstream M-03).
+- Заголовки запросов к туннелям: `Bypass-Tunnel-Reminder` и `ngrok-skip-browser-warning` добавляются централизованно в `src/lib/headers.ts`, не в местах вызова.
 
 ### 7) Evidence
 
@@ -71,7 +76,7 @@
 - `src/stores/connections.ts`
 - `src/lib/sdk.ts`
 - `src/lib/api-error.ts`
-- `src/lib/headers.ts`
+- `src/lib/headers.ts`, `src/lib/api-detect.ts`, `src/lib/sdk-v1.ts`
 - `src/lib/logbuffer.ts`
 - `src/lib/scrub.ts`
 - `src/lib/security-baseline.test.ts`

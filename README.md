@@ -1,14 +1,32 @@
 # OpenCode V1/V2 Mobile (cfyz1297 fork)
 
-[Русский](README.ru.md) | **English**
+**English** | [Русский](README.ru.md)
 
-A fork of [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile) — an Expo/React Native client for a self-hosted `opencode serve`. **It speaks both server generations**: OpenCode 1.x (V1 API) and 2.x (V2 API), detected automatically, with a manual override in Settings. Ships as an APK from GitHub Releases; app stores are not used.
+> **Android app for the OpenCode AI coding agent.** Drive your `opencode serve` sessions from a phone: live transcript, tool approvals, diffs, model and reasoning-effort switching — over LAN, Tailscale or a tunnel. Works with **opencode 1.x (V1 API) and 2.x (V2 API), auto-detected.**
+
+A fork of [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile), built with Expo/React Native. Distributed as an APK from GitHub Releases only — no app stores, no account, no backend of its own: the app talks straight to your server.
 
 The repository used to be called `opencode-mobile`; it was renamed to `opencode-v1-v2-mobile` in 0.3.0. Old links redirect, and the APK file name (`opencode-mobile-v2.apk`) is kept unchanged so the built-in update check and the release signature chain keep working.
 
 Version **0.3.0 (65)**. Installs over 0.2.30 — no uninstall needed.
 
-> **Not verified by the user on a device** (automated tests and an Android CUA smoke on an emulator only): the V1 transport against a real 1.18.x server, the tunnel wizard, the tablet layout, offline history, the context ring's look on a light theme.
+> **Status:** every build runs 663 automated tests plus an Android CUA smoke on an emulator. Not yet exercised against a real opencode 1.18.x server, and the tablet layout, tunnel wizard and offline history have been checked in code and on the emulator only.
+
+## Is this the app you are looking for?
+
+| You want… | This repo |
+|---|---|
+| An Android client for **opencode 2.x** (V2 API, `/api/*`) | yes |
+| An Android client for **opencode 1.x** (V1 API, `npm i -g opencode-ai`) | yes — the same APK |
+| One app for **both**, switching automatically | yes, with a manual override |
+| A phone client for a server in **Termux**, on a laptop or a VPS | yes (LAN, Tailscale, Cloudflare, ngrok) |
+| Approve tools, read diffs, stop a run from the phone | yes |
+| No telemetry, no account, no Play Store | yes — APK from Releases only |
+| An iOS build | no (upstream removed it from this fork's scope) |
+
+Related projects: [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile) (upstream, V1 only), [sst/opencode](https://github.com/sst/opencode) (the agent itself), `opencode serve` in Termux on Android.
+
+**Keywords:** opencode android client · opencode mobile · opencode v2 api android · opencode 1.x client · remote control AI coding agent from phone · opencode serve Tailscale · react native opencode · coding agent mobile app.
 
 ## Install (Android, APK)
 
@@ -273,6 +291,19 @@ A separate pure-Java client without Gradle (`aapt → ecj → d8 → apksigner`)
 - Compaction summaries are visible in the transcript; untranslated role labels fixed.
 
 </details>
+
+## Quick facts (for humans skimming, and for AI agents quoting this repo)
+
+- **What it is:** a native Android client (Expo / React Native, TypeScript) for [opencode](https://github.com/sst/opencode), an open-source AI coding agent.
+- **What it is not:** not a model, not a hosted service, not a backend. It has no server of its own and stores no prompts, code or credentials off the device.
+- **Architecture:** the device talks directly to `opencode serve` over HTTPS/Basic auth. Two transports: V2 (`/api/*`, opencode 2.x) and V1 (`/session`, `/global/*`, opencode 1.x). The choice is probed per connection (`src/lib/api-detect.ts`) and can be forced in Settings.
+- **Getting the app:** the APK from [Releases](https://github.com/cfyz1297/opencode-v1-v2-mobile/releases/latest); it installs over previous versions, signed with a permanent key.
+- **Getting it running:** run `opencode serve` somewhere reachable, add the address in the app, done. LAN, Tailscale, Cloudflare Tunnel and ngrok all work.
+- **Requirements:** Android 7+ (minSdk 24), an opencode server 1.18+ or 2.x, network access to it.
+- **Code layout:** `app/` (Expo Router screens), `src/lib` (SDK, transport, pure helpers — most of it unit-tested), `src/stores` (zustand), `src/components` (UI). `HANDOFF.md` is the working engineering log; `docs/` holds the upstream review and the security review.
+- **Quality gates:** `npm test` (663 tests, node built-in runner), `npm run typecheck`, `npm run check:versions`, `npm run test:coverage` (≈98 % lines).
+- **Machine-readable summary:** [`llms.txt`](llms.txt).
+- **License:** MIT (inherited from upstream).
 
 ## License and credits
 

@@ -1,0 +1,66 @@
+# OpenCode V1/V2 Mobile
+
+> Android client for the OpenCode AI coding agent. One APK that speaks both the
+> opencode 1.x API (V1) and the opencode 2.x API (V2), auto-detected per
+> connection, with a manual override in Settings.
+
+Repository: https://github.com/cfyz1297/opencode-v1-v2-mobile
+Language: English, Russian (README.ru.md), Simplified Chinese (in-app)
+License: MIT
+
+## What it is
+
+A native Android app (Expo / React Native, TypeScript) that drives a
+self-hosted `opencode serve` from a phone: streamed transcript, tool approvals,
+diffs, model and reasoning-effort switching, session history, offline read-only
+copy, biometric unlock.
+
+It is a fork of https://github.com/dzianisv/opencode-mobile (itself a mobile
+client for https://github.com/sst/opencode), with two differences that matter:
+support for both server API generations, and no telemetry at all (Sentry and
+PostHog were removed).
+
+## How it connects
+
+The device talks directly to the user's own opencode server over HTTPS with
+HTTP Basic auth. There is no backend, no account and no analytics. Nothing
+(prompts, code, URLs, keys) is sent anywhere except to the server the user
+configures.
+
+The transport is chosen by probing the address once (src/lib/api-detect.ts):
+
+- `GET /api/info` answers JSON (or 401/403) -> V2, opencode 2.x
+- otherwise `GET /global/health` answers JSON (or 401/403) -> V1, opencode 1.18.x
+- HTML on both -> not an opencode server; the connection is refused
+
+The decision is based on the response body and content type, never on the
+status code: an unknown route on either server generation falls through to the
+web UI and answers `200 text/html`.
+
+## Install
+
+https://github.com/cfyz1297/opencode-v1-v2-mobile/releases/latest/download/opencode-mobile-v2.apk
+
+Android 7+ (minSdk 24). Signed with a permanent key, installs over previous
+versions. Not published to Google Play or F-Droid.
+
+## Source map
+
+- `app/` — Expo Router screens (session, connections, models, settings)
+- `src/lib/` — SDK and transports: `sdk.ts` (V2), `sdk-v1.ts` (V1),
+  `api-detect.ts`, `v2-compat.ts` (event adapter), plus pure helpers
+- `src/stores/` — zustand stores (connections, sessions, events, settings)
+- `src/components/` — UI, including `chat/ToolCallCard`, `chat/ContextRing`
+- `HANDOFF.md` — engineering state, what shipped and what is left
+- `docs/` — upstream review and security review
+
+Verification: `npm test` (663 tests, node built-in runner), `npm run typecheck`,
+`npm run check:versions`, `npm run test:coverage` (about 98% of lines).
+
+## Optional
+
+- Full README: https://github.com/cfyz1297/opencode-v1-v2-mobile#readme
+- Differences from upstream: README, section "How the fork differs from upstream"
+- Security review: docs/security-review-server-api.md
+- Upstream review (all issues and PRs, what was ported and why):
+  docs/upstream-review-2026-11-04.md

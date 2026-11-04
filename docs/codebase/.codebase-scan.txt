@@ -67,10 +67,21 @@ assets/splash-icon.png
 docs
 docs/codebase
 docs/codebase/.codebase-scan.txt
+docs/codebase/.map-head
+docs/codebase/ARCHITECTURE.md
+docs/codebase/CONCERNS.md
+docs/codebase/CONVENTIONS.md
+docs/codebase/INTEGRATIONS.md
+docs/codebase/STACK.md
+docs/codebase/STRUCTURE.md
+docs/codebase/TESTING.md
 docs/connection-status-validation.md
 docs/model-visibility-validation.md
 docs/run-resync-validation.md
 docs/security-review-0.2.21.md
+docs/security-review-server-api.md
+docs/upstream-review-2026-11-04.md
+llms.txt
 metro.config.js
 package-lock.json
 package.json
@@ -88,7 +99,9 @@ src/components/ErrorBoundary.tsx
 src/components/TabletSessions.tsx
 src/components/UpdateBanner.tsx
 src/components/chat
+src/components/chat/AnsweredQuestion.tsx
 src/components/chat/CompactionCard.tsx
+src/components/chat/ContextRing.tsx
 src/components/chat/DiffView.tsx
 src/components/chat/DirectoryBrowserSheet.tsx
 src/components/chat/DirectorySwitcher.tsx
@@ -108,6 +121,7 @@ src/components/chat/VariantPicker.tsx
 src/components/chat/diff-compute.test.ts
 src/components/chat/diff-compute.ts
 src/components/chat/index.ts
+src/components/chat/message-bubble-error.test.ts
 src/components/markdown
 src/components/markdown/CodeBlock.tsx
 src/components/markdown/Markdown.tsx
@@ -116,12 +130,18 @@ src/components/wide-content-scroll.regression.test.ts
 src/lib
 src/lib/adaptive-layout.test.ts
 src/lib/adaptive-layout.ts
+src/lib/answered-questions.test.ts
+src/lib/answered-questions.ts
+src/lib/api-detect.test.ts
+src/lib/api-detect.ts
 src/lib/api-error.test.ts
 src/lib/api-error.ts
 src/lib/auth.test.ts
 src/lib/auth.ts
 src/lib/chatwoot.test.ts
 src/lib/chatwoot.ts
+src/lib/composer-and-questions.test.ts
+src/lib/composer-taps.regression.test.ts
 src/lib/connection-bootstrap.test.ts
 src/lib/connection-health.test.ts
 src/lib/connection-health.ts
@@ -160,6 +180,8 @@ src/lib/logbuffer.test.ts
 src/lib/logbuffer.ts
 src/lib/message-merge.test.ts
 src/lib/message-merge.ts
+src/lib/message-page.test.ts
+src/lib/message-page.ts
 src/lib/message-run.test.ts
 src/lib/message-run.ts
 src/lib/model-picker-filter.test.ts
@@ -178,28 +200,6 @@ src/lib/part-batch.test.ts
 src/lib/part-batch.ts
 src/lib/part-runs.test.ts
 src/lib/part-runs.ts
-src/lib/path-utils.test.ts
-src/lib/path-utils.ts
-src/lib/pending-questions.test.ts
-src/lib/pending-questions.ts
-src/lib/persisted-keys.test.ts
-src/lib/prompt-from-parts.test.ts
-src/lib/prompt-from-parts.ts
-src/lib/provider-auth.test.ts
-src/lib/provider-auth.ts
-src/lib/provider-connect-screen.smoke.test.ts
-src/lib/providers-navigation.smoke.test.ts
-src/lib/providers-screen.integration.test.ts
-src/lib/providers-ui.test.ts
-src/lib/providers-ui.ts
-src/lib/question-answers.test.ts
-src/lib/question-answers.ts
-src/lib/quick-connect-url.test.ts
-src/lib/quick-connect-url.ts
-src/lib/revert-filter.test.ts
-src/lib/revert-filter.ts
-src/lib/run-watchdog.test.ts
-src/lib/run-watchdog.ts
 
 === STACK DETECTION (manifest files) ===
 
@@ -289,7 +289,7 @@ src/lib/run-watchdog.ts
 --- package.json ---
 {
   "name": "@opencode-ai/mobile",
-  "version": "0.2.28",
+  "version": "0.3.0",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
@@ -365,74 +365,74 @@ No .env.example or .env.template found. Identify required environment variables 
 src/components/chat/MessageBubble.tsx:42: // TODO: Replace with streamdown-rn once React 19 types PR lands - it has
 
 === GIT RECENT COMMITS (last 20) ===
+2a97e60 docs: make the repo findable for people and for AI agents
+f8a2d20 docs: record 0.3.0 release (APK hash, run id) and the inherited gh-pages site
+000ff00 Merge feat/server-api-v1: 0.3.0 — V1+V2 server support, favorites, context ring
+3126900 chore: release 0.3.0 — both APIs, new name, keyboard-safe variant picker
+86a9bf5 fix: price the session during a run; unclip the attachment remove badge
+2f71c0b feat: context ring in the header, session-wide cost, "whole session" page
+ab22dd7 feat: favorite models in the picker; fix blank tool cards
+86c6da5 docs: upstream review — what was ported, what the fork already had, what was skipped
+19a9185 docs: note the session-cursor loop bound in the security review
+f84e482 fix(v1): page the global session list instead of taking the newest 100
+687dbf1 fix: stop hiding sessions past the server's newest 50
+4f9d4bd fix: keep loaded history, unfreeze the stop button, unstick the attach tap
+598e457 feat: speak the v1 server API too, with an auto/manual switch
+948ac3f docs: record 0.2.30 release in HANDOFF
+4d74dc4 fix(chat): show why a run failed instead of an empty bubble
+eb8dcb8 docs: record 0.2.29 release in HANDOFF
+74eecc3 fix(chat): send mid-run, keep answered questions, count pages in prompts
+e913b68 docs: карта кодовой базы в docs/codebase
 5837958 docs: record 0.2.28 release in HANDOFF
 0cf0833 chore(release): 0.2.28 (62)
-6ab3ae4 fix(chat): keep per-run cost and stay responsive after resume (#4)
-b030b44 docs: install the server from opencode-termux on Android
-6169e54 docs: record 0.2.27 release in HANDOFF
-69e0f4d docs: split README into English and Russian
-25c9195 chore(release): 0.2.27 (61)
-63a5bb9 fix(chat): interleave thoughts and tools like the desktop
-02cf2f9 feat(chat): one tool row and total cost per run
-6c8950a chore: keep 0.2.26 (60) version metadata
-d820a68 feat(chat): compact timeline for assistant steps
-1cb3d5c feat(sessions): newest-first ordering, project grouping kept
-9cd0d2c fix(chat): dismissable action sheets, selectable assistant text, compact tool runs
-9dce3c2 feat: select sessions with checkboxes and delete them in bulk
-99e7535 docs: lead with install and spell out how the fork differs from upstream
-6ff6ca3 docs: record the 0.2.26 release artifact
-8688969 fix: stop the prompt area from eating the free space
-f05a82e docs: record the 0.2.25 release artifact
-e502329 fix: keep the composer on screen while a question card is shown
-ea3730a fix: shrink the root view under the keyboard instead of padding in JS
 
 === HIGH-CHURN FILES (last 90 days, top 20) ===
-  25 package.json
-  24 app.json
-  23 android/app/build.gradle
-  22 README.md
-  18 .github/workflows/build.yml
-  18 app/session/[id].tsx
-  14 src/lib/sdk.ts
+  29 README.md
+  28 package.json
+  27 app.json
+  26 android/app/build.gradle
+  24 HANDOFF.md
+  22 app/session/[id].tsx
+  21 .github/workflows/build.yml
+  17 src/lib/sdk.ts
+  16 src/lib/i18n/en.json
+  16 src/lib/i18n/ru.json
+  16 src/lib/i18n/zh-Hans.json
+  13 src/stores/sessions.ts
   13 distribution/whatsnew/whatsnew-en-US
   13 scripts/cua-roadmap-smoke.mjs
-  12 HANDOFF.md
-  10 src/lib/i18n/en.json
-  10 src/lib/i18n/ru.json
-  10 src/lib/i18n/zh-Hans.json
-   9 src/stores/sessions.ts
-   9 src/stores/events.ts
-   9 BUGS.md
-   9 src/stores/connections.ts
-   8 src/lib/v2-compat.ts
-   8 src/components/chat/MessageBubble.tsx
-   8 app/(tabs)/index.tsx
+  11 src/stores/events.ts
+  10 README.ru.md
+  10 src/lib/sdk.integration.test.ts
+  10 src/lib/v2-compat.ts
+  10 src/stores/connections.ts
+   9 src/lib/v2-compat.test.ts
 
 === MONOREPO SIGNALS ===
 No monorepo signals detected.
 
 === CODE METRICS ===
-Total files scanned: 252
-Total lines of code: 39409
+Total files scanned: 284
+Total lines of code: 42330
 
 Files by language:
-  TypeScript: 145
-  Other: 64
-  TypeScript/React: 39
+  TypeScript: 165
+  Other: 74
+  TypeScript/React: 41
   JavaScript: 2
   Kotlin: 2
 
 Top 10 largest files:
 package-lock.json: 375.4KB
 android/app/src/main/res/drawable-xxxhdpi/splashscreen_logo.png: 65.0KB
-app/session/[id].tsx: 52.4KB
+app/session/[id].tsx: 53.5KB
 app/(tabs)/index.tsx: 52.1KB
 assets/icon-appstore.png: 51.1KB
+README.ru.md: 48.3KB
 android/app/src/main/res/drawable-xxhdpi/splashscreen_logo.png: 46.0KB
 android/gradle/wrapper/gradle-wrapper.jar: 42.7KB
-src/lib/i18n/ru.json: 37.3KB
-src/lib/v2-compat.ts: 35.2KB
-app/connection/add.tsx: 30.8KB
+HANDOFF.md: 39.0KB
+src/lib/i18n/ru.json: 38.8KB
 
 === CI/CD PIPELINES ===
 CI/CD: GitHub Actions
