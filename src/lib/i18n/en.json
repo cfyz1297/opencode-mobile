@@ -422,7 +422,9 @@
       "serverDefault": "Server default",
       "empty": "No connected providers yet",
       "manageModels": "Manage models",
-      "freeBadge": "Free"
+      "freeBadge": "Free",
+      "favorites": "Favorites",
+      "favoriteToggle": "Add or remove from favorites"
     },
     "message": {
       "copy": "Copy",

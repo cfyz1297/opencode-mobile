@@ -422,7 +422,9 @@
       "serverDefault": "服务器默认模型",
       "empty": "尚未连接任何服务商",
       "manageModels": "管理模型",
-      "freeBadge": "免费"
+      "freeBadge": "免费",
+      "favorites": "收藏",
+      "favoriteToggle": "添加或取消收藏"
     },
     "message": {
       "copy": "复制",

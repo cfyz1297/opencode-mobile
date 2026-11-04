@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { createModelVisibility, modelKey, parseHiddenModels } from './model-visibility.ts'
+import { createModelVisibility, FAVORITES_SCOPE, FAVORITES_STORAGE_KEY, modelKey, parseHiddenModels } from './model-visibility.ts'
 import { buildModelPickerSections } from './model-picker-filter.ts'
 
 const providers = [{ id: 'go', name: 'OpenCode Go', models: [{ id: 'a', name: 'Alpha' }, { id: 'b', name: 'Beta' }] }, { id: 'other', name: 'Other', models: [{ id: 'a', name: 'Alpha' }] }]
@@ -62,4 +62,24 @@ test('read failures are retryable and returned arrays cannot mutate preferences'
   preferences.hidden('s').length = 0
   assert.equal(preferences.hidden('s').length, 1)
   await assert.rejects(preferences.setEnabled('', 'go', 'a', false))
+})
+
+test('favorites persist under their own key and do not leak into hidden models', async () => {
+  const store = new Map<string, string>()
+  const storage = { getItem: async (key: string) => store.get(key) ?? null, setItem: async (key: string, value: string) => { store.set(key, value) } }
+  const hidden = createModelVisibility(storage)
+  const favorites = createModelVisibility(storage, () => {}, FAVORITES_STORAGE_KEY)
+
+  // enabled=false is what puts a key into the set (see the store's comment).
+  await favorites.setEnabled(FAVORITES_SCOPE, 'go', 'a', false)
+  assert.deepEqual(favorites.hidden(FAVORITES_SCOPE), [modelKey('go', 'a')])
+  assert.deepEqual(hidden.hidden(FAVORITES_SCOPE), [], 'a starred model is not a hidden one')
+
+  const restored = createModelVisibility(storage, () => {}, FAVORITES_STORAGE_KEY)
+  await restored.load()
+  assert.deepEqual(restored.hidden(FAVORITES_SCOPE), [modelKey('go', 'a')])
+
+  await restored.setEnabled(FAVORITES_SCOPE, 'go', 'a', true)
+  assert.deepEqual(restored.hidden(FAVORITES_SCOPE), [])
+  assert.equal(store.get('opencode_model_favorites_v1'), '[]')
 })

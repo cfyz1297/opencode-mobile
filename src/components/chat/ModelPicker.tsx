@@ -6,6 +6,8 @@ import { useTranslation } from "react-i18next"
 import { buildModelPickerSections, type ModelPickerItem } from "../../lib/model-picker-filter"
 
 import { useHiddenModels } from "../../stores/model-visibility"
+import { useFavoriteModels } from "../../stores/model-favorites"
+import { modelKey } from "../../lib/model-visibility"
 
 interface Provider {
   id: string
@@ -27,10 +29,19 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, o
   const { t } = useTranslation()
   const [search, setSearch] = useState("")
   const { hidden, loaded } = useHiddenModels()
+  const { favorites, toggle } = useFavoriteModels()
 
   const sections = useMemo(
-    () => buildModelPickerSections({ providers: loaded ? providers : [], query: search, selected, hidden }),
-    [providers, search, selected, hidden, loaded],
+    () =>
+      buildModelPickerSections({
+        providers: loaded ? providers : [],
+        query: search,
+        selected,
+        hidden,
+        favorites,
+        favoritesTitle: t("chat.modelPicker.favorites"),
+      }),
+    [providers, search, selected, hidden, loaded, favorites, t],
   )
 
   const handleSelect = useCallback(
@@ -92,6 +103,8 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, o
         )}
         renderItem={({ item }: { item: ModelPickerItem }) => {
           const active = selected?.providerID === item.providerID && selected?.modelID === item.modelID
+          const key = modelKey(item.providerID, item.modelID)
+          const starred = favorites.includes(key)
           return (
             <TouchableOpacity
               style={[s.row, isDark && s.rowDark, active && (isDark ? s.rowSelectedDark : s.rowSelected)]}
@@ -113,6 +126,18 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, o
                 </View>
                 <Text style={[s.rowProvider, isDark && s.metaDark]}>{item.providerName || item.providerID}</Text>
               </View>
+              <TouchableOpacity
+                onPress={() => toggle(item.providerID, item.modelID)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                testID={`model-favorite-${item.providerID}-${item.modelID}`}
+                accessibilityLabel={t("chat.modelPicker.favoriteToggle")}
+              >
+                <Ionicons
+                  name={starred ? "star" : "star-outline"}
+                  size={17}
+                  color={starred ? "#f59e0b" : isDark ? "#555555" : "#c0c0c0"}
+                />
+              </TouchableOpacity>
               {active && <Ionicons name="checkmark-circle" size={20} color="#8b5cf6" />}
             </TouchableOpacity>
           )
@@ -179,6 +204,7 @@ const s = StyleSheet.create({
   rowSelectedDark: { backgroundColor: "#1f1a2e" },
   rowText: { flex: 1 },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  rowRight: { flexDirection: "row", alignItems: "center", gap: 10 },
   rowName: { fontSize: 15, fontWeight: "500", color: "#0a0a0a", flexShrink: 1 },
   rowProvider: { fontSize: 12, color: "#999999", marginTop: 1 },
   freeBadge: {

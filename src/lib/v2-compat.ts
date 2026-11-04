@@ -938,8 +938,10 @@ export class V2EventAdapter {
         ...(patch.input !== undefined ? { input: patch.input } : {}),
         ...(patch.output !== undefined ? { output: patch.output } : {}),
         ...(patch.error ? { error: patch.error } : {}),
-        // Only surface a title when the payloads carry one; other fields stay
-        // stable around it (input lives above).
+        // session.tool.progress carries what the tool is doing in
+        // metadata.title and nothing else — dropping it left a long-running
+        // tool as a bare name with no way to tell what it was executing.
+        ...(patch.title ? { title: patch.title } : {}),
       },
     } as Part
     return { type: "message.part.updated", properties: { part } }
