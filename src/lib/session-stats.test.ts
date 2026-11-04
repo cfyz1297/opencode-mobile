@@ -4,7 +4,13 @@ import { computeSessionStats, fillColor } from "./session-stats.ts"
 import type { Message } from "./sdk.ts"
 
 const providers = [
-  { id: "go", models: [{ id: "m1", limit: { context: 1000 } }, { id: "nomatch" }] },
+  {
+    id: "go",
+    models: [
+      { id: "m1", limit: { context: 1000 }, cost: { input: 1, output: 2, cache: { read: 0.1, write: 0 } } },
+      { id: "nomatch" },
+    ],
+  },
 ]
 
 function assistant(cost: number | undefined, tokens?: Message["tokens"], model = "m1"): Message {
@@ -34,6 +40,33 @@ test("the session record wins: the message page is only part of the session", ()
 
 test("a zero session cost falls back to the summed cost", () => {
   assert.equal(computeSessionStats([assistant(0.5)], providers, { cost: 0 }).cost, 0.5)
+})
+
+// opencode-go reports no amount at all, so session.cost is 0 and every step is
+// 0 too; summing the loaded page would label a paid session "free". The
+// cumulative token counts from the session record are the only session-wide
+// source a catalog price can be applied to.
+test("a zero session cost is estimated from the session tokens and the catalog price", () => {
+  const stats = computeSessionStats([assistant(0, { input: 10, output: 5 })], providers, {
+    cost: 0,
+    tokens: { input: 1_000_000, output: 1_000_000, reasoning: 0, cache: { read: 0, write: 0 } },
+  })
+  assert.equal(stats.cost, 3)
+})
+
+test("an unpriced model leaves the session cost at zero", () => {
+  const stats = computeSessionStats([assistant(0, { input: 10, output: 5 }, "nomatch")], providers, {
+    cost: 0,
+    tokens: { input: 1_000_000, output: 1_000_000, cache: { read: 0, write: 0 } },
+  })
+  assert.equal(stats.cost, 0)
+})
+
+// Mid-run the session record may not carry totals yet, but the finished steps
+// already do — the footer under the last bubble is priced that way.
+test("a run in progress is priced from the finished steps until session totals arrive", () => {
+  const stats = computeSessionStats([assistant(0, { input: 1_000_000, output: 0 })], providers, null)
+  assert.equal(stats.cost, 1)
 })
 
 test("context usage is the last assistant turn against the model's window", () => {
