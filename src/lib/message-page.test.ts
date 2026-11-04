@@ -5,6 +5,7 @@ import {
   MESSAGES_PER_TURN,
   clampTurns,
   countTurns,
+  keepLoadedHistory,
   messageLimitForTurns,
   trimToTurns,
 } from "./message-page.ts"
@@ -63,4 +64,44 @@ test("trimming returns a copy, so the caller's array is never mutated", () => {
   const { messages: page } = trimToTurns(messages, 1)
   page.pop()
   assert.equal(messages.length, 4)
+})
+
+// --- keepLoadedHistory -------------------------------------------------------
+
+const msg = (id: string) => ({ id })
+
+test("a refresh keeps the older messages the screen already loaded", () => {
+  // loadOlderMessages had pulled everything (hasMore=false); this refresh only
+  // fetched the newest page. Keeping just the page made history vanish until
+  // the session was reopened.
+  const previous = ["m1", "m2", "m3", "m4", "m5"].map(msg)
+  const page = ["m3", "m4", "m5"].map(msg)
+  assert.deepEqual(keepLoadedHistory(page, previous, true).map((m) => m.id), ["m1", "m2", "m3", "m4", "m5"])
+})
+
+test("a refresh picks up messages added while it was in flight", () => {
+  const previous = ["m1", "m2"].map(msg)
+  const page = ["m2", "m3"].map(msg)
+  assert.deepEqual(keepLoadedHistory(page, previous, true).map((m) => m.id), ["m1", "m2", "m3"])
+})
+
+test("only messages older than the page survive — a revert cleanup deletes the rest", () => {
+  // The server removed everything after the revert point; those ids are newer
+  // than the page's first message and must not be resurrected.
+  const previous = ["m1", "m2", "m7", "m8"].map(msg)
+  const page = ["m1", "m2", "m9"].map(msg)
+  assert.deepEqual(keepLoadedHistory(page, previous, true).map((m) => m.id), ["m1", "m2", "m9"])
+})
+
+test("a cold load or an untrimmed page is used verbatim", () => {
+  const previous = ["m1", "m2"].map(msg)
+  const page = ["m2", "m3"].map(msg)
+  assert.deepEqual(keepLoadedHistory(page, previous, false).map((m) => m.id), ["m2", "m3"])
+  assert.deepEqual(keepLoadedHistory(page, [], true).map((m) => m.id), ["m2", "m3"])
+})
+
+test("a page that already covers the history is not duplicated", () => {
+  const previous = ["m1", "m2", "m3"].map(msg)
+  const page = ["m1", "m2", "m3"].map(msg)
+  assert.deepEqual(keepLoadedHistory(page, previous, true).map((m) => m.id), ["m1", "m2", "m3"])
 })

@@ -6,7 +6,7 @@ import { extractPromptFromParts, type PromptFromParts } from "../lib/prompt-from
 import { mergeIncomingMessage, reconcileTemps } from "../lib/message-merge"
 import { isColdSessionLoad, isLiveEventForSession } from "../lib/session-load-reconcile"
 import { createPartBatcher } from "../lib/part-batch"
-import { countTurns, messageLimitForTurns, trimToTurns } from "../lib/message-page"
+import { countTurns, keepLoadedHistory, messageLimitForTurns, trimToTurns } from "../lib/message-page"
 import { offlineHistory } from '../lib/history-storage'
 
 // Helper to convert API response to our internal format
@@ -73,7 +73,8 @@ interface SessionsState {
     files?: Array<{ uri: string; mime: string; filename?: string; base64?: string }>,
     variant?: string,
   ) => Promise<void>
-  abortSession: () => Promise<void>
+  /** Returns false when the server refused: the run is still going. */
+  abortSession: () => Promise<boolean>
   refreshMessages: () => Promise<void>
   /** Apply a transcript that the caller already fetched, without a second GET. */
   applyServerMessages: (response: MessageWithParts[]) => void
@@ -174,6 +175,10 @@ export const useSessions = create<SessionsState>((set, get) => ({
     // until the user backs out and re-enters (issue #150). Only a
     // genuinely new/different session needs the blocking spinner.
     const isColdLoad = isColdSessionLoad(get().currentSession?.id, sessionID)
+    // Captured before the reset below: a session whose whole transcript is
+    // already in the store (loadOlderMessages cleared hasMore) must not lose
+    // its older messages to this refresh's trimmed page.
+    const alreadyLoadedAll = !isColdLoad && !get().hasMore && get().messages.length > 0
     try {
       // Reset optimistic sending — SSE sessionStatus is the source of truth
       set((state) => ({
@@ -209,14 +214,16 @@ export const useSessions = create<SessionsState>((set, get) => ({
       const parsed = parseMessages(response)
       // The page is measured in exchanges, not messages (see message-page.ts).
       const page = trimToTurns(parsed.messages, turns)
-      const messages = page.messages
+      const prevMessages = get().currentSession?.id === sessionID ? get().messages : []
+      const messages = keepLoadedHistory(page.messages, prevMessages, alreadyLoadedAll)
       const parts: Record<string, Part[]> = {}
-      for (const message of messages) parts[message.id] = parsed.parts[message.id] || []
+      for (const message of messages) {
+        parts[message.id] = parsed.parts[message.id] ?? get().parts[message.id] ?? []
+      }
 
       // Reconcile optimistic temp messages with the server list: a temp whose
       // real copy is now in the list is dropped (otherwise the message shows
       // twice, and reloads accumulate the dupes), in-flight temps are kept.
-      const prevMessages = get().currentSession?.id === sessionID ? get().messages : []
       const merged = reconcileTemps(messages, parts, prevMessages, get().parts)
 
       set({
@@ -224,8 +231,9 @@ export const useSessions = create<SessionsState>((set, get) => ({
         messages: merged.messages,
         parts: { ...merged.parts },
         isLoading: false,
-        // Older exchanges were left out — offer "load older".
-        hasMore: page.trimmed,
+        // Older exchanges were left out — offer "load older". Nothing is older
+        // when the refresh kept the history it already had.
+        hasMore: messages.length > page.messages.length ? false : page.trimmed,
       })
     } catch (err) {
       if (seq !== selectSeq) return
@@ -437,18 +445,20 @@ export const useSessions = create<SessionsState>((set, get) => ({
     const epoch = connectionEpoch
     const client = clientFor(get().currentSession?.directory)
     const session = get().currentSession
-    if (!client || !session) return
+    if (!client || !session) return false
 
     try {
       await client.session.abort(session.id)
-      if (epoch !== connectionEpoch) return
+      if (epoch !== connectionEpoch) return false
       // Mark only after the abort request succeeded — if it failed, the run
       // continues and any eventual completion is a genuine response.
       abortedSessions.add(session.id)
       set((state) => ({ sending: { ...state.sending, [session.id]: false } }))
+      return true
     } catch {
-      if (epoch !== connectionEpoch) return
+      if (epoch !== connectionEpoch) return false
       set({ error: "Failed to abort session" })
+      return false
     }
   },
 

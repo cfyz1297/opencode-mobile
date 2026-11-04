@@ -30,6 +30,32 @@ export function countTurns(messages: readonly { role?: string }[]): number {
 }
 
 /**
+ * Keep the whole transcript the screen already shows when a refresh fetches
+ * only the newest page.
+ *
+ * `load older` pulls the full history and clears `hasMore`; the next refresh
+ * (focus, foreground, reconnect) used to replace that with a page trimmed back
+ * to the setting, so messages visibly vanished until the session was reopened
+ * — and reopening only helped because the short list triggered another full
+ * load. Once the history is known to be complete, only the page's own messages
+ * are allowed to change.
+ */
+export function keepLoadedHistory<T extends { id: string }>(
+  page: readonly T[],
+  previous: readonly T[],
+  hadFullHistory: boolean,
+): T[] {
+  const oldest = page[0]?.id
+  if (!hadFullHistory || previous.length === 0 || !oldest) return page.slice()
+  const inPage = new Set(page.map((m) => m.id))
+  // Only messages strictly older than the page can be kept: anything newer than
+  // the page's first message may have been deleted server-side (a revert cleanup
+  // removes the messages after its point), and keeping it would resurrect it.
+  const older = previous.filter((m) => !inPage.has(m.id) && m.id < oldest)
+  return older.length > 0 ? [...older, ...page] : page.slice()
+}
+
+/**
  * Keep the newest `turns` exchanges. `trimmed` means older messages were left
  * out, i.e. there is more to load. A page with no user message at all is kept
  * whole — it cannot be measured in exchanges.
