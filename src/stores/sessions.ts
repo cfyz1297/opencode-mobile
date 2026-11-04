@@ -22,6 +22,10 @@ function parseMessages(response: MessageWithParts[]): { messages: Message[]; par
   return { messages, parts }
 }
 
+// Most sessions one Recent list renders. Well above the old 50, which silently
+// dropped sessions that were reachable from the TUI.
+const SESSION_LIST_LIMIT = 800
+
 function pageSize(): number {
   return useSettings.getState().pageSize
 }
@@ -141,7 +145,9 @@ export const useSessions = create<SessionsState>((set, get) => ({
       set({ isLoading: true, error: null })
       // A directory-less list includes sessions across projects. Each row carries
       // its own directory into the session route so subsequent operations stay scoped.
-      const sessions = await client.session.list({ roots: true, limit: 50 })
+      // The cap only bounds what one screen renders; the transport pages through
+      // the server's cursor, and 50 used to hide older sessions the TUI still has.
+      const sessions = await client.session.list({ roots: true, limit: SESSION_LIST_LIMIT })
       if (epoch !== connectionEpoch) return
       // BUG-010: merge by ID instead of wholesale replace — a session.created SSE
       // event that landed mid-flight must not be clobbered by a stale list fetch.

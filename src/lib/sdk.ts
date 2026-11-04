@@ -315,17 +315,30 @@ function createV2Client(config: ClientConfig) {
     return mapSession(raw, config.directory)
   }
 
-  const listSessions = async (limit?: number): Promise<Session[]> => {
-    // Directory-less GET /api/session returns sessions across ALL locations
-    // (verified on V2), so the Recent Sessions list works without the user
-    // picking a folder first — same reason V1 preferred
-    // /experimental/session. Query params (limit/search) are optional in V2;
-    // sorting/filtering happens client-side in normalizeSessions.
-    const query = new URLSearchParams()
-    if (limit) query.set("limit", String(limit))
-    const qs = query.toString()
-    const raw = unwrapData<V2SessionInfo[]>(await request(config, `/api/session${qs ? `?${qs}` : ""}`))
-    return (raw ?? []).map((s) => mapSession(s, config.directory))
+  // Directory-less GET /api/session returns sessions across ALL locations
+  // (verified on V2), so the Recent Sessions list works without the user
+  // picking a folder first — same reason V1 preferred /experimental/session.
+  // The server defaults to the newest 50, which silently hid older sessions
+  // that the TUI still lists, so walk the cursor until the list is complete
+  // (or the cap is reached). The UI has no "load more" affordance.
+  const SESSION_PAGE_SIZE = 200
+  const SESSION_PAGES = 4
+  const listSessions = async (): Promise<Session[]> => {
+    const out: V2SessionInfo[] = []
+    let cursor: string | null | undefined
+    for (let page = 0; page < SESSION_PAGES; page++) {
+      const query = new URLSearchParams({ limit: String(SESSION_PAGE_SIZE) })
+      if (cursor) query.set("cursor", cursor)
+      const body = await request<{ data?: V2SessionInfo[]; cursor?: { next?: string | null } }>(
+        config,
+        `/api/session?${query.toString()}`,
+      )
+      const rows = Array.isArray(body?.data) ? body.data : []
+      out.push(...rows)
+      cursor = body?.cursor?.next ?? null
+      if (!cursor || rows.length < SESSION_PAGE_SIZE) break
+    }
+    return out.map((s) => mapSession(s, config.directory))
   }
 
   // Shape the raw global list the way the list UI expects (roots filter +

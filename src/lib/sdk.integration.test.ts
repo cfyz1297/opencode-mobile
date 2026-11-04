@@ -106,6 +106,27 @@ test("SDK loads global sessions, filters roots and searches before limiting", as
   assert.deepEqual(rows.map((s) => s.id), ["new"])
   assert.equal(calls[0].headers["x-opencode-directory"], undefined)
 })
+test("SDK walks the session cursor so the list is not capped at the server's newest 50", async () => {
+  // The server defaults to the newest 50 and answers with a `next` cursor; the
+  // Recent list has no "load more", so an unread cursor means sessions that the
+  // TUI lists are invisible in the app (upstream #188 / #182).
+  reply = { data: [{ id: "s1", title: "one", time: { updated: 2 } }], cursor: { next: "page-2" } }
+  const first = await createClient({ baseUrl: base }).session.list({ roots: true })
+  assert.deepEqual(first.map((s) => s.id), ["s1"])
+  assert.equal(calls[0].path, "/api/session?limit=200")
+
+  // A second page that is short ends the walk.
+  reply = { data: [{ id: "s2", title: "two", time: { updated: 1 } }], cursor: { next: "page-3" } }
+  const second = await createClient({ baseUrl: base }).session.list({ roots: true })
+  assert.deepEqual(second.map((s) => s.id), ["s2"])
+})
+
+test("SDK stops paging when the server reports no next cursor", async () => {
+  reply = { data: [{ id: "s1", title: "one", time: { updated: 2 } }], cursor: { next: null } }
+  await createClient({ baseUrl: base }).session.list()
+  assert.equal(calls.length, 1)
+})
+
 test("SDK message paging clamps limits and orders server messages chronologically", async () => {
   reply = { data: [{ id: "a", type: "assistant", content: [{ type: "text", text: "answer" }] }, { id: "u", type: "user", text: "question" }] }
   const rows = await createClient({ baseUrl: base }).session.messages("s", { limit: 999 })
