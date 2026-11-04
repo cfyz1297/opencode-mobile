@@ -11,6 +11,11 @@ export interface ServerConnection {
   // Password stored separately in SecureStore
   // Directory to use for this connection
   directory?: string
+  // Which opencode server API this URL speaks (probed once, reused across
+  // launches; cleared when the URL changes). Absent = not probed yet.
+  api?: "v1" | "v2"
+  // Version string reported by the server's health/info route, when known.
+  serverVersion?: string
   // When last successfully connected
   lastConnected?: number
   // Is this the active connection?

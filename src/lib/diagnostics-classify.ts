@@ -18,9 +18,24 @@ export interface ProbeAttempt {
   target: string
   ok: boolean
   status?: number
+  contentType?: string
   durationMs: number
   error?: string
   errorCause?: string
+}
+
+/** Pick the health probe that identifies the server, and with it the API
+ *  generation. Unknown routes on both server generations answer 200 with the
+ *  web SPA's HTML, so only a JSON answer (or an auth rejection, which proves
+ *  the route exists) counts. */
+export function chooseHealthProbe(
+  v2: ProbeAttempt,
+  v1: ProbeAttempt,
+): { attempt: ProbeAttempt; api?: "v1" | "v2" } {
+  if (v2.ok) return { attempt: v2, api: "v2" }
+  if (v2.status === 401 || v2.status === 403) return { attempt: v2, api: "v2" }
+  if (v1.ok || v1.status === 401 || v1.status === 403) return { attempt: v1, api: "v1" }
+  return { attempt: v2 }
 }
 
 export interface ParsedUrl {

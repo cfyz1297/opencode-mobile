@@ -1,6 +1,6 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { parseUrl, classify, type ProbeAttempt } from "./diagnostics-classify.ts"
+import { parseUrl, classify, chooseHealthProbe, type ProbeAttempt } from "./diagnostics-classify.ts"
 
 const probe = (over: Partial<ProbeAttempt> = {}): ProbeAttempt => ({
   name: "p",
@@ -177,4 +177,24 @@ test("server-unreachable adds MagicDNS hint only for hostnames, not IPs", () => 
   const ipR = classify(parseUrl("http://10.0.0.5:8080"), probe({ error: "refused" }), fail.internet, fail.root)
   assert.match(hostR.summary, /MagicDNS/)
   assert.doesNotMatch(ipR.summary, /MagicDNS/)
+})
+
+test("health probe picks the route that exists, not whichever answered first", () => {
+  // A v1 server answers /api/info with the SPA (HTML 200, ok forced false by
+  // requireJson). Only /global/health proves the API generation.
+  const spaIsh = probe({ target: "/api/info", ok: false, status: 200, contentType: "text/html" })
+  const v1 = probe({ target: "/global/health", ok: true, status: 200, contentType: "application/json" })
+  assert.deepEqual(chooseHealthProbe(spaIsh, v1), { attempt: v1, api: "v1" })
+})
+
+test("health probe keeps an auth rejection, since that proves the route exists", () => {
+  const v2 = probe({ target: "/api/info", ok: false, status: 401, contentType: "application/json" })
+  const v1 = probe({ target: "/global/health", ok: false, status: 404 })
+  assert.deepEqual(chooseHealthProbe(v2, v1), { attempt: v2, api: "v2" })
+})
+
+test("health probe reports no API when neither route exists", () => {
+  const v2 = probe({ target: "/api/info", ok: false, status: 200, contentType: "text/html" })
+  const v1 = probe({ target: "/global/health", ok: false, status: 200, contentType: "text/html" })
+  assert.deepEqual(chooseHealthProbe(v2, v1), { attempt: v2 })
 })

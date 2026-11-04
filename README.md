@@ -21,7 +21,11 @@ The APK is built by GitHub Actions from `main` of this repository and signed wit
 
 ## Connecting to an opencode server
 
-You need an **opencode 2.0.x** server (V2 API). V2 is installed as a native binary — the `opencode-ai` npm package stayed on the 1.x line and does not serve `/api/*`.
+The app speaks **both server generations**: opencode 1.x (V1 API, what `npm install -g opencode-ai` still installs) and opencode 2.0.x+ (V2 API, installed as a native binary). It probes the address once, remembers the answer per connection, and uses the matching transport — `/global/health` + `/global/event` for V1, `/api/info` + `/api/event` for V2. The probe classifies by response envelope, never by status code: an unknown route on either generation falls through to the web UI and answers `200 text/html`, which is why a V2-only client used to report "connected" on a V1 server and then fail on every request.
+
+If auto-detection ever picks wrong, **Settings → Server → Server API** forces `v1` or `v2` for the active connection.
+
+For V2:
 
 1. Install and start the server:
 
@@ -68,11 +72,12 @@ What changed in the code:
 
 - **Adapter `src/lib/v2-compat.ts`**: V2 responses and events are normalized to the V1 shape, so stores and screens stayed as they were. V1 events (`session.status`, `message.part.updated`) are assembled from V2 deltas (`session.text.delta`, `session.reasoning.delta`, `session.tool.*`).
 - **SDK** switched to `/api/session`, `/api/event`, `/api/info`, `/api/permission/request`, `/api/fs/*`, `/api/project`, `/api/location`. Changing a session's model/agent goes through `POST /api/session/{id}/model` and `/agent`.
+- **V1 transport** (`src/lib/sdk-v1.ts`, `src/lib/api-detect.ts`): the same app works against an opencode 1.x server — `/session`, `/experimental/session`, `/session/{id}/prompt_async`, `/global/event`. The detected API is stored on the connection (`api`, `serverVersion`) and is invalidated when the URL changes. Ported from upstream PR #209 / release v0.4.16.
 - **New screens and logic**: `app/history.tsx` (offline history), `app/models.tsx` (model visibility), `app/providers/*` (provider catalog and key-based connection through the server), `app/connection/tunnel.tsx` (tunnel wizard), `src/components/TabletSessions.tsx` (tablet), `src/lib/adaptive-layout.ts`, `src/lib/connection-health.ts`, `src/lib/connection-security.ts`, `src/lib/run-watchdog.ts`, `src/lib/stream-watchdog.ts`, `src/lib/keyboard-inset.ts`.
 - **V2 specifics**: agent questions go through V2 forms, compaction summaries are visible in the transcript, image attachments render as images, the chat follows the stream, the composer clears after a built-in command.
 - **Client isolation**: the SDK client is bound to its connection, so streamed messages and the selected model do not leak between servers.
 - **Removed along with the infrastructure**: `website/`, `docs-site/`, `fastlane/`, `fdroid/`, `distribution/`, `eas.json`, `.maestro/`, `.autopilot/`, `.supervisor/`, `.tasks/`, the iOS build and store-publishing workflows, the Sentry plugin and source-map upload.
-- **Security**: the `SYSTEM_ALERT_WINDOW` permission is blocked, passwords and offline copies are written with the `WHEN_UNLOCKED_THIS_DEVICE_ONLY` policy, and the connection form warns about a password over unencrypted `http://`.
+- **Security**: the `SYSTEM_ALERT_WINDOW` permission is blocked, passwords and offline copies are written with the `WHEN_UNLOCKED_THIS_DEVICE_ONLY` policy, and the connection form warns about a password over unencrypted `http://`. Approval and question notifications carry fixed text, not server-supplied tool names, paths or question bodies, because the notification shade is readable on a locked phone (upstream audit M-03, ported). Requests carry `ngrok-skip-browser-warning` / `Bypass-Tunnel-Reminder`, so a tunnel proxies the API instead of answering with its own interstitial page.
 
 What the fork does not have (by design or not yet): provider OAuth connections (API key only), OpenCode Cloud (waitlist only), iOS builds, stores and telemetry.
 

@@ -114,6 +114,8 @@ export default function AddConnectionScreen() {
             name: name.trim() || t("connection.shared.namePlaceholder"),
             type: "local",
             url: serverUrl,
+            api: result.api,
+            serverVersion: result.serverVersion,
           },
           password || undefined,
         )
@@ -187,6 +189,8 @@ export default function AddConnectionScreen() {
             url: url.trim(),
             directory: directory.trim() || undefined,
             username: username.trim() || undefined,
+            api: result.api,
+            serverVersion: result.serverVersion,
           },
           password || undefined,
         )

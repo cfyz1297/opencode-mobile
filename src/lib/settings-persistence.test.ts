@@ -102,3 +102,23 @@ test("changing the page size does not drop the other preferences", async () => {
   assert.equal(next.getState().notifications.questions, false)
   assert.equal(next.getState().locale, "ru")
 })
+
+test("the server API preference survives a restart", async () => {
+  STORE.clear()
+  const first = freshStore()
+  await first.getState().load()
+  assert.equal(first.getState().serverApi, "auto", "default is detection")
+
+  await first.getState().setServerApi("v1")
+  const second = freshStore()
+  await second.getState().load()
+  assert.equal(second.getState().serverApi, "v1")
+})
+
+test("an unknown stored server API falls back to auto", async () => {
+  STORE.clear()
+  STORE.set("opencode_settings", JSON.stringify({ serverApi: "v9" }))
+  const store = freshStore()
+  await store.getState().load()
+  assert.equal(store.getState().serverApi, "auto")
+})

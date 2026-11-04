@@ -9,7 +9,9 @@
 import { fetch as expoFetch } from "expo/fetch"
 import { buildRequestHeaders } from "./headers"
 import { SSEParser } from "./sse"
-import { apiErrorFor, isAuthStatus } from "./api-error"
+import { ApiError, apiErrorFor, isAuthStatus } from "./api-error"
+import { detectServerApi, type ProbeRequest, type ServerApi, type ServerIdentity } from "./api-detect"
+import { createV1Client } from "./sdk-v1"
 import { normalizeSessions } from "./session-list"
 import type { FileRoot } from "./file-roots"
 import {
@@ -40,6 +42,10 @@ export interface ClientConfig {
     username: string
     password: string
   }
+  // Which server API this connection speaks. Omitted means V2 (the app's
+  // original transport); stores/connections.ts probes the server once and
+  // records the answer on the connection.
+  api?: ServerApi
 }
 
 export interface Session {
@@ -206,17 +212,7 @@ export interface HealthResponse {
 
 const REQUEST_TIMEOUT_MS = 30_000
 
-// Thrown by request() on a non-2xx response. Carries the HTTP status so
-// callers can distinguish e.g. 404 (older server, endpoint missing) from
-// other failures without parsing the message string.
-export class ApiError extends Error {
-  status: number
-  constructor(status: number, body: string) {
-    super(`API Error: ${status} - ${body}`)
-    this.name = "ApiError"
-    this.status = status
-  }
-}
+export { ApiError }
 
 function createHeaders(config: ClientConfig): HeadersInit {
   return buildRequestHeaders(config)
@@ -297,7 +293,7 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
   }
 }
 
-export function createClient(config: ClientConfig) {
+function createV2Client(config: ClientConfig) {
   // Session IDs and switch choices belong to this connection. Sharing this
   // cache across clients can skip the first model switch on another server.
   const lastSwitch = new Map<string, string>()
@@ -805,7 +801,36 @@ export function createClient(config: ClientConfig) {
   }
 }
 
-export type Client = ReturnType<typeof createClient>
+// A probe is a diagnostic, not a session call: it should answer in about a
+// second on a LAN and give up before the onboarding flow's own timeout.
+const PROBE_TIMEOUT_MS = 8_000
+
+/** Probe a connection and report which server API it speaks (see api-detect.ts). */
+export async function probeServer(config: ClientConfig): Promise<ServerIdentity> {
+  const normalized: ClientConfig = { ...config, baseUrl: config.baseUrl.replace(/\/+$/, "") }
+  const headers = createHeaders(normalized)
+  const probe: ProbeRequest = async (path) => {
+    const response = await fetchWithTimeout(`${normalized.baseUrl}${path}`, { headers }, PROBE_TIMEOUT_MS)
+    const contentType = response.headers.get("content-type") ?? ""
+    const body = await response.text().catch(() => "")
+    return { status: response.status, contentType, body }
+  }
+  return detectServerApi(probe)
+}
+
+export function createClient(config: ClientConfig): Client {
+  if (config.api === "v1") {
+    // Both clients implement the same runtime contract (session, project,
+    // permission, question, provider, config). The cast covers the one place
+    // their types differ nominally: v1's /question and /permission lists hand
+    // back untyped records while the v2 mappers produce shaped requests, and
+    // events.ts already treats both as records when reconciling.
+    return createV1Client(config) as unknown as Client
+  }
+  return createV2Client(config)
+}
+
+export type Client = ReturnType<typeof createV2Client>
 
 // Note: `permission.reply` changed signature in V2 (session- and request-
 // scoped). Callers that only knew (requestID, reply) must now pass the

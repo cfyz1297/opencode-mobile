@@ -52,6 +52,10 @@ export default function EditConnectionScreen() {
   const [password, setPassword] = useState("")
   const [isTesting, setIsTesting] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  // API generation returned by the last successful Test, saved with the
+  // connection so the next launch skips the probe (and a server swapped at the
+  // same URL updates its transport).
+  const [detectedApi, setDetectedApi] = useState<"v1" | "v2" | undefined>(undefined)
 
   useEffect(() => {
     if (connection) {
@@ -96,6 +100,7 @@ export default function EditConnectionScreen() {
     )
 
     if (result.ok) {
+      setDetectedApi(result.api)
       setIsTesting(false)
       Alert.alert(t("connection.edit.alerts.successTitle"), t("connection.edit.alerts.successMessage"))
       return
@@ -142,6 +147,7 @@ export default function EditConnectionScreen() {
           url: url.trim(),
           directory: directory.trim() || undefined,
           username: username.trim() || undefined,
+          ...(detectedApi ? { api: detectedApi } : {}),
         },
         // Empty = keep existing password (the field loads blank); a typed value
         // rotates it in SecureStore.

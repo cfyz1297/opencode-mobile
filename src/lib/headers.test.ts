@@ -10,6 +10,14 @@ test("always sets JSON content type", () => {
   assert.equal(buildRequestHeaders({})["Content-Type"], "application/json")
 })
 
+test("marks every request as client traffic so tunnels proxy it instead of serving their own page", () => {
+  // ngrok answers an unmarked request with an HTML interstitial (401), and the
+  // app read that as "wrong password"; upstream #219.
+  const h = buildRequestHeaders({})
+  assert.equal(h["ngrok-skip-browser-warning"], "true")
+  assert.equal(h["Bypass-Tunnel-Reminder"], "true")
+})
+
 test("omits directory and auth headers when not provided", () => {
   const h = buildRequestHeaders({})
   assert.equal("x-opencode-directory" in h, false)

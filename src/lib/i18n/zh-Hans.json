@@ -14,7 +14,8 @@
       "notifications": "通知",
       "privacy": "隐私",
       "providers": "服务商",
-      "about": "关于"
+      "about": "关于",
+      "server": "服务器"
     },
     "providers": {
       "row": {
@@ -60,6 +61,14 @@
         "label": "文档",
         "description": "了解如何使用 OpenCode"
       }
+    },
+    "serverApi": {
+      "label": "服务器 API",
+      "title": "服务器 API 版本",
+      "description": "连接时自动识别协议（opencode 1.x 为 v1，opencode 2.x 为 v2）。仅在需要绕过服务器问题时才手动指定版本。",
+      "auto": "自动（推荐）",
+      "v1": "v1 (opencode 1.x)",
+      "v2": "v2 (opencode 2.x)"
     },
     "language": {
       "label": "语言",
