@@ -1077,7 +1077,13 @@ export default function SessionScreen() {
           {currentModelVariants && Object.keys(currentModelVariants).length > 0 && (
             <TouchableOpacity
               style={[s.variantChip, isDark && s.variantChipDark, variant && s.variantChipActive]}
-              onPress={() => variantSheetRef.current?.expand()}
+              onPress={() => {
+                // The picker has no text input, so the keyboard is pure
+                // obstruction: with it up the sheet rendered behind the IME
+                // and the last option ("High") was unreachable.
+                Keyboard.dismiss()
+                variantSheetRef.current?.expand()
+              }}
               testID="variant-chip"
             >
               <Ionicons name="flash-outline" size={14} color={variant ? "#8b5cf6" : isDark ? "#888888" : "#666666"} />

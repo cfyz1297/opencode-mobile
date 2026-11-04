@@ -3,7 +3,7 @@
 Актуально на **2026-11-04**.
 
 - App: **`cc.agentlabs.opencode`** — Expo/React Native Android-клиент к собственному серверу `opencode serve`. Работает с **обоими поколениями API**: V2 (`/api/*`, opencode 2.x) и V1 (`/session`, `/global/event`, opencode 1.18.x); версия определяется автоматически, в настройках можно включить принудительно.
-- Репозиторий форка: **`cfyz1297/opencode-mobile`**. Апстрим для справки: `dzianisv/opencode-mobile`.
+- Репозиторий форка: **`cfyz1297/opencode-v1-v2-mobile`**. Апстрим для справки: `dzianisv/opencode-mobile`.
 - Пользователь запускает сервер в Termux на телефоне; приложение — клиент к нему.
 - **Текст релиза пишется на двух языках: сначала английский, потом русский.** Правило действует с 0.2.30, распространяется на описание GitHub Release, `README.md`/`README.ru.md` и этот файл.
 
@@ -11,17 +11,17 @@
 
 | Что | Значение |
 |---|---|
-| Версия | **0.2.30**, versionCode **64** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
+| Версия | **0.3.0**, versionCode **65** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
 | Ветки | `main` = `master` (релизный коммит — см. `git log -1`) |
-| Тег | `v0.2.30` |
-| Release | https://github.com/cfyz1297/opencode-mobile/releases/tag/v0.2.30 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
-| APK | 86 401 676 байт, SHA256 `cdeab566d04d52ecccc70208abbc178230941f6eaead20a7901bae9e36773d51` |
-| Подпись | production keystore, сертификат тот же, что у 0.2.20/0.2.22/0.2.23/0.2.27/0.2.28/0.2.29 → установка поверх без удаления |
+| Тег | `v0.3.0` |
+| Release | https://github.com/cfyz1297/opencode-v1-v2-mobile/releases/tag/v0.3.0 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
+| APK | см. `SHA256SUMS.txt` релиза v0.3.0 |
+| Подпись | production keystore, сертификат тот же, что у 0.2.20–0.2.30 → установка поверх без удаления (проверяется в CI сравнением с предыдущим релизом) |
 | Каналы | только `Build Android APK` и `Security scan`. Play / F-Droid / App Store не используются, на тег `v*` не запускаются |
-| Тесты | `npm test` — **658 passed, 0 failed**; `npm run test:coverage` — 98.32% строк / 86.40% ветвей / 96.06% функций; `npm run typecheck` чисто; `npm run check:versions` — 0.2.30 (64) |
+| Тесты | `npm test` — **663 passed, 0 failed**; `npm run test:coverage` — 98.33% строк / 86.43% ветвей / 96.06% функций; `npm run typecheck` чисто; `npm run check:versions` — 0.3.0 (65) |
 | Документация | `README.md` — английский (основной), `README.ru.md` — русский, оба ссылаются друг на друга |
 
-## Не выпущено (ветка `feat/server-api-v1`, 2026-11-04)
+## Что вошло в 0.3.0 (ветка `feat/server-api-v1`, 2026-11-04)
 
 - **Совместимость с opencode 1.x (V1 API).** Новый транспорт `src/lib/sdk-v1.ts` (порт upstream PR #209 / релиза v0.4.16): `/session`, `/experimental/session`, `/session/{id}/prompt_async`, `/global/event`, `/permission/*`, `/question/*`, `/file*`, `/path`, `/agent`, `/command`, `/provider`, `/config`. Модель/агент в V1 едут в теле промпта — отдельных `POST /session/{id}/model|agent` там нет. Ответы V1 отдаются в той же форме, что и адаптированные V2, поэтому сторы и экраны не менялись. События `session.idle`, `permission.updated` и `permission.v2.*` (их шлёт сервер 1.18.x) нормализуются в те имена, которые уже знает `src/stores/events.ts`.
 - **Определение версии сервера.** `src/lib/api-detect.ts`: `GET /api/info` (JSON или 401/403 → V2), иначе `GET /global/health` (JSON или 401/403 → V1); HTML на обоих маршрутах = это не сервер opencode. Решение принимается по типу ответа, а не по коду, потому что неизвестный маршрут на обоих поколениях отдаёт `200 text/html` из веб-интерфейса. Результат пишется в подключение (`api`, `serverVersion`) и сбрасывается при смене URL; ошибка пробы оставляет прежнее поведение (V2), чтобы сохранённое подключение не переставало открываться.
@@ -52,7 +52,16 @@
 - **Общая стоимость в панели.** Рядом с токенами и процентом: `· $0.0392`. Раньше стоимость считалась суммой по загруженным сообщениям, то есть занижалась для длинной сессии (страница — не вся сессия). Теперь предпочитается `session.cost` из `/api/session/{id}` (поле копится сервером), сумма по сообщениям осталась запасным вариантом. Обе цифры (кольцо и панель) считает один `computeSessionStats()` из `src/lib/session-stats.ts`, чтобы не разъезжались.
 - **Настройка «Вся сессия».** `ALL_TURNS = 0` в `message-page.ts` — максимальное значение в списке `5 / 10 / 25 / 50 / Вся` (вкладка «Подключения», блок предпочтений). Для неё транспорт запрашивает транскрипт целиком (`client.session.allMessages()`), обрезка не применяется, `hasMore` остаётся `false`.
 - **Найден и исправлен тихий лимит 50.** `loadOlderMessages()` вызывал `client.session.messages(id)` без `limit`, а сервер по умолчанию отдаёт 50 сообщений — и потом выставлял `hasMore=false`, после чего догрузить было нечем. Это и есть «не видно всех сообщений» из отчёта. Теперь запрос идёт с максимумом (200) и следует курсору, пока тот приносит новые строки (на текущей сборке сервера курсор сообщений отдаёт пустую страницу — обход на этом и завершается, страховка от зацикливания на пустом/повторном курсоре и 10 страницах).
-- Тесты: `session-stats.test.ts` (7), `session-info.regression.test.ts` (3), `message-page` (+3 на ALL_TURNS), `sdk.integration` (+2 на `allMessages`), `sdk-v1.integration` (+1). Итог: 658 тестов, покрытие 98.32% строк / 86.40% ветвей / 96.06% функций.
+- **Выбор уровня рассуждений при открытой клавиатуре.** Шторка `VariantPicker` не знала про IME и оставалась за клавиатурой — нижняя строка («High») была недоступна. Теперь чип закрывает клавиатуру перед открытием, а шторка получила `keyboardBehavior="interactive"` и `android_keyboardInputMode="adjustResize"`, как у выбора модели и папок.
+- **Стоимость сессии на провайдере, который её не отдаёт.** `opencode-go` не присылает цену ни в сообщениях, ни в записи сессии, поэтому панель показывала «без затрат» весь прогон. Теперь шаги ценятся по каталогу модели (та же формула, что у футера пузыря — `estimateCost` из `message-run.ts`), а накопленные `session.tokens` ценятся по каталогу последней модели. Тест `session-stats.test.ts` (7).
+- **Бейдж удаления вложения** больше не обрезается: он стоял в `-6` по верхнему/правому краю и обрезался `ScrollView`, теперь внутри миниатюры (`ImageAttachments.tsx`).
+- Тесты: `session-stats.test.ts` (7), `session-info.regression.test.ts` (3), `variant-picker-keyboard.regression.test.ts` (2), `message-page` (+3 на ALL_TURNS), `sdk.integration` (+2 на `allMessages`), `sdk-v1.integration` (+1). Итог: 663 теста.
+
+### Релиз 0.3.0
+
+- Версия поднята до **0.3.0 (65)** в `package.json`, `app.json`, `android/app/build.gradle` и проверках CI.
+- Репозиторий переименован: **`cfyz1297/opencode-v1-v2-mobile`** (было `opencode-mobile`). GitHub перенаправляет старые ссылки; `links.ts`, `update-check.ts` и `build.yml` обновлены на новое имя. Имя файла APK (`opencode-mobile-v2.apk`) не менялось — на него опираются проверка подписи в CI и ссылка обновления.
+- README.md / README.ru.md переписаны: полный обзор функций, обновлённая таблица отличий от оригинала, список изменений 0.3.0.
 
 Что нового в 0.2.30:
 

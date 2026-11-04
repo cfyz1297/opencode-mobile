@@ -1,6 +1,6 @@
 # Технологический стек
 
-Проект: форк `cfyz1297/opencode-mobile` — Expo/React Native клиент к self-hosted `opencode serve` (V2 API). Публикуется только как APK через GitHub Releases (`README.md:5`, `HANDOFF.md:4`).
+Проект: форк `cfyz1297/opencode-v1-v2-mobile` — Expo/React Native клиент к self-hosted `opencode serve` (V2 API). Публикуется только как APK через GitHub Releases (`README.md:5`, `HANDOFF.md:4`).
 
 ## Обязательные разделы
 

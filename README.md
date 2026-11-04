@@ -1,19 +1,21 @@
-# OpenCode Mobile (cfyz1297 fork)
+# OpenCode V1/V2 Mobile (cfyz1297 fork)
 
 [Русский](README.ru.md) | **English**
 
-A fork of [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile) — an Expo/React Native client for a self-hosted `opencode serve`. The fork runs on **OpenCode API V2** (server 2.0.x) and ships as an APK from GitHub Releases; app stores are not used.
+A fork of [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile) — an Expo/React Native client for a self-hosted `opencode serve`. **It speaks both server generations**: OpenCode 1.x (V1 API) and 2.x (V2 API), detected automatically, with a manual override in Settings. Ships as an APK from GitHub Releases; app stores are not used.
 
-Version **0.2.30 (64)** continues the 0.2.20 user line. It installs over the previous build — no uninstall needed.
+The repository used to be called `opencode-mobile`; it was renamed to `opencode-v1-v2-mobile` in 0.3.0. Old links redirect, and the APK file name (`opencode-mobile-v2.apk`) is kept unchanged so the built-in update check and the release signature chain keep working.
 
-> **Important:** the 0.2.20 features (tunnel wizard, tablet layout, offline history) have still **not been verified by the user** on a real device against a real server. There are automated tests and an Android CUA smoke run on an emulator; that is not a substitute for manual checking.
+Version **0.3.0 (65)**. Installs over 0.2.30 — no uninstall needed.
+
+> **Not verified by the user on a device** (automated tests and an Android CUA smoke on an emulator only): the V1 transport against a real 1.18.x server, the tunnel wizard, the tablet layout, offline history, the context ring's look on a light theme.
 
 ## Install (Android, APK)
 
 Stable link — always the latest release:
 
-- **[Download opencode-mobile-v2.apk](https://github.com/cfyz1297/opencode-mobile/releases/latest/download/opencode-mobile-v2.apk)** (~86 MB)
-- All releases: [Releases](https://github.com/cfyz1297/opencode-mobile/releases) — every new build gets its own release (`0.2.15`, `0.2.18`, …); the APK file is always named `opencode-mobile-v2.apk`
+- **[Download opencode-mobile-v2.apk](https://github.com/cfyz1297/opencode-v1-v2-mobile/releases/latest/download/opencode-mobile-v2.apk)** (~86 MB)
+- All releases: [Releases](https://github.com/cfyz1297/opencode-v1-v2-mobile/releases) — every new build gets its own release (`0.2.15`, `0.2.18`, `0.3.0`, …). The APK file is still named `opencode-mobile-v2.apk`: the release signature check and the update-check link both point at that name, so it is deliberately not renamed.
 
 > ⚠️ One-time reinstall: since `0.2.9` the APK is signed with a permanent key (earlier every build generated a new debug key, so updates would not install over the old app). If you are on an older build, uninstall it **once** and install the current one; after that updates install in place.
 
@@ -46,14 +48,50 @@ OPENCODE_SERVER_PASSWORD=yourpassword opencode serve --hostname 0.0.0.0 --port 4
 
 V2 specifics (verified on 2.0.27): Basic authentication only as `opencode:<password>` (Bearer and an empty user both return 401), all paths under `/api/*`, paginated responses as `{data, cursor}`, SSE at `GET /api/event`.
 
+## What the app does
+
+**Sessions and chat**
+- Live transcript: text, reasoning, tool calls, diffs and compaction summaries, streamed as the server produces them, in the order the model produced them.
+- Send a follow-up while the agent is still working; the server queues it.
+- Stop button follows the server's actual run status, so a run started elsewhere (app restarted, another device, opened mid-run) can still be interrupted.
+- Edit a message and roll the session back to it (`revert` / `unrevert`), or compact the history into a summary.
+- Pending tool approvals and agent questions appear inline; answered questions stay in the transcript collapsed to one line.
+- A failed run shows the server's reason in place of the answer instead of an empty bubble.
+- Message page size is counted in prompts (5 / 10 / 25 / 50 / **All**). "All" loads the whole transcript.
+
+**Session info**
+- The header button is a ring filled by context usage (blue, amber past 50 %, red past 80 %).
+- The panel shows token counts, the context percentage with a bar, the total spend for the whole session, and the model/agent the session runs with.
+
+**Models and agents**
+- Model picker with search, grouped by provider, showing the active model.
+- **Favorites**: a star in either picker pins a model to a "Favorites" section on top; stored on the device only, shared across connections.
+- Hidden models (Models screen) disappear from both pickers.
+- Reasoning-effort (variant) picker for models that expose one; the sheets move with the keyboard so no row is left under the IME.
+
+**Connections and servers**
+- Multiple connections: LAN, Tailscale, tunnel; passwords in the Keystore/Keychain.
+- **V1 and V2 support** with automatic detection and a manual override.
+- Honest status: "Active" means the server answered, checked on focus, every 15 s and on foreground.
+- Tunnel wizard for Cloudflare (named tunnels) and ngrok.
+- Providers screen: connect a provider by API key through the server; no key is stored in the APK.
+- Diagnostics screen with a copyable report (URL parsing, both health routes, the detected API generation, internet reachability).
+
+**Reliability and privacy**
+- Streak recovery: stream watchdog, transcript re-read after silence, `GET /api/session/active` to settle "working" state.
+- Offline history, encrypted, read-only, capped.
+- No telemetry: Sentry and PostHog are removed.
+- Biometric unlock, notifications with fixed text (no server-supplied tool names or paths on the lock screen).
+- Tablet layout, any orientation, native keyboard inset.
+
 ## How the fork differs from upstream
 
 The base is upstream [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile) at tag `v0.4.15` (2026-08-14). From there the fork has its own version line and its own goals: one user, one server in Termux, one delivery channel — an APK.
 
 | What | Upstream | Fork |
 |---|---|---|
-| Server API | API 1.x (`/session`, `/global/*`) | **V2 only** (`/api/*`), server 2.0.x |
-| Version | 0.4.x | 0.2.x line, currently 0.2.30 (64) |
+| Server API | API 1.x only (`/session`, `/global/*`) | **both**: 1.x (`/session`, `/global/*`) and 2.x (`/api/*`), auto-detected, forceable in Settings |
+| Version | 0.4.x | 0.3.x line, currently 0.3.0 (65) |
 | Signing and updates | new debug key per build in old versions | permanent keystore, installs in place |
 | Channels | Google Play, self-hosted F-Droid, APK, EAS | APK from GitHub Releases only |
 | Telemetry | Sentry (crash reports) + PostHog | both dependencies removed |
@@ -64,6 +102,10 @@ The base is upstream [dzianisv/opencode-mobile](https://github.com/dzianisv/open
 | Models screen | none | search, groups, visibility — affects both pickers |
 | Connection status | "selected" means "active" | real server response, polled on focus and every 15 s |
 | Run recovery | none | silence watchdog, transcript re-read, `GET /api/session/active` |
+| Model picker | search + groups | + favorites (starred section on top) |
+| Session info | token count | context ring in the header, context bar, whole-session spend |
+| Sessions list | newest page | walks the server cursor, up to 800 roots |
+| Tool rows | name + raw payload | command for `shell`, live progress title, input fallback, no empty expand |
 | Keyboard | JS inset | native IME inset in `MainActivity` |
 | New session folder | default | the selected project (`location.directory` in the request body) |
 | Tests | `node --test` over a glob | `scripts/run-tests.mjs` + 80 % coverage gate, CUA smoke on an emulator |
@@ -73,10 +115,9 @@ What changed in the code:
 - **Adapter `src/lib/v2-compat.ts`**: V2 responses and events are normalized to the V1 shape, so stores and screens stayed as they were. V1 events (`session.status`, `message.part.updated`) are assembled from V2 deltas (`session.text.delta`, `session.reasoning.delta`, `session.tool.*`).
 - **SDK** switched to `/api/session`, `/api/event`, `/api/info`, `/api/permission/request`, `/api/fs/*`, `/api/project`, `/api/location`. Changing a session's model/agent goes through `POST /api/session/{id}/model` and `/agent`.
 - **V1 transport** (`src/lib/sdk-v1.ts`, `src/lib/api-detect.ts`): the same app works against an opencode 1.x server — `/session`, `/experimental/session`, `/session/{id}/prompt_async`, `/global/event`. The detected API is stored on the connection (`api`, `serverVersion`) and is invalidated when the URL changes. Ported from upstream PR #209 / release v0.4.16.
-- **Session stats**: the header button is a ring that fills with context usage (blue → amber at 50% → red past 80%), and the panel shows the token count, the context percentage and the total spend for the whole session. Settings → Prompts per session gains an **All** option that loads the entire transcript.
-- **Favorites**: a star in either model picker pins a model to a "Favorites" section at the top; stored locally (provider/model ids only) and global across connections.
-- **Tool cards**: the `shell` tool (2.x name) is rendered as a terminal with its command, the progress title from `session.tool.progress` is shown, and an empty output falls back to the tool input instead of an empty card.
-- **New screens and logic**: `app/history.tsx` (offline history), `app/models.tsx` (model visibility), `app/providers/*` (provider catalog and key-based connection through the server), `app/connection/tunnel.tsx` (tunnel wizard), `src/components/TabletSessions.tsx` (tablet), `src/lib/adaptive-layout.ts`, `src/lib/connection-health.ts`, `src/lib/connection-security.ts`, `src/lib/run-watchdog.ts`, `src/lib/stream-watchdog.ts`, `src/lib/keyboard-inset.ts`.
+- **Tool cards** (`src/lib/tool-view.ts`): the `shell` tool (2.x name) is rendered as a terminal with its command, the progress title from `session.tool.progress` is shown, and an empty output falls back to the tool input instead of an empty card.
+- **Session stats** (`src/lib/session-stats.ts`, `src/components/chat/ContextRing.tsx`): one function computes tokens, context percentage and whole-session cost, shared by the header ring and the info panel so they cannot disagree.
+- **New screens and logic**: `app/history.tsx` (offline history), `app/models.tsx` (model visibility), `app/providers/*` (provider catalog and key-based connection through the server), `app/connection/tunnel.tsx` (tunnel wizard), `src/components/TabletSessions.tsx` (tablet), `src/lib/adaptive-layout.ts`, `src/lib/connection-health.ts`, `src/lib/connection-security.ts`, `src/lib/run-watchdog.ts`, `src/lib/stream-watchdog.ts`, `src/lib/keyboard-inset.ts`, `src/lib/message-page.ts` (page in prompts, `ALL_TURNS`, `keepLoadedHistory`), `src/lib/session-stats.ts`, `src/lib/tool-view.ts`, `src/lib/api-detect.ts`, `src/stores/model-favorites.ts`.
 - **V2 specifics**: agent questions go through V2 forms, compaction summaries are visible in the transcript, image attachments render as images, the chat follows the stream, the composer clears after a built-in command.
 - **Client isolation**: the SDK client is bound to its connection, so streamed messages and the selected model do not leak between servers.
 - **Removed along with the infrastructure**: `website/`, `docs-site/`, `fastlane/`, `fdroid/`, `distribution/`, `eas.json`, `.maestro/`, `.autopilot/`, `.supervisor/`, `.tasks/`, the iOS build and store-publishing workflows, the Sentry plugin and source-map upload.
@@ -93,7 +134,7 @@ Demo mode without a server, multiple connections (LAN, tunnel, Tailscale), biome
 - Server passwords and offline history live in the Android Keystore / iOS Keychain with the `WHEN_UNLOCKED_THIS_DEVICE_ONLY` policy: they do not end up in OS backups and are not restored on another device.
 - Plain `http://` encrypts neither the password nor the transcript. The connection forms warn about it; use https, a tunnel or Tailscale on untrusted networks. Loopback (Termux on the same phone) shows no warning — traffic never leaves the device.
 - The app does not request `SYSTEM_ALERT_WINDOW` (drawing over other apps).
-- Build dependencies: `npm audit` reports 11 vulnerabilities in the Metro/PostCSS/Espree chain (`npm audit fix --force` downgrades Expo to 44 and breaks the build). None of that code ships in the APK — it only runs during the CI build.
+- Build dependencies: `npm audit` reports 34 entries (7 high) in the Metro/PostCSS/Expo CLI chain. `npm audit fix --force` downgrades Expo to 51 and breaks the project. None of that code ships in the APK — it only runs during the CI build.
 
 ## Cloudflare / ngrok wizard
 
@@ -102,7 +143,7 @@ Cloudflare needs a **named tunnel**, an account and a domain: in the Cloudflare 
 ## Building from source
 
 ```bash
-git clone https://github.com/cfyz1297/opencode-mobile
+git clone https://github.com/cfyz1297/opencode-v1-v2-mobile
 cd opencode-mobile
 npm install
 npm run android            # dev build on a device/emulator
@@ -121,7 +162,23 @@ A separate pure-Java client without Gradle (`aapt → ecj → d8 → apksigner`)
 ## Updates
 
 <details>
-<summary>Changelog by version (0.2.11 – 0.2.30)</summary>
+<summary>Changelog by version (0.2.11 – 0.3.0)</summary>
+
+### 0.3.0
+
+- **Works with opencode 1.x and 2.x.** A second transport (`src/lib/sdk-v1.ts`) covers the V1 API — `/session`, `/experimental/session`, `/session/{id}/prompt_async`, `/global/event`, permissions, questions, files, agents, commands, providers. The address is probed once per connection and the answer is stored; the probe classifies by response body and content type, never by status code, because an unknown route on either generation falls through to the web UI and answers `200 text/html`. Settings → Server → Server API forces `v1` or `v2` (applies immediately, no restart). Events that only 1.18.x sends (`session.idle`, `permission.updated`, `permission.v2.*`) are normalized, otherwise an approval prompt would never appear and the run would hang.
+- **Favorites in the model picker.** A star in each row pins a model to a "Favorites" section at the top of both pickers. Stored on the device (provider and model ids only), global across connections; a starred model stays in its provider list, and a hidden model stays hidden.
+- **Tool cards no longer show up empty.** Three causes: the progress title from `session.tool.progress` was received and thrown away, an empty output string hid the input that was right there, and the 2.x tool name `shell` was not recognised (only `bash`), so no terminal icon and no command. The decision now lives in `src/lib/tool-view.ts` and is covered by tests.
+- **Context ring and session spend.** The header button became a ring filled by context usage, and the panel shows the cost of the whole session next to the percentage. The cost used to be summed over loaded messages only, which understates a long session; the server's cumulative `session.cost` is preferred now.
+- **Chat no longer loses messages mid-session.** "Load older" used to clear `hasMore` after fetching, and every later refresh (focus, foreground, reconnect) replaced the transcript with a page trimmed to the setting — messages vanished until the session was reopened. Older messages are now kept when the full history is already known.
+- **"Load older" really loads everything.** It called the API without a limit, the server answered its default 50 messages, and the store then marked the history complete — everything older became unreachable. It now asks for the largest page (200) and follows the message cursor while it returns new rows.
+- **The stop button is always there during a run.** It used to depend on a local "I sent this" flag, so a run started elsewhere could not be interrupted — a long build had no way to be stopped.
+- **The attach and paste buttons can't fail silently.** Unhandled rejections from the image picker and clipboard reads are caught and reported; the picker dismisses the keyboard and ignores a second launch while open.
+- **Reasoning-effort picker with the keyboard open.** The sheet stayed behind the IME and its last row was unreachable; it now dismisses the keyboard and moves with it like the model sheet.
+- **Session list is no longer cut off.** The V2 list ignored the response cursor (server default 50) and the V1 list ignored `x-next-cursor` (default 100), so sessions visible in the TUI were missing from the app. Both walk their cursor now, bounded and de-duplicated.
+- **Tunnels work.** Requests carry `ngrok-skip-browser-warning` and `Bypass-Tunnel-Reminder`; without them ngrok answered with its own page and the app reported a wrong password.
+- **Notifications carry no server text.** Approval and question notifications are fixed strings: the shade is readable on a locked phone, and the details (tool names, paths, commands) are server-supplied.
+- **Repository renamed** to `opencode-v1-v2-mobile`.
 
 ### 0.2.30
 

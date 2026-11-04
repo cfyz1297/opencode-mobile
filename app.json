@@ -2,7 +2,7 @@
   "expo": {
     "name": "OpenCode",
     "slug": "opencode-mobile",
-    "version": "0.2.30",
+    "version": "0.3.0",
     "orientation": "default",
     "scheme": "opencode",
     "userInterfaceStyle": "automatic",
@@ -35,9 +35,11 @@
     },
     "android": {
       "package": "cc.agentlabs.opencode",
-      "versionCode": 64,
+      "versionCode": 65,
       "usesCleartextTraffic": true,
-      "blockedPermissions": ["android.permission.SYSTEM_ALERT_WINDOW"],
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0F172A"
