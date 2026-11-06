@@ -14,7 +14,7 @@ import {
   Keyboard,
   useWindowDimensions,
 } from "react-native"
-import { useLocalSearchParams, Stack, useRouter, useFocusEffect } from "expo-router"
+import { useLocalSearchParams, useRouter, useFocusEffect, useNavigation } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useKeyboardHeight } from "../../src/lib/use-keyboard-height"
@@ -849,31 +849,40 @@ export default function SessionScreen() {
     [messages, providers, currentSession],
   )
 
+  const navigation = useNavigation()
+
+  // Header options are set through an effect, not inline on the Stack.Screen
+  // element: this screen re-renders on every streamed part, and inline options
+  // re-registered the native header on each render — the race behind the
+  // react-native-screens "child already has a parent" crash when leaving a
+  // session mid-stream (upstream v0.4.17, Sentry OPENCODE-MOBILE-6/-7).
+  // contextPercent is in the deps so the ring still updates, but only when the
+  // visible data changes.
+  useEffect(() => {
+    navigation.setOptions({
+      title: currentSession?.title || t("session.titleFallback"),
+      headerRight: () => (
+        <View style={s.headerRight}>
+          {shortDir && (
+            <View style={[s.dirBadge, isDark && s.dirBadgeDark]}>
+              <Ionicons name="folder-outline" size={14} color={isDark ? "#888888" : "#666666"} />
+              <Text style={[s.dirText, isDark && s.dirTextDark]}>{shortDir}</Text>
+            </View>
+          )}
+          <ContextRing
+            percent={contextPercent}
+            isDark={isDark}
+            active={showInfo}
+            onPress={() => setShowInfo((v) => !v)}
+            accessibilityLabel={t("chat.sessionInfo.open")}
+          />
+        </View>
+      ),
+    })
+  }, [navigation, currentSession?.title, shortDir, showInfo, isDark, t, contextPercent])
+
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: currentSession?.title || t("session.titleFallback"),
-          headerRight: () => (
-            <View style={s.headerRight}>
-              {shortDir && (
-                <View style={[s.dirBadge, isDark && s.dirBadgeDark]}>
-                  <Ionicons name="folder-outline" size={14} color={isDark ? "#888888" : "#666666"} />
-                  <Text style={[s.dirText, isDark && s.dirTextDark]}>{shortDir}</Text>
-                </View>
-              )}
-              <ContextRing
-                percent={contextPercent}
-                isDark={isDark}
-                active={showInfo}
-                onPress={() => setShowInfo((v) => !v)}
-                accessibilityLabel={t("chat.sessionInfo.open")}
-              />
-            </View>
-          ),
-        }}
-      />
-
       <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center' }}>
       {layout.split && <TabletSessions width={layout.sidebar} selected={id} />}
       <View
