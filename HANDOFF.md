@@ -15,7 +15,7 @@
 | Ветки | `main` = `master` (релизный коммит — см. `git log -1`) |
 | Тег | `v0.3.1` |
 | Release | https://github.com/cfyz1297/opencode-v1-v2-mobile/releases/tag/v0.3.1 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
-| APK | 86 426 305 байт, SHA256 `e712309865686597bdf14337375600e1ff812b94367de9bcb9d00f56b55510f6` (артефакт CI `app-release`, run 41905056528) |
+| APK | 86 426 384 байт, SHA256 `8ff38b649d5c8bb552287941933adc067463d0143ffcc07ef10f1cc840930e84` (артефакт CI `app-release`, run 42201661240) |
 | Подпись | production keystore, сертификат тот же, что у 0.2.20–0.2.30 → установка поверх без удаления (проверяется в CI сравнением с предыдущим релизом) |
 | Каналы | только `Build Android APK` и `Security scan`. Play / F-Droid / App Store не используются, на тег `v*` не запускаются |
 | Тесты | `npm test` — **666 passed, 0 failed**; `npm run test:coverage` — 98.33% строк / 86.43% ветвей / 96.06% функций; `npm run typecheck` чисто; `npm run check:versions` — 0.3.1 (66) |
