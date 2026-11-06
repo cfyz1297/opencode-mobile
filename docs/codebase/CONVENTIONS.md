@@ -2,7 +2,7 @@
 
 Правила ниже выведены из фактического кода; инструментов принуждения (линтер/форматтер) в репозитории нет, поэтому единственные автоматические гейты — `tsc --noEmit` и `npm test`.
 
-Актуально на 2026-11-05, коммит `2a97e60` (0.3.0).
+Актуально на 2026-11-06, коммит `2a97e60` (0.4.0).
 
 ## Обязательные разделы
 
@@ -29,9 +29,9 @@
 - Линтер: **отсутствует** (нет `.eslintrc*`, `eslint.config.*`, зависимостей eslint).
 - Фактический стиль: отступ 2 пробела; в `src/**` преобладают двойные кавычки, точки с запятой в конце строк не ставятся (`grep ';$' src/lib/*.ts` — 8 строк на весь `src/lib`); в тестах и `scripts/*.mjs` встречаются одиночные кавычки и точки с запятой (`src/lib/connections-screen.test.ts:1-5`, `scripts/check-version-parity.mjs`). Стиль не принуждается, поэтому файл-в-файл разнобой допустим.
 - `any` формально не запрещён механически, но встречается точечно (`as any`/`: any` в `src`+`app`), обычно на границе известных-неполных типов: `name={icon as any}` (`src/components/chat/ToolCallCard.tsx:347 (ToolCallCard)`), `(event as any).payload` (`src/stores/events.ts:398 (connect)`). `AGENTS.md` требует «без `any`» — фактически это правило нарушается в 24 местах.
-- TypeScript: `strict: true`, наследование `expo/tsconfig.base` (`tsconfig.json:2-4`). Важное следствие: `include`/`exclude` исключают тесты из проверки типов (`tsconfig.json:9-10`), то есть `*.test.ts` **не типизируются** в `npm run typecheck`.
+- TypeScript: `strict: true`, наследование `expo/tsconfig.base` (`tsconfig.json:2-4`). `include` охватывает и `*.test.ts(x)`: `npm run typecheck` проверяет тесты наравне с исходниками.
 - Запуск: `npm run typecheck`, `npm test`, `npm run test:coverage`, `npm run check:versions`.
-- Числа на 2026-11-05: **663 теста**, покрытие **98.33 % строк / 86.43 % ветвей / 96.06 % функций**.
+- Числа на 2026-11-06: **635 тестов**, покрытие **98.35 % строк / 86.26 % ветвей / 97.22 % функций**.
 
 ### 3) Импорты и модули
 
@@ -39,7 +39,7 @@
 - Алиас `@/*` объявлен (`tsconfig.json:5-7`), но **не используется** (0 импортов `@/`): конвенция — относительные пути от файла (`../../src/stores/sessions` в `app/`, `./v2-compat` в `src/lib`).
 - Общего барреля `src/index.ts` нет. Баррели есть только у двух каталогов компонентов: `src/components/chat/index.ts` (реэкспорт 17 компонентов) и `src/components/markdown/index.tsx`.
 - Тестовые файлы импортируют проверяемый модуль **с расширением `.ts`** (`import { keyboardPadding } from "./keyboard-inset.ts"`), production-код — без расширения. Это требование Node type-stripping'а, а не вкусовщина.
-- Чистый модуль (`src/lib/*.ts`) не должен импортировать `react-native`/`expo-*`, если для него планируются тесты под `node --test`; нативные обёртки выносятся отдельно (`src/lib/history-storage.ts` ↔ `src/lib/offline-history.ts`, `src/lib/waitlist-queue-storage.ts` ↔ `src/lib/waitlist.ts`, `src/lib/i18n/config.ts` ↔ `src/lib/i18n/locale-resolve.ts`).
+- Чистый модуль (`src/lib/*.ts`) не должен импортировать `react-native`/`expo-*`, если для него планируются тесты под `node --test`; нативные обёртки выносятся отдельно (`src/lib/history-storage.ts` ↔ `src/lib/offline-history.ts`, `src/lib/speech-locale.ts` ↔ `src/lib/speech.ts`, `src/lib/i18n/config.ts` ↔ `src/lib/i18n/locale-resolve.ts`).
 - Type-only импорты помечаются `import type` (`src/stores/sessions.ts:2`).
 
 ### 4) Ошибки и логирование
@@ -56,7 +56,7 @@
 - Каталог: тест лежит рядом с модулем (`src/lib/*.test.ts`), один тест — один файл модуля; исключение по имени: `src/lib/session-recency.test.ts` тестирует `session-grouping.ts`.
 - Раннер: встроенный `node:test`, ассерты `node:assert/strict`; `describe/it` редки — почти всё плоские `test(...)`.
 - Моки: внедрение зависимостей (фейковое хранилище, фейковый `fetch`), подмена `expo/fetch` через `registerHooks` (`src/lib/sdk.integration.test.ts:1-17`), HTTP-заглушка для интеграционных (`tests/fixtures/mock-opencode-server.ts`), «экранный» харнесс на `vm` + `typescript` (`src/lib/connections-screen.test.ts:1-30`), статические проверки исходников регулярками для того, что нельзя отрендерить (`src/components/wide-content-scroll.regression.test.ts`, `src/lib/dialog-back-gesture.regression.test.ts`).
-- Покрытие: гейт 80 % по строкам/ветвям/функциям (`package.json`); фактически 98.33 / 86.43 / 96.06 (прогон 2026-11-05).
+- Покрытие: гейт 80 % по строкам/ветвям/функциям (`package.json`); фактически 98.35 / 86.26 / 97.22 (прогон 2026-11-06).
 - Подробности — `docs/codebase/TESTING.md`.
 
 ### 6) Прочие наблюдаемые конвенции

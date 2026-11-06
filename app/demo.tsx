@@ -4,9 +4,9 @@ import { Stack, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { MessageBubble, PermissionPrompt } from "../src/components/chat"
+import { type PermissionReply } from "../src/components/chat/PermissionPrompt"
 import { buildDemoScript, buildDemoCompletionMessage, buildDemoDenialMessage } from "../src/lib/demo-script"
 import { SETUP_GUIDE_URL } from "../src/lib/links"
-import { type DemoPermissionReply } from "../src/lib/demo-analytics"
 
 // Fully offline, scripted walkthrough for installers with no self-hosted
 // opencode server. ISOLATION: every message/part below is hardcoded local
@@ -23,9 +23,9 @@ export default function DemoScreen() {
 
   // Built once per mount from pure, hardcoded data (src/lib/demo-script.ts).
   const script = useMemo(() => buildDemoScript(), [])
-  const [reply, setReply] = useState<DemoPermissionReply | null>(null)
+  const [reply, setReply] = useState<PermissionReply | null>(null)
 
-  const handleReply = useCallback((r: DemoPermissionReply) => {
+  const handleReply = useCallback((r: PermissionReply) => {
     setReply(r)
   }, [])
 
@@ -68,13 +68,6 @@ export default function DemoScreen() {
               testID="demo-connect-button"
             >
               <Text style={s.connectButtonText}>{t("demo.connectButton")}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={s.hostedCtaLink}
-              onPress={handleConnectPress}
-              testID="demo-hosted-cta"
-            >
-              <Text style={s.hostedCtaLinkText}>{t("demo.hostedCtaLink")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={s.setupGuideLink}
@@ -131,8 +124,6 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   connectButtonText: { color: "#ffffff", fontWeight: "600", fontSize: 15 },
-  hostedCtaLink: { marginTop: 14 },
-  hostedCtaLinkText: { fontSize: 14, fontWeight: "600", color: "#8b5cf6", textAlign: "center" },
   setupGuideLink: { marginTop: 14 },
   setupGuideLinkText: { fontSize: 14, fontWeight: "600", color: "#6366f1" },
 })

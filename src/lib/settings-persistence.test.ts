@@ -7,6 +7,7 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 import { createRequire } from "node:module"
 import { runInNewContext } from "node:vm"
 
@@ -16,7 +17,7 @@ const ts = require("typescript")
 const STORE = new Map<string, string>()
 
 function freshStore() {
-  const source = readFileSync(new URL("../stores/settings.ts", import.meta.url), "utf8")
+  const source = readFileSync(fileURLToPath(new URL("../stores/settings.ts", import.meta.url).href), "utf8")
   const output = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText
@@ -44,6 +45,15 @@ function freshStore() {
     },
     "../lib/message-page": { clampTurns: (turns: number) => Math.max(1, Math.min(50, Math.floor(turns))) },
     "../lib/i18n/config": { setAppLocale: () => {} },
+    "../lib/stored-json": {
+      parseStoredJSON: (raw: string, fallback: unknown) => {
+        try {
+          return JSON.parse(raw)
+        } catch {
+          return fallback
+        }
+      },
+    },
   }
 
   const exports: Record<string, any> = {}

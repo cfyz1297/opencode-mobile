@@ -1,6 +1,6 @@
 # Структура кодовой базы
 
-Актуально на 2026-11-05, коммит `2a97e60` (0.3.0).
+Актуально на 2026-11-06, коммит `2a97e60` (0.4.0).
 
 ## Обязательные разделы
 
@@ -30,7 +30,7 @@
 ### 2) Точки входа
 
 - Основная runtime-точка: `expo-router/entry` (`package.json` → `main`).
-- Корневой layout: `app/_layout.tsx` — `QueryClient`, `I18nextProvider`, `GestureHandlerRootView`, `BottomSheetModalProvider`, `AuthGate`, `ErrorBoundary`; инициализация auth/**settings → connections** (порядок важен: предпочтение `serverApi` решает транспорт), подписка на `AppState`, `useEvents.connect()`, `useCatalog.load()`, разрешения на уведомления, автосохранение офлайн-истории.
+- Корневой layout: `app/_layout.tsx` — `I18nextProvider`, `GestureHandlerRootView`, `BottomSheetModalProvider`, `AuthGate`, `ErrorBoundary`; инициализация auth/**settings → connections** (порядок важен: предпочтение `serverApi` решает транспорт), подписка на `AppState`, `useEvents.connect()`, `useCatalog.load()`, разрешения на уведомления, автосохранение офлайн-истории.
 - Вторичные входы: `MainActivity.kt` (`installImeReporter()`), CLI-скрипты в `scripts/`, deep link `opencode://`.
 - CI: `npx expo prebuild` + `gradlew assembleRelease`.
 
@@ -60,7 +60,7 @@
   - живучесть: `run-watchdog.ts`, `stream-watchdog.ts`, `connection-health.ts`;
   - UI-логика: `adaptive-layout.ts`, `keyboard-inset.ts`, `scroll-config.ts`, `scroll-follow.ts`, `model-selection.ts`, `model-picker-filter.ts`, `model-visibility.ts`, **`session-stats.ts`**, **`tool-view.ts`**, `providers-ui.ts`, `status-labels.ts`, `tablet-session-nav.ts`, `notify-format.ts`;
   - хранилище/безопасность: `offline-history.ts`, `history-storage.ts`, `connection-security.ts`, `scrub.ts`, `logbuffer.ts`;
-  - внешнее: `update-check.ts`, `update-check-policy.ts`, `waitlist.ts`, `waitlist-queue-storage.ts`, `chatwoot.ts`, `diagnostics.ts`, `diagnostics-classify.ts`, `custom-provider.ts`, `tunnel.ts`, `speech.ts`, `speech-errors.ts`, `links.ts`, `file-roots.ts`, `path-utils.ts`, `quick-connect-url.ts`.
+  - внешнее: `update-check.ts`, `update-check-policy.ts`, `diagnostics.ts`, `diagnostics-classify.ts`, `custom-provider.ts`, `tunnel.ts`, `speech.ts`, `speech-errors.ts`, `links.ts`, `file-roots.ts`, `path-utils.ts`, `quick-connect-url.ts`, `stored-json.ts`, `http.ts`.
 
 ### 5) Evidence
 

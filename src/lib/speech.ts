@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react"
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from "expo-speech-recognition"
 import { shouldSurfaceSpeechError } from "./speech-errors"
+import { speechLocale } from "./speech-locale"
 
 interface SpeechState {
   listening: boolean
@@ -63,9 +64,9 @@ export function useSpeech(onResult: (text: string) => void): SpeechState & Speec
     }
     // BUG-024: use device locale instead of hardcoded en-US; await start() so
     // permission/start errors surface as setError instead of unhandled rejection.
-    const locale = Intl.DateTimeFormat().resolvedOptions().locale.split("-")[0] || "en"
+    const locale = speechLocale(Intl.DateTimeFormat().resolvedOptions().locale)
     try {
-      await ExpoSpeechRecognitionModule.start({ lang: `${locale}-US`, interimResults: true, continuous: true })
+      await ExpoSpeechRecognitionModule.start({ lang: locale, interimResults: true, continuous: true })
     } catch (err: any) {
       userStarted.current = false
       setError(err?.message || "Failed to start speech recognition")

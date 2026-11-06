@@ -7,9 +7,9 @@
 // every method now talks to the opencode V2 HTTP API and maps payloads through
 // src/lib/v2-compat.ts so stores/screens stay untouched.
 import { fetch as expoFetch } from "expo/fetch"
-import { buildRequestHeaders } from "./headers"
 import { SSEParser } from "./sse"
-import { ApiError, apiErrorFor, isAuthStatus } from "./api-error"
+import { ApiError, apiErrorFor } from "./api-error"
+import { createHeaders, fetchWithTimeout, request } from "./http"
 import { detectServerApi, type ProbeRequest, type ServerApi, type ServerIdentity } from "./api-detect"
 import { createV1Client } from "./sdk-v1"
 import { normalizeSessions } from "./session-list"
@@ -221,88 +221,7 @@ export interface HealthResponse {
   version: string
 }
 
-const REQUEST_TIMEOUT_MS = 30_000
-
 export { ApiError }
-
-function createHeaders(config: ClientConfig): HeadersInit {
-  return buildRequestHeaders(config)
-}
-
-// `timeoutMs` lets specific callers (e.g. the onboarding health-check) fail
-// faster than the general REQUEST_TIMEOUT_MS used by real session calls.
-// Leave it unset to get the default.
-async function request<T>(
-  config: ClientConfig,
-  path: string,
-  options: RequestInit = {},
-  timeoutMs?: number,
-): Promise<T> {
-  const url = `${config.baseUrl}${path}`
-  const headers = { ...createHeaders(config), ...options.headers }
-  const response = await fetchWithTimeout(
-    url,
-    {
-      ...options,
-      headers,
-    },
-    timeoutMs,
-  )
-
-  if (!response.ok) {
-    const error = await response.text()
-    if (isAuthStatus(response.status)) throw apiErrorFor(response.status, `API Error: ${response.status} - ${error}`)
-    throw new ApiError(response.status, error)
-  }
-
-  // V2 returns bare 204s for mutations (e.g. DELETE /api/session/{id}) —
-  // parsing an empty body as JSON would throw.
-  if (response.status === 204) return undefined as T
-  const text = await response.text()
-  if (!text) return undefined as T
-  // BUG-016: non-JSON body (HTML proxy page, 502 error page) must surface as
-  // an ApiError, not a raw SyntaxError that leaks into the UI.
-  try {
-    return JSON.parse(text)
-  } catch {
-    throw new ApiError(0, `Non-JSON response: ${text.slice(0, 200)}`)
-  }
-}
-
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = REQUEST_TIMEOUT_MS): Promise<Response> {
-  const parentSignal = options.signal
-  if (parentSignal?.aborted) throw new Error("Request aborted")
-
-  // timeoutMs <= 0 disables the timer entirely — the request runs until it
-  // completes or the parent signal aborts. POST /prompt needs this: some V2
-  // servers (2.0.24) hold the POST open until the run finishes, and a
-  // client-side timer aborting that connection cancels the run server-side
-  // (empty assistant message). See prompt().
-  if (!(timeoutMs > 0)) {
-    return fetch(url, { ...options, signal: parentSignal })
-  }
-
-  const controller = new AbortController()
-  let timedOut = false
-  const timeout = setTimeout(() => {
-    timedOut = true
-    controller.abort()
-  }, timeoutMs)
-  const onParentAbort = () => controller.abort()
-  parentSignal?.addEventListener("abort", onParentAbort)
-
-  try {
-    return await fetch(url, { ...options, signal: controller.signal })
-  } catch (error) {
-    if (timedOut) {
-      throw new Error(`Request timed out after ${timeoutMs}ms`)
-    }
-    throw error
-  } finally {
-    clearTimeout(timeout)
-    parentSignal?.removeEventListener("abort", onParentAbort)
-  }
-}
 
 function createV2Client(config: ClientConfig) {
   // Session IDs and switch choices belong to this connection. Sharing this
@@ -625,6 +544,11 @@ function createV2Client(config: ClientConfig) {
         // with switch notifications on every message. Skip identical repeats.
         const switchKey = `${sessionID}|${params.model ? params.model.providerID + "/" + params.model.modelID : ""}|${params.variant ?? ""}|${params.agent ?? ""}`
         if ((params.model || params.agent) && lastSwitch.get(sessionID) !== switchKey) {
+          // Model and agent are independent session switches: send them at the
+          // same time, or a tunnel with 200 ms RTT costs two extra round trips
+          // before every prompt. Promise.all still fails the send if either
+          // switch failed, so the model cannot silently remain wrong.
+          const switches: Array<Promise<unknown>> = []
           if (params.model) {
             // Only send the switch when the user made an explicit choice (see
             // the model-selection lessons in .agents/retro.md: never
@@ -632,23 +556,28 @@ function createV2Client(config: ClientConfig) {
             // is dropped — the session's server-side default already carries
             // its own variant configuration and guessing one here would
             // override the server's choice.
-            await request(config, `/api/session/${sessionID}/model`, {
-              method: "POST",
-              body: JSON.stringify({
-                model: {
-                  providerID: params.model.providerID,
-                  id: params.model.modelID,
-                  ...(params.variant ? { variant: params.variant } : {}),
-                },
+            switches.push(
+              request(config, `/api/session/${sessionID}/model`, {
+                method: "POST",
+                body: JSON.stringify({
+                  model: {
+                    providerID: params.model.providerID,
+                    id: params.model.modelID,
+                    ...(params.variant ? { variant: params.variant } : {}),
+                  },
+                }),
               }),
-            })
+            )
           }
           if (params.agent) {
-            await request(config, `/api/session/${sessionID}/agent`, {
-              method: "POST",
-              body: JSON.stringify({ agent: params.agent }),
-            })
+            switches.push(
+              request(config, `/api/session/${sessionID}/agent`, {
+                method: "POST",
+                body: JSON.stringify({ agent: params.agent }),
+              }),
+            )
           }
+          await Promise.all(switches)
         }
 
         const text = params.parts

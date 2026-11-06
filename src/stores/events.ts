@@ -2,7 +2,8 @@ import { create } from "zustand"
 import { useConnections } from "./connections"
 import { useSessions, abortedSessions } from "./sessions"
 import { send as notify } from "../lib/notifications"
-import { PERMISSION_NOTIFICATION_BODY, QUESTION_NOTIFICATION_BODY, sanitizeBody } from "../lib/notify-format"
+import { PERMISSION_NOTIFICATION_KEY, QUESTION_NOTIFICATION_KEY, sanitizeBody } from "../lib/notify-format"
+import i18n from "../lib/i18n/config"
 import { statusFromPart } from "../lib/status-labels"
 import { isAuthError } from "../lib/api-error"
 import { isSessionActuallyIdle } from "../lib/session-status-reconcile"
@@ -326,8 +327,8 @@ export const useEvents = create<EventsState>((set, get) => ({
         if (disconnectedFor >= PROLONGED_DISCONNECT_MS) {
           notify({
             category: "connection",
-            title: "Connection interrupted",
-            body: sanitizeBody(undefined, "Trying to reconnect to your server"),
+            title: i18n.t("notifications.titles.connection"),
+            body: sanitizeBody(undefined, i18n.t("notifications.bodies.reconnecting")),
             sessionId: "",
             dedupeKey: "sse-prolonged-disconnect",
             dedupeCooldownMs: 60_000,
@@ -453,8 +454,8 @@ export const useEvents = create<EventsState>((set, get) => ({
                   const match = useSessions.getState().sessions.find((s) => s.id === sessionID)
                   notify({
                     category: "completed",
-                    title: "Task completed",
-                    body: sanitizeBody(match?.title, "Session finished processing"),
+                    title: i18n.t("notifications.titles.completed"),
+                    body: sanitizeBody(match?.title, i18n.t("notifications.bodies.completed")),
                     sessionId: sessionID,
                   })
                 }
@@ -527,8 +528,8 @@ export const useEvents = create<EventsState>((set, get) => ({
               }
               notify({
                 category: "errors",
-                title: "Session error",
-                body: sanitizeBody(error?.message, "Something went wrong"),
+                title: i18n.t("notifications.titles.error"),
+                body: sanitizeBody(error?.message, i18n.t("notifications.bodies.error")),
                 sessionId: sessionID,
               })
               break
@@ -547,10 +548,10 @@ export const useEvents = create<EventsState>((set, get) => ({
               }))
               notify({
                 category: "permissions",
-                title: "Agent needs approval",
+                title: i18n.t("notifications.titles.permission"),
                 // Fixed body: the tool name, resources and command text are
                 // server-supplied and must not reach the lock screen.
-                body: PERMISSION_NOTIFICATION_BODY,
+                body: i18n.t(PERMISSION_NOTIFICATION_KEY),
                 sessionId: req.sessionID,
                 dedupeKey: `perm-${req.id}`,
                 dedupeCooldownMs: 60_000,
@@ -585,9 +586,9 @@ export const useEvents = create<EventsState>((set, get) => ({
               notify({
                 category: "questions",
                 // Fixed title and body: the header/question text is
-                // server-supplied (see PERMISSION_NOTIFICATION_BODY).
-                title: "Input needed",
-                body: QUESTION_NOTIFICATION_BODY,
+                // server-supplied (see PERMISSION_NOTIFICATION_KEY).
+                title: i18n.t("notifications.titles.question"),
+                body: i18n.t(QUESTION_NOTIFICATION_KEY),
                 sessionId: req.sessionID,
                 dedupeKey: `question-${req.id}`,
                 dedupeCooldownMs: 60_000,

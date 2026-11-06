@@ -10,79 +10,14 @@
 //
 // expo/fetch provides WinterCG-compliant fetch with ReadableStream support for SSE
 import { fetch as expoFetch } from "expo/fetch"
-import { buildRequestHeaders } from "./headers"
 import { SSEParser } from "./sse"
 import { ApiError, apiErrorFor } from "./api-error"
+import { createHeaders, fetchWithTimeout, request } from "./http"
 import { loadSessionList } from "./session-list"
 import { MAX_MESSAGE_LIMIT } from "./message-page"
 import type { Agent, ClientConfig, Command, Event, FileEntry, HealthResponse, MessageWithParts, Project, Session } from "./sdk"
 import type { FileRoot } from "./file-roots"
 import type { ProviderCatalog } from "./v2-compat"
-
-const REQUEST_TIMEOUT_MS = 30_000
-
-function createHeaders(config: ClientConfig): Record<string, string> {
-  return buildRequestHeaders(config)
-}
-
-async function request<T>(
-  config: ClientConfig,
-  path: string,
-  options: RequestInit = {},
-  timeoutMs?: number,
-): Promise<T> {
-  const url = `${config.baseUrl}${path}`
-  const headers = { ...createHeaders(config), ...(options.headers as Record<string, string> | undefined) }
-  const response = await fetchWithTimeout(url, { ...options, headers }, timeoutMs)
-
-  if (!response.ok) {
-    const error = await response.text()
-    if (response.status === 401 || response.status === 403) {
-      throw apiErrorFor(response.status, `API Error: ${response.status} - ${error}`)
-    }
-    throw new ApiError(response.status, error)
-  }
-
-  if (response.status === 204) return undefined as T
-  const text = await response.text()
-  if (!text) return undefined as T
-  try {
-    return JSON.parse(text)
-  } catch {
-    throw new ApiError(0, `Non-JSON response: ${text.slice(0, 200)}`)
-  }
-}
-
-async function fetchWithTimeout(
-  url: string,
-  options: RequestInit = {},
-  timeoutMs: number = REQUEST_TIMEOUT_MS,
-): Promise<Response> {
-  const parentSignal = options.signal
-  if (parentSignal?.aborted) throw new Error("Request aborted")
-
-  // timeoutMs <= 0 disables the timer: prompt_async runs a whole turn server-side.
-  if (!(timeoutMs > 0)) return fetch(url, { ...options, signal: parentSignal })
-
-  const controller = new AbortController()
-  let timedOut = false
-  const timeout = setTimeout(() => {
-    timedOut = true
-    controller.abort()
-  }, timeoutMs)
-  const onParentAbort = () => controller.abort()
-  parentSignal?.addEventListener("abort", onParentAbort)
-
-  try {
-    return await fetch(url, { ...options, signal: controller.signal })
-  } catch (error) {
-    if (timedOut) throw new Error(`Request timed out after ${timeoutMs}ms`)
-    throw error
-  } finally {
-    clearTimeout(timeout)
-    parentSignal?.removeEventListener("abort", onParentAbort)
-  }
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value)

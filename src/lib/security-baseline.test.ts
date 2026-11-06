@@ -1,8 +1,9 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { fileURLToPath } from "node:url"
 
-const read = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8')
+const read = (path: string) => readFileSync(fileURLToPath(new URL(`../../${path}`, import.meta.url).href), 'utf8')
 
 // Security baseline: these are cheap invariants a refactor can silently drop.
 // They are static on purpose - each one asserts a property of the shipped source,

@@ -1,6 +1,6 @@
 # Проблемные места кодовой базы
 
-Зафиксировано 2026-11-05 на коммите `2a97e60` (`main`, версия 0.3.0 / 65, релиз опубликован). Всё ниже — по факту кода и локальных прогонов, не по README.
+Зафиксировано 2026-11-06 на коммите `2a97e60` (`main`, версия 0.4.0 / 67). Всё ниже — по факту кода и локальных прогонов, не по README.
 
 ## Обязательные разделы
 
@@ -8,9 +8,6 @@
 
 | Severity | Проблема | Evidence | Влияние | Что делать |
 |----------|----------|----------|---------|------------|
-| high | CI-проверка подписи собираемого APK ходит в сеть за **предыдущим релизом** (`releases/latest/download/opencode-mobile-v2.apk`) | `.github/workflows/build.yml` | Если последний релиз удалён/переименован или GitHub отдаёт ошибку, сборка падает | Кэшировать отпечаток сертификата в секрете вместо скачивания APK |
-| high | Версия захардкожена в **четырёх** местах, четвёртое — grep внутри workflow (`versionCode='65'`, `versionName='0.3.0'`) | `.github/workflows/build.yml`, `scripts/check-version-parity.mjs` | `check:versions` проверяет три файла, а литералы в workflow правятся руками; забыл — красный CI на теге | Читать версию из `app.json` (`jq`/node) в workflow, убрать литералы |
-| high | Тестовые файлы исключены из `tsc` — типы тестов не проверяются | `tsconfig.json`, `package.json` (`typecheck`) | Изменение сигнатуры ловится только в рантайме теста | Отдельный `tsconfig.test.json` + шаг CI |
 | med | **Два транспорта — двойная площадь правки протокола.** Новое поле/событие нужно провести через `v2-compat.ts` и `sdk-v1.ts` | `src/lib/v2-compat.ts`, `src/lib/sdk-v1.ts` | Поле работает на одном поколении и молча пустое на другом | Таблица соответствия полей в `INTEGRATIONS.md` + тест на каждое новое поле в обоих файлах |
 | med | **Определение API по конверту** опирается на поведение веб-интерфейса (неизвестный маршрут → `200 text/html`) | `src/lib/api-detect.ts` | Смена fallback-поведения сервера ломает автоподключение | Ручной переключатель уже есть; при смене — добавить проверку второго признака (например, `Server`-заголовок) |
 | med | **Курсор сообщений V2 не листает** на проверенной сборке: `cursor.previous` отдаёт пустую страницу, обход останавливается | `src/lib/sdk.ts` (`allMessages`) | Фактический потолок «всей сессии» — 200 сообщений, хотя настройка обещает всю | Эскалировать в апстрим; сейчас ограничение осознанное и задокументировано в `HANDOFF.md` |
@@ -33,11 +30,9 @@
 | Нет линтера/форматтера | Полагались на `tsc` + тесты | весь репозиторий | Стилевой разнобой, мёртвые импорты ловятся глазами | ESLint + Prettier отдельным необязательным шагом |
 | `@/*` алиас объявлен и не используется | Наследие шаблона | `tsconfig.json` | Ложное ожидание у нового участника | Использовать или удалить |
 | `any` в десятках мест | Границы неполных внешних типов | `ToolCallCard.tsx`, `stores/events.ts`, тестовые хелперы | Ослабление `strict` на стыках | Уточнить типы событий/иконок |
-| Остатки Sentry | Плагин удалён, файл остался | `android/sentry.properties` | Выглядит как активная телеметрия | Удалить файл |
 | Остатки F-Droid в Gradle | Комментарии после отказа от F-Droid | `android/app/build.gradle` | Неочевидная причина `enableV3Signing false` | Обновить комментарии: совместимость подписи с 0.2.x–0.3.x |
 | Дублирование семантики статуса сессии | Два источника (SSE и active) | `src/stores/events.ts` | Трудно воспроизводимые «вечный busy» | Задокументировать контракт, покрыть тестом приоритета |
 | Таймеры сверки после отправки | V2 не шлёт событие о user-сообщении | `src/stores/sessions.ts` (1.2 с и 4 с) | Лишние GET; сообщение может «мигнуть» | Серверное событие/merge по id |
-| `EX_DEV_CLIENT_NETWORK_INSPECTOR=true` в release | Наследие prebuild | `android/gradle.properties` | Лишний dev-флаг в релизе | Убрать/перенести в debug |
 | Каталог `dist/` на диске разработчика | Локальные APK прошлых релизов | `dist/`, `.gitignore` | Изредка ловит невнимательный `git add -f` (уже случалось) | `dist/` в `.gitignore` (сделано), APK — только в GitHub Releases |
 
 ### 3) Безопасность
@@ -50,8 +45,8 @@
 | API-ключи провайдеров уходят на сервер | A04 | `src/lib/provider-auth.ts`, `src/lib/sdk-v1.ts` | Ключ не сохраняется клиентом; Basic-канал | При `http://` ключ виден в трафике |
 | Ответы модели рендерятся как Markdown | A03 | `src/components/markdown/Markdown.tsx` | `react-native-marked` не исполняет HTML/JS | Нет теста «HTML в ответе не активен» |
 | Серверный текст в уведомлениях | A09 (утечка на экран блокировки) | `src/lib/notify-format.ts`, `src/stores/events.ts` | **Исправлено в 0.3.0**: тело — фиксированные константы | — |
-| Скачивание предыдущего APK в CI | A08 | `.github/workflows/build.yml` | Сверка сертификата `apksigner verify --print-certs` | Источник доверия — тот же GitHub |
-| Диагностические отчёты содержат хост сервера | A09 | `src/lib/diagnostics.ts`, `src/lib/scrub.ts` | `redactHostAndUrls` перед шарингом | Пользователь копирует текст вручную — редактирования не будет |
+| Сверка сертификата в CI | A08 | `.github/workflows/build.yml` | `apksigner verify --print-certs` против закреплённого SHA-256 сертификата; APK предыдущего релиза больше не скачивается | При смене keystore константу нужно обновить вручную |
+| Диагностические отчёты содержат хост сервера | A09 | `src/lib/diagnostics.ts` | Отчёт копируется/шарится только по нажатию пользователя; автоматической отправки нет | Редактирования нет — пользователь копирует текст вручную |
 | HTML-страница читается как «живой сервер» | A08/A05 | `src/lib/diagnostics.ts`, `src/lib/diagnostics-classify.ts` | **Исправлено в 0.3.0**: `requireJson` + `chooseHealthProbe` | — |
 | Туннель подменяет API своей страницей | — | `src/lib/headers.ts` | **Исправлено в 0.3.0**: `ngrok-skip-browser-warning`, `Bypass-Tunnel-Reminder` | — |
 
@@ -93,14 +88,10 @@
 
 1. `[ASK USER]` Оставлять ли GitHub Pages с унаследованным сайтом апстрима (`/privacy` описывает Sentry и VIBE TECHNOLOGIES LLC) — выключить, переписать под форк или оставить как исторический?
 2. `[ASK USER]` Вводить ли ESLint + Prettier как обязательный гейт и с каким набором правил?
-3. `[ASK USER]` Включать ли `*.test.ts` в проверку типов (`tsconfig.test.json` + шаг CI)?
-4. `[ASK USER]` Вычищать ли `SYSTEM_ALERT_WINDOW` из закоммиченного манифеста или достаточно `blockedPermissions`?
-5. `[ASK USER]` Доставка диагностики в Chatwoot: продуктовая функция (включить, описать согласие) или удалить вместе с env-переменной?
-6. `[ASK USER]` Удалять ли `android/sentry.properties`?
-7. `[ASK USER]` Нужна ли поддержка V1-серверов **старше** 1.18.x (другой формат `permission.updated`)? Сейчас поддержаны два формата, более старые не проверялись.
-8. `[ASK USER]` Обязателен ли V2 ≥ 2.0.24 с `/api/session/active`, или эвристику по переписке для старых V2 нужно сохранять бессрочно?
-9. `[ASK USER]` Переводить ли заголовки уведомлений на en/ru/zh-Hans?
-10. `[ASK USER]` Нужна ли iOS-сборка? `app.json` содержит полный iOS-блок, README утверждает, что iOS в форке нет.
+3. `[ASK USER]` Вычищать ли `SYSTEM_ALERT_WINDOW` из закоммиченного манифеста или достаточно `blockedPermissions`?
+4. `[ASK USER]` Нужна ли поддержка V1-серверов **старше** 1.18.x (другой формат `permission.updated`)? Сейчас поддержаны два формата, более старые не проверялись.
+5. `[ASK USER]` Обязателен ли V2 ≥ 2.0.24 с `/api/session/active`, или эвристику по переписке для старых V2 нужно сохранять бессрочно?
+6. `[ASK USER]` Нужна ли iOS-сборка? `app.json` содержит полный iOS-блок, README утверждает, что iOS в форке нет.
 
 ### 7) Intent vs reality (расхождения документации и кода)
 
@@ -113,7 +104,7 @@
 | AGENTS.md: «фиксированные ключи переводов в UI» | Заголовки уведомлений — хардкод | `src/stores/events.ts` |
 | AGENTS.md/HANDOFF местами описывают Windows-пути | Разработка идёт в Termux/Linux | `AGENTS.md`, `HANDOFF.md` |
 | README: «34 записи в npm audit» | Совпадает (34, 7 high) | локальный прогон 2026-11-05 |
-| README/`llms.txt`: «663 теста» | Совпадает | `npm test` 2026-11-05 |
+| README/`llms.txt`: «635 тестов» | Совпадает | `npm test` 2026-11-06 |
 | `.codebase-scan.txt`: «No security configs detected» | Есть gitleaks-workflow | `.github/workflows/security-scan.yml` |
 | «APK не в Git» | Верно с 0.3.0 после чистки; в истории остались два APK из коммита `f8a2d20` (удалён из `main`, но объекты могут сохраняться на GitHub до GC) | `.gitignore`, `git log --all -- dist` |
 
@@ -127,5 +118,5 @@
 - `tests/fixtures/mock-opencode-server.ts`, `src/lib/sdk-v1.integration.test.ts`
 - `src/lib/offline-history.ts`, `src/lib/run-watchdog.ts`, `src/lib/stream-watchdog.ts`
 - `.github/workflows/build.yml`, `.github/workflows/security-scan.yml`
-- `tsconfig.json`, `package.json`, `app.json`, `android/app/build.gradle`, `android/app/src/main/AndroidManifest.xml`, `android/sentry.properties`
+- `tsconfig.json`, `package.json`, `app.json`, `android/app/build.gradle`, `android/app/src/main/AndroidManifest.xml`
 - `README.md`, `README.ru.md`, `HANDOFF.md`, `AGENTS.md`, `docs/security-review-server-api.md`

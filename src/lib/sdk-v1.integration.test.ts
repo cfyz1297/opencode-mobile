@@ -276,7 +276,7 @@ test("catalog, files and paths use the v1 routes", async () => {
   assert.equal(await c.file.roots(), null)
   assert.equal((await c.path.get()).home, "/home")
   assert.equal((await c.project.list())[0].id, "p")
-  assert.equal((await c.project.current()).id, "p")
+  assert.equal((await c.project.current())!.id, "p")
 })
 
 test("provider keys go to the classic auth route on v1", async () => {

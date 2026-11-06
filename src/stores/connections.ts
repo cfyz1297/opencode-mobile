@@ -9,6 +9,7 @@ import { stripTrailingSlash } from "../lib/path-utils"
 import { offlineHistory } from '../lib/history-storage'
 import { directoryClient } from "../lib/directory-client"
 import { useSettings } from "./settings"
+import { parseStoredJSON } from "../lib/stored-json"
 
 // Where a connection check was initiated from (kept from the former
 // analytics.ts — the sources show up in user-facing status/log messages).
@@ -73,16 +74,6 @@ function generateId(): string {
   return Crypto.randomUUID().replace(/-/g, "").slice(0, 16)
 }
 
-// Parse JSON from SecureStore, tolerating corrupted data (BUG-016).
-function parseStoredJSON<T>(raw: string, fallback: T): T {
-  try {
-    return JSON.parse(raw) as T
-  } catch {
-    console.warn("Failed to parse stored JSON, using fallback")
-    return fallback
-  }
-}
-
 function buildClient(
   url: string,
   directory?: string,
@@ -111,7 +102,9 @@ async function resolveApi(
     const identity = await probeServer({ baseUrl: connection.url, directory: connection.directory, auth })
     connection.api = identity.api
     connection.serverVersion = identity.version
-    return { api: identity.api, resolved: true }
+    // An ambiguous auth rejection says nothing about the generation, so there
+    // is nothing worth persisting until a later probe succeeds.
+    return { api: identity.api, resolved: identity.api !== undefined }
   } catch {
     return { api: undefined, resolved: false }
   }
@@ -135,8 +128,8 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
         SecureStore.getItemAsync(CONNECTIONS_KEY),
         SecureStore.getItemAsync(RECENT_DIRS_KEY),
       ])
-      const connections: ServerConnection[] = stored ? parseStoredJSON(stored, []) : []
-      const recentDirectories: string[] = recentRaw ? parseStoredJSON(recentRaw, []) : []
+      const connections: ServerConnection[] = stored ? parseStoredJSON(stored, [], "stored connections") : []
+      const recentDirectories: string[] = recentRaw ? parseStoredJSON(recentRaw, [], "recent directories") : []
 
       // Find active connection
       const active = connections.find((c) => c.active) || null
@@ -277,8 +270,6 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
       active: c.id === id,
     }))
 
-    await SecureStore.setItemAsync(CONNECTIONS_KEY, JSON.stringify(connections))
-
     const active = connections.find((c) => c.id === id) || null
     let client: Client | null = null
     let base: ClientBase | null = null
@@ -350,10 +341,11 @@ export const useConnections = create<ConnectionsState>((set, get) => ({
     const connections = get().connections.map((c) => {
       if (c.id !== id) return c
       const merged = { ...c, ...updates }
-      // A different URL is a different server: drop the recorded probe so the
-      // next client build re-detects the transport instead of reusing the
-      // previous server's answer.
-      if (updates.url !== undefined && updates.url !== c.url) {
+      // The edit screen always sends the URL back. Without a fresh probe it
+      // means "keep what is there" — but the same address may have been
+      // swapped between V1 and V2 since the last probe, so drop the recorded
+      // answer and re-detect. A probe from "Test connection" wins.
+      if (updates.url !== undefined && updates.api === undefined) {
         merged.api = undefined
         merged.serverVersion = undefined
       }

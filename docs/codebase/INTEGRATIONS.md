@@ -1,6 +1,6 @@
 # Внешние интеграции
 
-Актуально на 2026-11-05, коммит `2a97e60` (0.3.0). Главное изменение: сервер может быть **двух поколений** (V1 / V2), и версия определяется при подключении.
+Актуально на 2026-11-06, коммит `2a97e60` (0.4.0). Главное изменение: сервер может быть **двух поколений** (V1 / V2), и версия определяется при подключении.
 
 ## Обязательные разделы
 
@@ -11,12 +11,10 @@
 | `opencode serve` — V2 REST + SSE (`/api/*`) | HTTP API | Сессии, сообщения, модели, файлы, формы, каталоги | HTTP Basic `opencode:<пароль>` (пустой username/`Bearer` → 401) | высокая | `src/lib/sdk.ts` (`createV2Client`), `src/lib/headers.ts` |
 | `opencode serve` — V1 REST + SSE (`/session`, `/global/*`) | HTTP API | То же для opencode 1.18.x: `/session`, `/experimental/session`, `/prompt_async`, `/global/event`, `/permission/*`, `/question/*` | тот же Basic | высокая | `src/lib/sdk-v1.ts` (`createV1Client`), `src/lib/api-detect.ts` |
 | GitHub Releases API | HTTP API | Проверка обновлений: `GET releases/latest`, не чаще 1 раза в 24 ч | без авторизации | средняя | `src/lib/update-check.ts` |
-| `opencode.agentlabs.cc/api/beta-signup` | HTTP API | Запись в waitlist OpenCode Connect | без авторизации | низкая | `src/lib/waitlist.ts` |
-| Chatwoot (public inbox) | HTTP API | Доставка обезличенного отчёта диагностики | inbox identifier; **выключено флагом** `DIAGNOSTICS_SUPPORT_DELIVERY = false` | низкая (мертва) | `src/lib/chatwoot.ts`, `src/lib/diagnostics.ts` |
 | `https://www.gstatic.com/generate_204` | HTTP API | Проверка «есть ли интернет» в диагностике | нет | низкая | `src/lib/diagnostics.ts` |
 | Cloudflare named tunnel / ngrok | Туннель (пользовательский) | Доступ к серверу вне LAN; адрес вводится в мастер | пароль сервера | средняя | `app/connection/tunnel.tsx`, `src/lib/tunnel.ts` |
 | SecureStore (Keystore/Keychain) | Устройство | Пароли, настройки, офлайн-история | `WHEN_UNLOCKED_THIS_DEVICE_ONLY` | высокая | `src/stores/connections.ts` (`SECURE_OPTIONS`), `src/lib/history-storage.ts` |
-| AsyncStorage | Устройство | Скрытые **и любимые** модели, проверка обновлений, очередь waitlist | нет (не секреты) | низкая | `src/lib/model-visibility.ts`, `src/stores/model-favorites.ts`, `src/lib/update-check.ts` |
+| AsyncStorage | Устройство | Скрытые **и любимые** модели, проверка обновлений | нет (не секреты) | низкая | `src/lib/model-visibility.ts`, `src/stores/model-favorites.ts`, `src/lib/update-check.ts` |
 | `expo-notifications` | Локальные уведомления | Завершение, подтверждение, вопрос, ошибка, обрыв связи | разрешение ОС | средняя | `src/lib/notifications.ts`, `src/stores/events.ts` |
 | Подпись APK (Gradle + GitHub secrets) | CI | Постоянный keystore, обновление «поверх» | `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` | высокая | `.github/workflows/build.yml`, `android/app/build.gradle` |
 
@@ -97,12 +95,11 @@
 | AsyncStorage: `opencode_model_visibility_v1` | Скрытые модели | Локально для устройства | `src/lib/model-visibility.ts` |
 | AsyncStorage: `opencode_model_favorites_v1` | Любимые модели (глобально, без привязки к серверу) | Только id провайдера/модели; тот же валидатор, что у скрытых | `src/lib/model-visibility.ts`, `src/stores/model-favorites.ts` |
 | AsyncStorage: ключи проверки обновлений | Отметка о проверке/скрытой версии | — | `src/lib/update-check.ts`, `src/lib/update-check-policy.ts` |
-| AsyncStorage: очередь waitlist | Отложенные e-mail | Не секрет | `src/lib/waitlist-queue-storage.ts` |
 
 ### 6) Секреты и учётные данные
 
 - Источники: пользовательский ввод (пароль сервера, API-ключ провайдера), GitHub Actions secrets, локальный `android/app/release.keystore` (в `.gitignore`).
-- Хардкод-проверка: паролей/токенов в коде нет; вшиты только публичные URL. `android/sentry.properties` содержит org/project Sentry (`vibetechnologies/opencode-mobile`), но не токен — остаток upstream.
+- Хардкод-проверка: паролей/токенов в коде нет; вшиты только публичные URL.
 - API-ключи провайдеров клиент не сохраняет: отправляются на сервер и забываются (`src/lib/provider-auth.ts`; на V1 — `PUT /auth/{id}`).
 - Транспорт: `usesCleartextTraffic=true` и `NSAllowsArbitraryLoads` — осознанно для LAN/Termux; предупреждение о пароле по `http://` показывается, но не блокирует (`src/lib/connection-security.ts`).
 
@@ -118,13 +115,13 @@
 
 - Логи только по ошибкам/переходам: `[SSE]`, `[Events]`, `[sendMessage]`; успешные HTTP-вызовы не логируются.
 - Диагностика: классификация пробы, отчёт с `Server API: v1|v2`, редактирование хоста/URL (`src/lib/scrub.ts`), копирование/шаринг. Health-проба теперь требует JSON или 401/403 (`requireJson` + `chooseHealthProbe`), поэтому HTML-страница не считается живым сервером.
-- Метрики/трейсинг отсутствуют; телеметрия удалена; доставка отчёта в Chatwoot выключена флагом.
+- Метрики/трейсинг отсутствуют; телеметрия удалена, диагностика уходит только в системный share sheet по нажатию пользователя.
 
 ### 9) Evidence
 
 - `src/lib/sdk.ts`, `src/lib/sdk-v1.ts`, `src/lib/api-detect.ts`, `src/lib/v2-compat.ts`, `src/lib/headers.ts`
 - `src/lib/auth.ts`, `src/lib/provider-auth.ts`, `src/lib/connection-health.ts`, `src/lib/connection-security.ts`
-- `src/lib/update-check.ts`, `src/lib/waitlist.ts`, `src/lib/chatwoot.ts`, `src/lib/diagnostics.ts`, `src/lib/scrub.ts`
+- `src/lib/update-check.ts`, `src/lib/diagnostics.ts`, `src/lib/scrub.ts`
 - `src/stores/connections.ts`, `src/stores/events.ts`, `src/stores/settings.ts`, `src/stores/model-favorites.ts`
 - `src/lib/offline-history.ts`, `src/lib/history-storage.ts`, `src/lib/model-visibility.ts`
 - `.github/workflows/build.yml`, `app.json`, `android/app/src/main/AndroidManifest.xml`

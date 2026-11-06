@@ -45,7 +45,7 @@ test("buildMessageData: no revert -> all messages, reversed (newest first), part
 
 test("buildMessageData: messages before the revert point stay visible with their parts", () => {
   const ids = ["m1", "m2", "m3"]
-  const data = buildMessageData(ids.map(msg), partsOf(ids), "m2")
+  const data = buildMessageData(ids.map((id) => msg(id)), partsOf(ids), "m2")
   // m2 (the point) and m3 hidden; m1 kept.
   assert.deepEqual(
     data.map((d) => d.message.id),

@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { fileURLToPath } from "node:url"
 import { createRequire } from 'node:module'
 import { runInNewContext } from 'node:vm'
 
@@ -40,7 +41,7 @@ function screen(health: (client: unknown) => Promise<Health>) {
   const settings = { pageSize: 25, setPageSize: () => {} }
 
   const same = (a?: unknown[], b?: unknown[]) =>
-    a?.length === b?.length && a.every((value, index) => Object.is(value, b?.[index]))
+    a !== undefined && a.length === b?.length && a.every((value, index) => Object.is(value, b?.[index]))
   const react = {
     useCallback: (value: unknown, deps?: unknown[]) => {
       const index = callbackCursor++
@@ -107,7 +108,7 @@ function screen(health: (client: unknown) => Promise<Health>) {
     },
   }
 
-  const output = ts.transpileModule(readFileSync(new URL('../../app/(tabs)/connections.tsx', import.meta.url), 'utf8'), {
+  const output = ts.transpileModule(readFileSync(fileURLToPath(new URL('../../app/(tabs)/connections.tsx', import.meta.url).href), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
   }).outputText
   const exports: Record<string, () => unknown> = {}

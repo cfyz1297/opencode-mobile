@@ -3,10 +3,12 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 
+export type PermissionReply = "once" | "always" | "reject"
+
 interface Props {
   permission: { id: string; permission: string; patterns: string[] }
   isDark: boolean
-  onReply: (reply: "once" | "always" | "reject") => void
+  onReply: (reply: PermissionReply) => void
 }
 
 export function PermissionPrompt({ permission, isDark, onReply }: Props) {
@@ -14,7 +16,7 @@ export function PermissionPrompt({ permission, isDark, onReply }: Props) {
   // BUG-023: guard against double-tap — optimistic removal is async, a second
   // tap before the reply lands would send a duplicate request.
   const replied = useRef(false)
-  const handleReply = (reply: "once" | "always" | "reject") => {
+  const handleReply = (reply: PermissionReply) => {
     if (replied.current) return
     replied.current = true
     onReply(reply)

@@ -26,7 +26,7 @@ test("sortByRecency: falls back to created when updated is missing", () => {
   const sorted = sortByRecency([
     { id: "onlyCreated", directory: "/a", time: { created: 500 } },
     at("updated", 100),
-  ] as never)
+  ] as Array<{ id: string; directory: string; time: { created: number; updated?: number } }>)
   assert.deepEqual(
     sorted.map((s) => s.id),
     ["onlyCreated", "updated"],

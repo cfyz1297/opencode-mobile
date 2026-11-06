@@ -21,7 +21,7 @@ test("stored values override defaults", () => {
 test("upgrade path: a category missing from storage gets its default", () => {
   // Stored data predates the "permission" category — it must come back as the default (false),
   // not undefined, while the user's stored choices are preserved.
-  const merged = mergeStoredSettings(DEFAULTS, { notifications: { idle: false, error: true } })
+  const merged = mergeStoredSettings(DEFAULTS, { notifications: { idle: false, error: true } } as Partial<typeof DEFAULTS>)
   assert.equal(merged.notifications.idle, false) // user's stored choice kept
   assert.equal(merged.notifications.error, true)
   assert.equal(merged.notifications.permission, false) // new category -> default

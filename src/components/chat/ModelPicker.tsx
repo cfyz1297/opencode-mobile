@@ -1,22 +1,13 @@
-import { useState, useCallback, useMemo } from "react"
+import { useCallback } from "react"
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import BottomSheet, { BottomSheetBackdrop, BottomSheetSectionList, BottomSheetTextInput } from "@gorhom/bottom-sheet"
 import { useTranslation } from "react-i18next"
-import { buildModelPickerSections, type ModelPickerItem } from "../../lib/model-picker-filter"
-
-import { useHiddenModels } from "../../stores/model-visibility"
-import { useFavoriteModels } from "../../stores/model-favorites"
-import { modelKey } from "../../lib/model-visibility"
-
-interface Provider {
-  id: string
-  name: string
-  models: Array<{ id: string; name: string; free?: boolean }>
-}
+import type { ModelPickerItem } from "../../lib/model-picker-filter"
+import { ModelPickerRow, pickerStyles as p, useModelPickerData, type ModelPickerProvider } from "./model-picker-shared"
 
 interface Props {
-  providers: Provider[]
+  providers: ModelPickerProvider[]
   selected: { providerID: string; modelID: string } | null
   isDark: boolean
   onSelect: (providerID: string, modelID: string) => void
@@ -27,22 +18,7 @@ interface Props {
 
 export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, onManageModels }: Props) {
   const { t } = useTranslation()
-  const [search, setSearch] = useState("")
-  const { hidden, loaded } = useHiddenModels()
-  const { favorites, toggle } = useFavoriteModels()
-
-  const sections = useMemo(
-    () =>
-      buildModelPickerSections({
-        providers: loaded ? providers : [],
-        query: search,
-        selected,
-        hidden,
-        favorites,
-        favoritesTitle: t("chat.modelPicker.favorites"),
-      }),
-    [providers, search, selected, hidden, loaded, favorites, t],
-  )
+  const { search, setSearch, sections, favorites, toggle } = useModelPickerData(providers, selected)
 
   const handleSelect = useCallback(
     (providerID: string, modelID: string) => {
@@ -50,14 +26,14 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, o
       setSearch("")
       sheetRef.current?.close()
     },
-    [onSelect, sheetRef],
+    [onSelect, setSearch, sheetRef],
   )
 
   const handleManage = useCallback(() => {
     setSearch("")
     sheetRef.current?.close()
     onManageModels?.()
-  }, [onManageModels, sheetRef])
+  }, [onManageModels, setSearch, sheetRef])
 
   return (
     <BottomSheet
@@ -81,7 +57,7 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, o
       }}
     >
       <View style={s.header}>
-        <Text style={[s.title, isDark && s.textWhite]}>{t("chat.modelPicker.title")}</Text>
+        <Text style={[s.title, isDark && p.textWhite]}>{t("chat.modelPicker.title")}</Text>
         <BottomSheetTextInput
           style={[s.search, isDark && s.searchDark]}
           placeholder={t("chat.modelPicker.searchPlaceholder")}
@@ -98,50 +74,21 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, o
         keyExtractor={(item: ModelPickerItem) => `${item.providerID}/${item.modelID}`}
         renderSectionHeader={({ section }: { section: { title: string } }) => (
           <View style={[s.sectionHeader, isDark && s.sectionHeaderDark]}>
-            <Text style={[s.sectionTitle, isDark && s.metaDark]}>{section.title}</Text>
+            <Text style={[s.sectionTitle, isDark && p.metaDark]}>{section.title}</Text>
           </View>
         )}
-        renderItem={({ item }: { item: ModelPickerItem }) => {
-          const active = selected?.providerID === item.providerID && selected?.modelID === item.modelID
-          const key = modelKey(item.providerID, item.modelID)
-          const starred = favorites.includes(key)
-          return (
-            <TouchableOpacity
-              style={[s.row, isDark && s.rowDark, active && (isDark ? s.rowSelectedDark : s.rowSelected)]}
-              onPress={() => handleSelect(item.providerID, item.modelID)}
-              testID={`model-option-${item.providerID}-${item.modelID}`}
-            >
-              <View style={s.rowText}>
-                <View style={s.nameRow}>
-                  <Text style={[s.rowName, isDark && s.textWhite]} numberOfLines={1}>
-                    {item.modelName || item.modelID}
-                  </Text>
-                  {item.free ? (
-                    <View style={[s.freeBadge, isDark && s.freeBadgeDark]}>
-                      <Text style={[s.freeBadgeText, isDark && s.freeBadgeTextDark]}>
-                        {t("chat.modelPicker.freeBadge")}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-                <Text style={[s.rowProvider, isDark && s.metaDark]}>{item.providerName || item.providerID}</Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => toggle(item.providerID, item.modelID)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                testID={`model-favorite-${item.providerID}-${item.modelID}`}
-                accessibilityLabel={t("chat.modelPicker.favoriteToggle")}
-              >
-                <Ionicons
-                  name={starred ? "star" : "star-outline"}
-                  size={17}
-                  color={starred ? "#f59e0b" : isDark ? "#555555" : "#c0c0c0"}
-                />
-              </TouchableOpacity>
-              {active && <Ionicons name="checkmark-circle" size={20} color="#8b5cf6" />}
-            </TouchableOpacity>
-          )
-        }}
+        renderItem={({ item }: { item: ModelPickerItem }) => (
+          <ModelPickerRow
+            item={item}
+            selected={selected}
+            isDark={isDark}
+            favorites={favorites}
+            onSelect={handleSelect}
+            onToggle={toggle}
+            freeLabel={t("chat.modelPicker.freeBadge")}
+            favoriteToggleLabel={t("chat.modelPicker.favoriteToggle")}
+          />
+        )}
         ListFooterComponent={
           onManageModels ? (
             <TouchableOpacity
@@ -150,7 +97,7 @@ export function ModelPicker({ providers, selected, isDark, onSelect, sheetRef, o
               testID="model-picker-manage"
             >
               <Ionicons name="options-outline" size={18} color={isDark ? "#cccccc" : "#444444"} />
-              <Text style={[s.manageText, isDark && s.textWhite]}>{t("chat.modelPicker.manageModels")}</Text>
+              <Text style={[s.manageText, isDark && p.textWhite]}>{t("chat.modelPicker.manageModels")}</Text>
             </TouchableOpacity>
           ) : null
         }
@@ -166,7 +113,6 @@ const s = StyleSheet.create({
   sheetDark: { backgroundColor: "#1a1a1a" },
   header: { paddingHorizontal: 16, paddingBottom: 12, gap: 10 },
   title: { fontSize: 18, fontWeight: "700", color: "#0a0a0a" },
-  textWhite: { color: "#ffffff" },
   search: {
     backgroundColor: "#f5f5f5",
     borderRadius: 10,
@@ -190,32 +136,6 @@ const s = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-  metaDark: { color: "#666666" },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#e5e5e5",
-  },
-  rowDark: { borderBottomColor: "#2a2a2a" },
-  rowSelected: { backgroundColor: "#f5f3ff" },
-  rowSelectedDark: { backgroundColor: "#1f1a2e" },
-  rowText: { flex: 1 },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  rowRight: { flexDirection: "row", alignItems: "center", gap: 10 },
-  rowName: { fontSize: 15, fontWeight: "500", color: "#0a0a0a", flexShrink: 1 },
-  rowProvider: { fontSize: 12, color: "#999999", marginTop: 1 },
-  freeBadge: {
-    backgroundColor: "#e8e8e8",
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  freeBadgeDark: { backgroundColor: "#2a2a2a" },
-  freeBadgeText: { fontSize: 11, fontWeight: "600", color: "#555555" },
-  freeBadgeTextDark: { color: "#bbbbbb" },
   manageRow: {
     flexDirection: "row",
     alignItems: "center",

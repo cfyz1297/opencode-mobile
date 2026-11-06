@@ -1,18 +1,9 @@
 import { create } from "zustand"
 import * as LocalAuthentication from "expo-local-authentication"
 import * as SecureStore from "expo-secure-store"
+import { parseStoredJSON } from "../lib/stored-json"
 
 const AUTH_SETTINGS_KEY = "opencode_auth_settings"
-
-// Parse JSON from SecureStore, tolerating corrupted data (BUG-016).
-function parseStoredJSON<T>(raw: string, fallback: T): T {
-  try {
-    return JSON.parse(raw) as T
-  } catch {
-    console.warn("Failed to parse stored auth settings JSON, using fallback")
-    return fallback
-  }
-}
 
 interface AuthSettings {
   requireBiometric: boolean
@@ -65,7 +56,7 @@ export const useAuth = create<AuthState>((set, get) => ({
 
       // Load settings
       const stored = await SecureStore.getItemAsync(AUTH_SETTINGS_KEY)
-      const settings: AuthSettings = stored ? parseStoredJSON<AuthSettings>(stored, DEFAULT_SETTINGS) : DEFAULT_SETTINGS
+      const settings: AuthSettings = stored ? parseStoredJSON<AuthSettings>(stored, DEFAULT_SETTINGS, "stored auth settings") : DEFAULT_SETTINGS
 
       // If biometric is not required, auto-authenticate
       const isAuthenticated = !settings.requireBiometric

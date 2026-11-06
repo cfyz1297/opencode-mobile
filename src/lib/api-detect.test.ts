@@ -30,10 +30,15 @@ test("v2 answers /api/info with JSON, including its version", async () => {
   assert.deepEqual(calls, ["/api/info"])
 })
 
-test("v2 recorded while unauthenticated is still recognised by the 401 on /api/info", async () => {
+test("an auth rejection on /api/info does not choose a generation (v1 looks the same)", async () => {
   const { probe, calls } = responder({ "/api/info": json({ error: "unauthorized" }, 401) })
-  assert.deepEqual(await detectServerApi(probe), { api: "v2" })
+  assert.deepEqual(await detectServerApi(probe), { api: undefined })
   assert.deepEqual(calls, ["/api/info"])
+})
+
+test("a 403 on /api/info is equally ambiguous", async () => {
+  const { probe } = responder({ "/api/info": json({ error: "forbidden" }, 403) })
+  assert.deepEqual(await detectServerApi(probe), { api: undefined })
 })
 
 test("v1 falls through /api/info to the SPA and answers /global/health with JSON", async () => {

@@ -6,6 +6,7 @@ import type { Session } from "./sdk.ts"
 // Minimal Session factory — only the fields the list logic reads.
 function session(over: Partial<Session> & { id: string }): Session {
   return {
+    ...over,
     id: over.id,
     slug: over.slug ?? over.id,
     projectID: "p",
@@ -13,7 +14,6 @@ function session(over: Partial<Session> & { id: string }): Session {
     title: over.title ?? over.id,
     version: "1",
     time: over.time ?? { created: 0, updated: 0 },
-    ...over,
   } as Session
 }
 

@@ -1,6 +1,6 @@
 # Тестовые практики
 
-Актуально на 2026-11-05, коммит `2a97e60` (0.3.0).
+Актуально на 2026-11-06, коммит `2a97e60` (0.4.0).
 
 ## Обязательные разделы
 
@@ -12,13 +12,13 @@
 - Вспомогательные приёмы: `node:module` `registerHooks` (подмена `expo/fetch`), `node:vm` + пакет `typescript` (рендер экранов с детерминированными адаптерами), `readFileSync` (статический анализ исходников), `node:http` (настоящий loopback-сервер для транспортов).
 
 ```bash
-npm test                 # 663 теста, 0 падений (2026-11-05)
+npm test                 # 635 тестов, 0 падений (2026-11-06)
 npm run test:coverage    # + пороги 80 % (lines/branches/functions)
-npm run typecheck        # tsc --noEmit (тестовые файлы исключены)
+npm run typecheck        # tsc --noEmit (тесты входят в проверку)
 npm run check:versions   # паритет версий
 ```
 
-- Замеры 2026-11-05 (0.3.0): **tests 663 / pass 663 / fail 0**, покрытие **98.33 % строк, 86.43 % ветвей, 96.06 % функций**.
+- Замеры 2026-11-06 (0.4.0): **tests 635 / pass 635 / fail 0**, покрытие **98.35 % строк, 86.26 % ветвей, 97.22 % функций**.
 - Тесты используют реальные таймеры (sleep-ы в сотни мс, `node:vm`-рендер), поэтому под параллельной нагрузкой падают по таймауту без изменения кода. Перед выводом «тесты красные» перепроверять в простое.
 
 ### 2) Раскладка тестов
@@ -42,7 +42,7 @@ npm run check:versions   # паритет версий
 
 ### 4) Моки и изоляция
 
-- Основной подход: **внедрение зависимостей** вместо модульного мокинга. Чистые модули принимают хранилище/`fetch`/таймеры/`probe`: `createHistory(storage)`, `ChatwootDeps.fetchFn`, `createPartBatcher(key, flush, delayMs)`, `createTunnelConnector(deps)`, `detectServerApi(probe)`.
+- Основной подход: **внедрение зависимостей** вместо модульного мокинга. Чистые модули принимают хранилище/`fetch`/таймеры/`probe`: `createHistory(storage)`, `createPartBatcher(key, flush, delayMs)`, `createTunnelConnector(deps)`, `detectServerApi(probe)`, `parseStoredJSON(raw, fallback, label)`.
 - Сетевой уровень: `registerHooks` подменяет только `expo/fetch` на глобальный `fetch`; сервер поднимается на `127.0.0.1:0` и пишет все вызовы в массив `calls` для ассертов (`sdk.integration.test.ts`, `sdk-v1.integration.test.ts`).
 - HTTP-фикстура: `tests/fixtures/mock-opencode-server.ts` — минимальный сервер **V1**-протокола. С 0.3.0 это не мёртвый код: тот же V1-протокол обслуживает `createV1Client`, а `loadSessionList` теперь используется обоими транспортами.
 - Двухпротокольные тесты: V1-клиент проверяется отдельным файлом со своим сервером — заголовки, Basic auth, `x-opencode-directory`, нормализация событий, курсор `x-next-cursor`, 404 on `/session/active`.

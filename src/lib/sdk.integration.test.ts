@@ -26,10 +26,27 @@ let raw: string | undefined
 let switchStatus = 204
 let delay = 0
 let routes: Record<string, { status?: number; body: unknown }> = {}
+// Test-only gate: /model waits until /agent arrives, proving the two switches
+// are in flight at the same time. If they run sequentially the timer releases
+// the model late and the test's latency assertion fails.
+let parallelSwitches = false
+let agentArrived = false
+let waitingModels: Array<() => void> = []
 const server = createServer(async (req, res) => {
   let body = ""
   for await (const chunk of req) body += chunk
   calls.push({ path: req.url!, method: req.method!, headers: req.headers, body: body ? JSON.parse(body) : {} })
+  if (parallelSwitches && req.url!.endsWith("/model")) {
+    await new Promise<void>((resolve) => {
+      if (agentArrived) return resolve()
+      waitingModels.push(resolve)
+      setTimeout(resolve, 1500)
+    })
+  }
+  if (parallelSwitches && req.url!.endsWith("/agent")) {
+    agentArrived = true
+    for (const release of waitingModels.splice(0)) release()
+  }
   if (delay) await new Promise((resolve) => setTimeout(resolve, delay))
   const route = routes[req.url!]
   const code = route?.status ?? (req.method === "POST" && /\/(model|agent)$/.test(req.url!) ? switchStatus : status)
@@ -46,7 +63,7 @@ after(async () => {
   await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   hook.deregister()
 })
-beforeEach(() => { calls = []; status = 200; reply = { healthy: true, version: "2.0.test" }; raw = undefined; switchStatus = 204; delay = 0; routes = {} })
+beforeEach(() => { calls = []; status = 200; reply = { healthy: true, version: "2.0.test" }; raw = undefined; switchStatus = 204; delay = 0; routes = {}; parallelSwitches = false; agentArrived = false; waitingModels = [] })
 
 const prompt = { parts: [{ type: "text" as const, text: "hello" }], model: { providerID: "test", modelID: "model-1" }, variant: "high", agent: "build" }
 
@@ -188,8 +205,19 @@ test("SDK explicitly switches model, reasoning and agent before sending, then sk
   const client = createClient({ baseUrl: base })
   await client.session.prompt("same", prompt)
   await client.session.prompt("same", prompt)
-  assert.deepEqual(calls.map((c) => c.path), ["/api/session/same/model", "/api/session/same/agent", "/api/session/same/prompt", "/api/session/same/prompt"])
-  assert.deepEqual(calls[0].body, { model: { providerID: "test", id: "model-1", variant: "high" } })
+  const paths = calls.map((c) => c.path)
+  assert.deepEqual(paths.slice(0, 2).sort(), ["/api/session/same/agent", "/api/session/same/model"])
+  assert.deepEqual(paths.slice(2), ["/api/session/same/prompt", "/api/session/same/prompt"])
+  assert.deepEqual(calls.find((c) => c.path.endsWith("/model"))!.body, { model: { providerID: "test", id: "model-1", variant: "high" } })
+})
+test("SDK switches model and agent concurrently", async () => {
+  status = 204
+  parallelSwitches = true
+  const started = Date.now()
+  await createClient({ baseUrl: base }).session.prompt("parallel", prompt)
+  assert.ok(agentArrived, "agent switch must be sent without waiting for the model switch")
+  assert.ok(Date.now() - started < 1000, "sequential switches would wait for the 1.5 s gate")
+  assert.equal(calls.at(-1)!.path, "/api/session/parallel/prompt")
 })
 test("SDK does not guess a model when the user chose none", async () => {
   status = 204
@@ -327,7 +355,7 @@ test("SDK question collection and config use their V2 routes", async () => {
 })
 test("SDK diff loads a session-wide wrapped diff", async () => {
   reply = { data: [{ file: "test.ts", before: "a", after: "b" }] }
-  assert.deepEqual(await createClient({ baseUrl: base }).session.diff("s", "ignored"), reply.data)
+  assert.deepEqual(await createClient({ baseUrl: base }).session.diff("s", "ignored"), (reply as { data: unknown }).data)
   assert.equal(calls[0].path, "/api/session/s/diff")
 })
 test("SDK stream refetches full session details after rename", async () => {

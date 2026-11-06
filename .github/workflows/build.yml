@@ -41,8 +41,6 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
-    env:
-      EXPO_PUBLIC_CHATWOOT_INBOX_IDENTIFIER: ${{ secrets.EXPO_PUBLIC_CHATWOOT_INBOX_IDENTIFIER }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -141,18 +139,20 @@ jobs:
           "$AAPT" dump badging "$APK" > /tmp/full-apk.txt
           sed -n '1p' /tmp/full-apk.txt > /tmp/current-apk.txt
           cat /tmp/current-apk.txt
+          EXPECTED_VERSION_CODE=$(node -p "require('./app.json').expo.android.versionCode")
+          EXPECTED_VERSION_NAME=$(node -p "require('./app.json').expo.version")
           grep -q "name='cc.agentlabs.opencode'" /tmp/current-apk.txt
-          grep -q "versionCode='66'" /tmp/current-apk.txt
-          grep -q "versionName='0.3.1'" /tmp/current-apk.txt
-          curl --fail --location --retry 2 -o /tmp/previous.apk https://github.com/cfyz1297/opencode-v1-v2-mobile/releases/latest/download/opencode-mobile-v2.apk
-          "$SIGNER" verify --print-certs /tmp/previous.apk > /tmp/previous-signers.txt
+          grep -q "versionCode='$EXPECTED_VERSION_CODE'" /tmp/current-apk.txt
+          grep -q "versionName='$EXPECTED_VERSION_NAME'" /tmp/current-apk.txt
           "$SIGNER" verify --print-certs "$APK" > /tmp/current-signers.txt
-          cat /tmp/previous-signers.txt /tmp/current-signers.txt
-          sed -n 's/^.*certificate SHA-256 digest: //p' /tmp/previous-signers.txt | sort -u > /tmp/previous-cert.txt
-          sed -n 's/^.*certificate SHA-256 digest: //p' /tmp/current-signers.txt | sort -u > /tmp/current-cert.txt
-          test -s /tmp/previous-cert.txt
-          test -s /tmp/current-cert.txt
-          diff -u /tmp/previous-cert.txt /tmp/current-cert.txt
+          cat /tmp/current-signers.txt
+          # Production certificate fingerprint. Hardcoded on purpose: downloading
+          # the previous release APK (~86 MB) on every build only to compare an
+          # immutable value wasted minutes. Update this if the keystore changes.
+          EXPECTED_CERT=0b409f5f6c2ce47a84b7f4ded0403a82a99470f668d6a924d0a09c4ab7821686
+          CURRENT_CERT=$(sed -n 's/^.*certificate SHA-256 digest: //p' /tmp/current-signers.txt | sort -u | tr 'A-F' 'a-f')
+          test -n "$CURRENT_CERT"
+          test "$CURRENT_CERT" = "$EXPECTED_CERT"
           echo 'Package/version verified; signing certificate matches the published app.'
 
       - name: Upload APK artifact

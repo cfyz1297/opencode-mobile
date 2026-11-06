@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react"
 import { Stack, router } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { useColorScheme, View, ActivityIndicator, AppState } from "react-native"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet"
 import { I18nextProvider, useTranslation } from "react-i18next"
@@ -18,9 +17,6 @@ import { historySnapshot } from "../src/lib/offline-history"
 import { AuthGate } from "../src/components/AuthGate"
 import { ErrorBoundary } from "../src/components/ErrorBoundary"
 import * as notifications from "../src/lib/notifications"
-import { flushPendingSignups } from "../src/lib/waitlist-queue-storage"
-
-const queryClient = new QueryClient()
 
 function RootLayout() {
   const colorScheme = useColorScheme()
@@ -109,25 +105,6 @@ function RootLayout() {
     return () => sub.remove()
   }, [])
 
-  // Retry any waitlist signup that couldn't reach the server when the user
-  // tapped Join (AGE-87). Runs at cold start and on every foreground, which is
-  // the cheapest reliable proxy for "connectivity may have come back" — it is a
-  // no-op (single storage read, no network) when the queue is empty, and it
-  // replaces the old silent mailto: fallback that lost 20 of 21 signups.
-  useEffect(() => {
-    const flush = () => {
-      void flushPendingSignups()
-        .catch(() => {
-          // Best effort: the entry stays queued for the next foreground.
-        })
-    }
-    flush()
-    const sub = AppState.addEventListener("change", (next) => {
-      if (next === "active") flush()
-    })
-    return () => sub.remove()
-  }, [])
-
   // Connect/disconnect SSE and load catalog when client changes
   useEffect(() => {
     if (client && !sseStarted.current) {
@@ -180,7 +157,6 @@ function RootLayout() {
       <I18nextProvider i18n={i18n}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <BottomSheetModalProvider>
-          <QueryClientProvider client={queryClient}>
             <AuthGate>
             <Stack
               screenOptions={{
@@ -240,7 +216,6 @@ function RootLayout() {
             </Stack>
               <StatusBar style={isDark ? "light" : "dark"} />
             </AuthGate>
-          </QueryClientProvider>
         </BottomSheetModalProvider>
       </GestureHandlerRootView>
       </I18nextProvider>

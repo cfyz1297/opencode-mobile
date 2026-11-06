@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { fileURLToPath } from "node:url"
 import { createRequire } from 'node:module'
 import { runInNewContext } from 'node:vm'
 import { buildModelPickerSections } from './model-picker-filter.ts'
@@ -53,7 +54,7 @@ function screen() {
     '../src/lib/model-picker-filter': { buildModelPickerSections },
     '../src/lib/providers-ui': { PROVIDERS_ROUTE: '/providers' },
   }
-  const output = ts.transpileModule(readFileSync(new URL('../../app/models.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText
+  const output = ts.transpileModule(readFileSync(fileURLToPath(new URL('../../app/models.tsx', import.meta.url).href), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText
   const exports: Record<string, () => unknown> = {}
   runInNewContext(output, { exports, require: (id: string) => { if (!(id in modules)) throw new Error(`Unexpected dependency ${id}`); return modules[id] } })
   const render = () => { cursor = 0; const tree = exports.default(); mounted = true; return tree }
@@ -130,7 +131,7 @@ test('catalog ignores pending responses after server connection changes', async 
     '../lib/model-selection': { chooseModelSelection: () => null },
     '../lib/providers-ui': { isFreeModel: () => false },
   }
-  const output = ts.transpileModule(readFileSync(new URL('../stores/catalog.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+  const output = ts.transpileModule(readFileSync(fileURLToPath(new URL('../stores/catalog.ts', import.meta.url).href), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
   const exports: Record<string, any> = {}
   runInNewContext(output, { exports, require: (id: string) => { if (!(id in modules)) throw new Error(id); return modules[id] } })
   Object.assign(exports.useCatalog, original)
@@ -169,7 +170,7 @@ test('shared visibility hook gates both pickers until catalog belongs to the act
     './connections': { useConnections: selector(connection) },
     './catalog': { useCatalog: selector(catalog) },
   }
-  const output = ts.transpileModule(readFileSync(new URL('../stores/model-visibility.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+  const output = ts.transpileModule(readFileSync(fileURLToPath(new URL('../stores/model-visibility.ts', import.meta.url).href), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
   const exports: Record<string, any> = {}
   runInNewContext(output, { exports, require: (id: string) => { if (!(id in modules)) throw new Error(id); return modules[id] } })
   await exports.useModelVisibility.getState().load()

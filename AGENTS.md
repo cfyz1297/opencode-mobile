@@ -20,7 +20,7 @@ docs/                # отчёты (security ×2, upstream review, провер
 ```bash
 npm run check:versions   # package.json ↔ app.json ↔ android/app/build.gradle
 npm run typecheck
-npm test                 # node --test через scripts/run-tests.mjs (663 теста на 0.3.0)
+npm test                 # node --test через scripts/run-tests.mjs (635 тестов на 0.4.0)
 npm run test:coverage    # пороги 80% по строкам/ветвям/функциям
 npm run android          # dev-сборка на устройстве/эмуляторе
 ```
@@ -43,6 +43,6 @@ npm run android          # dev-сборка на устройстве/эмуля
 
 - `gh` CLI авторизован как `cfyz1297`, scopes `repo, workflow, gist, read:org`. Пуш в `.github/workflows/*` требует scope `workflow` — проверять `gh auth status` перед правкой workflow.
 - Активны только workflow `Build Android APK` и `Security scan`. Всё остальное (магазины, iOS, Maestro) из проекта удалено.
-- Версия живёт в четырёх местах: `package.json`, `app.json` (version + versionCode), `android/app/build.gradle` и литералы в `.github/workflows/build.yml`. `check:versions` проверяет первые три — литералы в workflow править руками.
+- Версия живёт в трёх местах: `package.json`, `app.json` (version + versionCode) и `android/app/build.gradle`. `check:versions` проверяет их; workflow берёт ожидаемые значения из `app.json`, литералы в нём больше не дублируются.
 - Релиз: тег `vX.Y.Z` → GitHub Release с `opencode-mobile-v2.apk` + `SHA256SUMS.txt`; предыдущему релизу добавить строку «⚠️ Устарел — используйте vX.Y.Z». Имя APK не меняется: на него опираются встроенная проверка обновлений и сверка подписи в CI.
 - `dist/` — локальные APK, в Git не попадают (`dist/` в `.gitignore`). APK публикуется только ассетом релиза; `git add -A -f` в этом репозитории опасен — однажды затащил два APK в историю.

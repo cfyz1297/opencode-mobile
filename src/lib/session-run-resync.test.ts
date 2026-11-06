@@ -1,6 +1,7 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 import { createRequire } from "node:module"
 import { runInNewContext } from "node:vm"
 import { isStreamStalled } from "./stream-watchdog.ts"
@@ -154,7 +155,8 @@ function harness() {
     },
     "./sessions": { useSessions: sessions, abortedSessions: new Set<string>() },
     "../lib/notifications": { send: () => {} },
-    "../lib/notify-format": { sanitizeBody: (_title: unknown, fallback: string) => fallback },
+    "../lib/notify-format": { sanitizeBody: (_title: unknown, fallback: string) => fallback, PERMISSION_NOTIFICATION_KEY: "permission", QUESTION_NOTIFICATION_KEY: "question" },
+    "../lib/i18n/config": { default: { t: (key: string) => key } },
     "../lib/status-labels": { statusFromPart: () => "" },
     "../lib/api-error": { isAuthError: () => false },
     "../lib/session-status-reconcile": { isSessionActuallyIdle },
@@ -164,7 +166,7 @@ function harness() {
     "../lib/answered-questions": { recordAnswered: (list: unknown) => list },
   }
 
-  const source = readFileSync(new URL("../stores/events.ts", import.meta.url), "utf8")
+  const source = readFileSync(fileURLToPath(new URL("../stores/events.ts", import.meta.url).href), "utf8")
   const output = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText

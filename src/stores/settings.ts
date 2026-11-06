@@ -6,22 +6,13 @@ import { clampTurns } from "../lib/message-page"
 import { setAppLocale } from "../lib/i18n/config"
 import type { LocalePreference } from "../lib/i18n/locale-resolve"
 import type { ServerApi } from "../lib/api-detect"
+import { parseStoredJSON } from "../lib/stored-json"
 
 const SETTINGS_KEY = "opencode_settings"
 
 /** "auto" probes each connection once and remembers the answer. The explicit
  *  values force a transport, e.g. to reproduce a server-side bug. */
 export type ServerApiPreference = "auto" | ServerApi
-
-// Parse JSON from SecureStore, tolerating corrupted data (BUG-016).
-function parseStoredJSON<T>(raw: string, fallback: T | null): T | null {
-  try {
-    return JSON.parse(raw) as T
-  } catch {
-    console.warn("Failed to parse stored settings JSON, using fallback")
-    return fallback
-  }
-}
 
 interface Settings {
   settingsVersion: number
@@ -71,7 +62,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   load: async () => {
     const raw = await SecureStore.getItemAsync(SETTINGS_KEY)
     if (raw) {
-      const parsed = parseStoredJSON<Partial<Settings>>(raw, null)
+      const parsed = parseStoredJSON<Partial<Settings> | null>(raw, null, "stored settings")
       // Merge stored settings with defaults so new fields/categories get their default
       const merged = parsed ? mergeStoredSettings(DEFAULTS, parsed) : DEFAULTS
       // v1 stored pageSize in raw messages; v2 counts exchanges. An old 25 meant

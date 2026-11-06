@@ -53,11 +53,17 @@ test("ModelPicker exposes manage callback and search testIDs", () => {
   assert.match(src, /onManageModels/)
   assert.match(src, /model-picker-manage/)
   assert.match(src, /model-picker-search/)
-  assert.match(src, /buildModelPickerSections/)
+  assert.match(src, /model-picker-shared/)
 })
 
-test("ModelPickerModal uses shared filter helper and search field", () => {
+test("ModelPickerModal uses the shared picker state and search field", () => {
   const src = readFileSync(join(root, "src/components/chat/ModelPickerModal.tsx"), "utf8")
-  assert.match(src, /buildModelPickerSections/)
+  assert.match(src, /model-picker-shared/)
   assert.match(src, /model-picker-modal-search/)
+})
+
+test("the shared picker module owns filtering, favorites and rows", () => {
+  const src = readFileSync(join(root, "src/components/chat/model-picker-shared.tsx"), "utf8")
+  assert.match(src, /buildModelPickerSections/)
+  assert.match(src, /model-favorite-/)
 })

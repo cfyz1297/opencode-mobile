@@ -23,10 +23,11 @@ test("privacy and setup pages fall back to the fork repo (no Pages site yet)", (
   assert.equal(SETUP_GUIDE_URL, PROJECT_REPO_URL)
 })
 
-// The in-app version must live in the fork's own numbering family, not the
-// upstream's stale one (the About row and the update banner both read it).
+// The in-app version must stay a released fork version (About row and update
+// banner both read it). The fork used to track upstream's 0.4.x while it was
+// still on 0.2.x; since 0.4.0 the families overlap, so only the shape is
+// guarded here — exact parity is `npm run check:versions`.
 test("app version follows the fork's 0.x release tags", () => {
   const version = (appJson as { expo?: { version?: string } }).expo?.version ?? ""
-  assert.doesNotMatch(version, /^0\.4\./)
-  assert.match(version, /^0\.\d+\./)
+  assert.match(version, /^0\.\d+\.\d+$/)
 })

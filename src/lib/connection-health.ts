@@ -1,5 +1,3 @@
-import type { Client } from "./sdk"
-
 export type ConnectionHealth = "checking" | "online" | "offline"
 
 // Short deadline: a server that is off must turn the badge grey in seconds,
@@ -9,7 +7,7 @@ export const CONNECTION_PROBE_TIMEOUT_MS = 5_000
 
 /** Ask the server for its own health; anything but an explicit `healthy: true` means "not reachable". */
 export async function probeConnection(
-  client: Pick<Client, "global">,
+  client: { global: { health: (timeoutMs?: number) => Promise<{ healthy?: boolean } | null | undefined> } },
   timeoutMs = CONNECTION_PROBE_TIMEOUT_MS,
 ): Promise<ConnectionHealth> {
   try {

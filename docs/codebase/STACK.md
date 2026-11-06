@@ -2,7 +2,7 @@
 
 Проект: форк `cfyz1297/opencode-v1-v2-mobile` (до 0.3.0 назывался `opencode-mobile`) — Expo/React Native клиент к self-hosted `opencode serve`, работающий с **обоими** поколениями API: V1 (opencode 1.18.x) и V2 (opencode 2.x). Публикуется только как APK через GitHub Releases (`README.md`, `HANDOFF.md`).
 
-Актуально на 2026-11-05, коммит `2a97e60` (после релиза 0.3.0; текущий `main`).
+Актуально на 2026-11-06, коммит `2a97e60` (после релиза 0.4.0; текущий `main`).
 
 ## Обязательные разделы
 
@@ -15,8 +15,8 @@
 | Runtime тестов / CI | Node.js 24+ (нативное type-stripping для `.test.ts`); на машине разработки — Node 26 | `.github/workflows/build.yml`, `scripts/run-tests.mjs` |
 | Пакетный менеджер | npm; lockfile v3; `legacy-peer-deps=true` | `package-lock.json`, `.npmrc`, `.github/workflows/build.yml` |
 | Модульная система / сборка | Metro + `expo-router/entry` (JS), затем `expo prebuild` → Gradle `assembleRelease` (Android) | `package.json` (`main`), `metro.config.js`, `.github/workflows/build.yml` |
-| Версия приложения | **0.3.0, versionCode 65** | `package.json`, `app.json`, `android/app/build.gradle` |
-| Тесты | **663 теста, 0 падений**; покрытие 98.33 % строк / 86.43 % ветвей / 96.06 % функций | локальный прогон 2026-11-05 |
+| Версия приложения | **0.4.0, versionCode 67** | `package.json`, `app.json`, `android/app/build.gradle` |
+| Тесты | **635 тестов, 0 падений**; покрытие 98.35 % строк / 86.26 % ветвей / 97.22 % функций | локальный прогон 2026-11-06 |
 
 ### 2) Продакшн-фреймворки и зависимости
 
@@ -29,10 +29,9 @@
 | `react` | `19.1.0` | UI | `package.json` |
 | `expo-router` | `~6.0.22` | Файловый роутинг: `app/` = маршруты | `package.json`, `app/_layout.tsx` |
 | `zustand` | `^5.0.2` | Все глобальные сторы (`src/stores/*`) | `src/stores/sessions.ts` |
-| `@tanstack/react-query` | `^5.62.0` | `QueryClientProvider` в корне (единственное использование) | `app/_layout.tsx` |
 | `i18next` + `react-i18next` | `^26.3.6` / `^17.0.10` | Локализация en / ru / zh-Hans | `src/lib/i18n/config.ts`, `src/lib/i18n/catalog-parity.test.ts` |
 | `expo-secure-store` | `~15.0.8` | Пароли серверов, настройки, офлайн-история | `src/stores/connections.ts`, `src/lib/history-storage.ts` |
-| `@react-native-async-storage/async-storage` | `2.2.0` | Видимость и любимые модели, проверка обновлений, очередь waitlist | `src/lib/model-visibility.ts`, `src/stores/model-favorites.ts`, `src/lib/update-check.ts` |
+| `@react-native-async-storage/async-storage` | `2.2.0` | Видимость и любимые модели, проверка обновлений | `src/lib/model-visibility.ts`, `src/stores/model-favorites.ts`, `src/lib/update-check.ts` |
 | `expo-notifications` | `~0.32.16` | Локальные уведомления (не push) | `src/lib/notifications.ts` |
 | `expo-local-authentication` | `~17.0.8` | Биометрический AppGate | `src/stores/auth.ts` |
 | `expo-image-picker`, `expo-image-manipulator` | `17.0.10`, `~14.0.8` | Вложения-изображения (JPEG + base64) | `app/session/[id].tsx` (`pickFromLibrary`) |
@@ -69,7 +68,7 @@ npm start                           # Expo dev server
 npm run android                     # dev-сборка (expo run:android)
 npx expo prebuild --platform android --no-install
 cd android && ./gradlew assembleRelease   # релизный APK
-npm test                            # 663 теста через scripts/run-tests.mjs
+npm test                            # 635 тестов через scripts/run-tests.mjs
 npm run test:coverage               # те же тесты + пороги 80 %
 npm run typecheck                   # tsc --noEmit
 npm run check:versions              # паритет версий в трёх файлах
@@ -81,7 +80,6 @@ npm run check:versions              # паритет версий в трёх ф
 
 - Источники конфигурации: `app.json` (Expo-манифест, permissions, plugins), `tsconfig.json`, `metro.config.js`, `android/gradle.properties`, `android/app/build.gradle`, `plugins/with-tablet-config-changes.js`, `.npmrc`.
 - Переменные окружения, реально читаемые кодом:
-  - `EXPO_PUBLIC_CHATWOOT_INBOX_IDENTIFIER`, `EXPO_PUBLIC_CHATWOOT_BASE_URL` — `src/lib/chatwoot.ts` (доставка отчёта диагностики выключена флагом `DIAGNOSTICS_SUPPORT_DELIVERY = false`).
   - `RELEASE_STORE_FILE`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD` — `android/app/build.gradle`; в CI из секретов `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
 - `.env.example` / `.env.template` отсутствуют; `.env*` в `.gitignore`.
 - Ограничения деплоя: только Android APK; магазины и iOS-сборка удалены; подпись — постоянный keystore, иначе обновление «поверх» невозможно; при отсутствии секрета собирается debug-ключ.

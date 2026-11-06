@@ -1,6 +1,7 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 import { createRequire } from "node:module"
 import { runInNewContext } from "node:vm"
 
@@ -41,7 +42,7 @@ function component() {
     "../../lib/part-runs": { groupParts: () => [] },
   }
   const output = ts.transpileModule(
-    readFileSync(new URL("./MessageBubble.tsx", import.meta.url), "utf8"),
+    readFileSync(fileURLToPath(new URL("./MessageBubble.tsx", import.meta.url).href), "utf8"),
     { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } },
   ).outputText
   const exports: Record<string, (props: unknown) => unknown> = {}

@@ -4,7 +4,7 @@ import { createHistory, historySnapshot } from './offline-history.ts'
 
 const snapshot = (id = 's1') => historySnapshot({ id, title: 'Saved session', directory: '/project', time: { updated: 1 } }, [
   { id: 'm1', role: 'user' }, { id: 'm2', role: 'assistant' }, { id: 'temp-1', role: 'user' },
-], { m1: [{ type: 'text', text: 'Question' }, { type: 'file', url: 'data:secret' }], m2: [{ type: 'text', text: 'Answer' }, { type: 'tool', state: { output: 'secret' } }] }, 100)
+], { m1: [{ type: 'text', text: 'Question' }, { type: 'file', url: 'data:secret' }], m2: [{ type: 'text', text: 'Answer' }, { type: 'tool', state: { output: 'secret' } }] } as Parameters<typeof historySnapshot>[2], 100)
 function storage() {
   const data = new Map<string, string>()
   return { data, get: async (k: string) => data.get(k) ?? null, set: async (k: string, v: string) => { data.set(k, v) }, remove: async (k: string) => { data.delete(k) } }

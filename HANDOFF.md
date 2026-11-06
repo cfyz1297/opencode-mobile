@@ -7,19 +7,33 @@
 - Пользователь запускает сервер в Termux на телефоне; приложение — клиент к нему.
 - **Текст релиза пишется на двух языках: сначала английский, потом русский.** Правило действует с 0.2.30, распространяется на описание GitHub Release, `README.md`/`README.ru.md` и этот файл.
 
-## Состояние на 2026-11-04
+## Состояние на 2026-11-06
 
 | Что | Значение |
 |---|---|
-| Версия | **0.3.1**, versionCode **66** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
+| Версия | **0.4.0**, versionCode **67** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
 | Ветки | `main` = `master` (релизный коммит — см. `git log -1`) |
-| Тег | `v0.3.1` |
-| Release | https://github.com/cfyz1297/opencode-v1-v2-mobile/releases/tag/v0.3.1 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
-| APK | 86 426 384 байт, SHA256 `8ff38b649d5c8bb552287941933adc067463d0143ffcc07ef10f1cc840930e84` (артефакт CI `app-release`, run 42201661240) |
-| Подпись | production keystore, сертификат тот же, что у 0.2.20–0.2.30 → установка поверх без удаления (проверяется в CI сравнением с предыдущим релизом) |
+| Тег | `v0.4.0` (после сборки и проверки) |
+| Release | https://github.com/cfyz1297/opencode-v1-v2-mobile/releases — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
+| APK | собирается из этого дерева; хэш — в `SHA256SUMS.txt` релиза |
+| Подпись | production keystore, сертификат SHA-256 `0b409f5f6c2ce47a84b7f4ded0403a82a99470f668d6a924d0a09c4ab7821686`; CI сверяет его без скачивания предыдущего APK |
 | Каналы | только `Build Android APK` и `Security scan`. Play / F-Droid / App Store не используются, на тег `v*` не запускаются |
-| Тесты | `npm test` — **666 passed, 0 failed**; `npm run test:coverage` — 98.33% строк / 86.43% ветвей / 96.06% функций; `npm run typecheck` чисто; `npm run check:versions` — 0.3.1 (66) |
+| Тесты | `npm test` — **635 passed, 0 failed**; `npm run typecheck` — тесты входят в проверку; покрытие — см. `npm run test:coverage` |
 | Документация | `README.md` — английский (основной), `README.ru.md` — русский, оба ссылаются друг на друга |
+
+## Что вошло в 0.4.0 (2026-11-06)
+
+Исправления по аудиту `ponytail-audit-opencode-mobile.md`:
+
+- **Смена URL и версия API.** «Test Connection» теперь сохраняет свежий `detectedApi`, а сохранение того же URL без теста сбрасывает запомненную версию и перепроверяет сервер. `401/403` на `/api/info` больше не считается доказательством V2: так же отвечает V1 за паролем, поэтому версия остаётся неизвестной до успешной авторизации.
+- **Голосовой ввод.** В распознаватель уходит локаль устройства целиком (`ru-RU`, `zh-CN`), а не `ru-US`/`zh-US`.
+- **Локализация.** Подписи ролей в чате и заголовки/тексты системных уведомлений берутся из en/ru/zh-Hans; серверный текст в шторку по-прежнему не попадает.
+- **Тесты проверяются `tsc`.** `*.test.ts(x)` возвращены в `tsconfig.json`; 49 ошибок типов в тестах исправлены.
+- **CI.** `versionCode`/`versionName` берутся из `app.json`; подпись сверяется с закреплённым SHA-256 сертификата, предыдущий APK (~86 МБ) больше не скачивается.
+- **Меньше лишних запросов.** Смена модели и агента на V2 идёт параллельно (`Promise.all`), повторные переключения уже пропускались; `setActiveConnection` пишет соединения в SecureStore один раз.
+- **Удалён мёртвый код:** `@tanstack/react-query` и `QueryClientProvider`; waitlist-форма и фоновая очередь `agentlabs.cc`; неиспользуемый клиент Chatwoot и `sendReportToSupport`; `android/sentry.properties`; `EX_DEV_CLIENT_NETWORK_INSPECTOR=false`.
+- **Дедупликация:** общий HTTP-слой `src/lib/http.ts` для V1/V2, общий `parseStoredJSON` (`src/lib/stored-json.ts`), общие части пикеров моделей (`model-picker-shared.tsx`), тип `PermissionReply` вместо `demo-analytics.ts`.
+
 
 ## Что вошло в 0.3.1 (2026-11-06)
 
@@ -150,7 +164,7 @@
 Тестовый APK без релиза: запушить коммиты → `Build Android APK` (workflow_dispatch, `reuse_apk_run_id` пустой) → артефакт `app-release`. Release и тег не создавать.
 
 Релиз:
-1. Поднять версию в четырёх местах: `package.json`, `app.json` (`expo.version` + `expo.android.versionCode`), `android/app/build.gradle` (`versionName` + `versionCode`), и проверки `versionCode='NN'` / `versionName='x.y.z'` в `.github/workflows/build.yml`.
+1. Поднять версию в трёх местах: `package.json`, `app.json` (`expo.version` + `expo.android.versionCode`), `android/app/build.gradle` (`versionName` + `versionCode`). Литералы в `.github/workflows/build.yml` не нужны: CI читает ожидаемые значения из `app.json`. При смене keystore обновить `EXPECTED_CERT` в том же шаге проверки.
 2. `npm run check:versions` — версии в трёх файлах должны совпасть.
 3. Слить в `main`, поставить тег `vX.Y.Z`, дождаться зелёного CI на теге.
 4. Опубликовать GitHub Release вручную с текстом изменений в описании и приложить `app-release.apk` под именем `opencode-mobile-v2.apk` (+ `SHA256SUMS.txt`): workflow Release не создаёт, а `releases/latest/download/opencode-mobile-v2.apk` используется встроенной проверкой обновлений. **Описание релиза — на двух языках: сначала английский, потом русский** (разделы `English` / `Русский`).

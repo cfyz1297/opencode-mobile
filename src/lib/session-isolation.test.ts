@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
+import { fileURLToPath } from "node:url"
 import vm from 'node:vm'
 import ts from 'typescript'
 import { createStore } from 'zustand/vanilla'
@@ -11,7 +12,7 @@ function harness() {
   const removed: string[] = []
   const client = { session: { list: () => pending.promise, create: () => pending.promise, delete: () => pending.promise } }
   const connections = createStore(() => ({ activeConnection: { id: 'a', url: 'https://a.example' }, client, clientForDirectory: () => client }))
-  const source = fs.readFileSync(new URL('../stores/sessions.ts', import.meta.url), 'utf8')
+  const source = fs.readFileSync(fileURLToPath(new URL('../stores/sessions.ts', import.meta.url).href), 'utf8')
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
   const exports: Record<string, any> = {}
   const deps: Record<string, unknown> = {

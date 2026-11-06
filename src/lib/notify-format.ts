@@ -14,13 +14,12 @@ export function sanitizeBody(s: string | undefined, fallback: string): string {
 }
 
 /**
- * Fixed body for a pending permission prompt. The tool name, resource list and
- * command text are server-supplied: rendered in the OS notification shade they
- * are visible on a locked device and give a hostile server a text-injection
- * surface into the notification UI. The detail stays in the app, behind the
- * biometric gate.
+ * i18next keys for the fixed bodies of a pending permission prompt and a
+ * pending question. The tool name, resource list and question text are
+ * server-supplied: rendered in the OS notification shade they are visible on a
+ * locked device and give a hostile server a text-injection surface into the
+ * notification UI. The detail stays in the app, behind the biometric gate.
+ * Keys (not English strings) so the shade follows the app locale.
  */
-export const PERMISSION_NOTIFICATION_BODY = "A tool is waiting for your approval"
-
-/** Fixed body for a pending question — the question text is server-supplied (see above). */
-export const QUESTION_NOTIFICATION_BODY = "The assistant has a question"
+export const PERMISSION_NOTIFICATION_KEY = "notifications.bodies.permission"
+export const QUESTION_NOTIFICATION_KEY = "notifications.bodies.question"

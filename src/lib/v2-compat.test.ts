@@ -22,6 +22,17 @@ import {
   V2EventAdapter,
 } from "./v2-compat.ts"
 
+// Test conveniences: the adapter's public `properties` is a generic record,
+// while these tests assert concrete V1 fields. One loose view keeps the
+// assertions readable without changing the production type.
+const adapter = () => {
+  const events = new V2EventAdapter()
+  return {
+    adapt: (event: Parameters<V2EventAdapter["adapt"]>[0]) =>
+      events.adapt(event) as Array<{ type: string; properties: any }>,
+  }
+}
+
 describe("unwrapData", () => {
   it("unwraps v2 {data} envelopes", () => {
     assert.deepEqual(unwrapData({ data: [1, 2] }), [1, 2])
@@ -365,8 +376,6 @@ describe("mapPermissions", () => {
 })
 
 describe("V2EventAdapter", () => {
-  const adapter = () => new V2EventAdapter()
-
   it("maps execution started/ended to v1 session.status busy/idle", () => {
     const a = adapter()
     const busy = a.adapt({ type: "session.execution.started", data: { sessionID: "ses_1" } })
@@ -674,8 +683,6 @@ describe("buildFormAnswer", () => {
 })
 
 describe("V2EventAdapter forms", () => {
-  const adapter = () => new V2EventAdapter()
-
   it("maps a question form.created to question.asked", () => {
     const out = adapter().adapt({ type: "form.created", data: { form: questionForm } })
     assert.equal(out.length, 1)
