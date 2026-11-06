@@ -13,9 +13,9 @@
 |---|---|
 | Версия | **0.3.2**, versionCode **67** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
 | Ветки | `main` = `master` (релизный коммит — см. `git log -1`) |
-| Тег | `v0.3.2` (после сборки и проверки) |
-| Release | https://github.com/cfyz1297/opencode-v1-v2-mobile/releases — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
-| APK | собирается из этого дерева; хэш — в `SHA256SUMS.txt` релиза |
+| Тег | `v0.3.2` (у апстрима был одноимённый тег без релиза — перезаписан на релизный коммит форка) |
+| Release | https://github.com/cfyz1297/opencode-v1-v2-mobile/releases/tag/v0.3.2 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
+| APK | 86 312 432 байта, SHA256 `531c54f5f6a6be1986f9b8363b126964b824f4f66040208f1883ee4d2df0d6ec` (артефакт CI `app-release`, run 42256306784) |
 | Подпись | production keystore, сертификат SHA-256 `0b409f5f6c2ce47a84b7f4ded0403a82a99470f668d6a924d0a09c4ab7821686`; CI сверяет его без скачивания предыдущего APK |
 | Каналы | только `Build Android APK` и `Security scan`. Play / F-Droid / App Store не используются, на тег `v*` не запускаются |
 | Тесты | `npm test` — **638 passed, 0 failed**; `npm run typecheck` — тесты входят в проверку; покрытие — 98.35 % строк / 86.29 % ветвей / 97.23 % функций (`npm run test:coverage`) |
@@ -34,6 +34,7 @@
 - **Удалён мёртвый код:** `@tanstack/react-query` и `QueryClientProvider`; waitlist-форма и фоновая очередь `agentlabs.cc`; неиспользуемый клиент Chatwoot и `sendReportToSupport`; `android/sentry.properties`; `EX_DEV_CLIENT_NETWORK_INSPECTOR=false`.
 - **Дедупликация:** общий HTTP-слой `src/lib/http.ts` для V1/V2, общий `parseStoredJSON` (`src/lib/stored-json.ts`), общие части пикеров моделей (`model-picker-shared.tsx`), тип `PermissionReply` вместо `demo-analytics.ts`.
 - **Безопасность.** Отчёт `docs/security-review-0.3.2.md`: вычищены креды из URL в диагностике, id сессии из deep link проверяется перед подстановкой в путь API, CI проверяет собранный APK на `SYSTEM_ALERT_WINDOW` и `debuggable`, удалены сторонние каналы waitlist/Chatwoot. `npm audit` — 21 запись, все в сборочной цепочке (принято, как в 0.3.0).
+- **Релиз 0.3.2.** CI на теге зелёный (`test`, `build`, `roadmap-smoke`), проверка APK в CI прошла: пакет/версия, отсутствие `SYSTEM_ALERT_WINDOW`, не-debuggable, сертификат совпал с закреплённым. Предыдущему релизу 0.3.1 добавлена строка «Устарел».
 
 
 ## Что вошло в 0.3.1 (2026-11-06)
