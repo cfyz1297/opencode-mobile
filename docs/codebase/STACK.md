@@ -2,7 +2,7 @@
 
 Проект: форк `cfyz1297/opencode-v1-v2-mobile` (до 0.3.0 назывался `opencode-mobile`) — Expo/React Native клиент к self-hosted `opencode serve`, работающий с **обоими** поколениями API: V1 (opencode 1.18.x) и V2 (opencode 2.x). Публикуется только как APK через GitHub Releases (`README.md`, `HANDOFF.md`).
 
-Актуально на 2026-11-06, коммит `fb0f6d9` (после релиза 0.3.2; текущий `main`).
+Актуально на 2026-11-06, коммит `6538aed` (после релиза 0.3.2; текущий `main`).
 
 ## Обязательные разделы
 
