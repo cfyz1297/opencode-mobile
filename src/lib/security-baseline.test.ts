@@ -38,3 +38,12 @@ test('connection forms warn before credentials go over plain http', () => {
     assert.match(src, /connection\.security\.cleartext/, screen)
   }
 })
+
+test('diagnostics never print credentials embedded in a URL', () => {
+  // A URL pasted into Advanced mode can carry user:pass@ or ?token=. The
+  // report is copied/shared and the probe start is logged, so both go through
+  // scrub.ts before leaving the raw input.
+  const diag = read('src/lib/diagnostics.ts')
+  assert.match(diag, /scrubUrl\(/)
+  assert.match(diag, /scrubString\(/)
+})

@@ -8,6 +8,7 @@ import appJson from "../../app.json"
 import { log, formatLogLines } from "./logbuffer"
 import { type Classification, type ProbeAttempt, type ParsedUrl, parseUrl, classify, chooseHealthProbe } from "./diagnostics-classify"
 import type { ServerApi } from "./api-detect"
+import { scrubString, scrubUrl } from "./scrub"
 
 export type { Classification, ProbeAttempt } from "./diagnostics-classify"
 
@@ -77,7 +78,7 @@ async function timedFetch(name: string, target: string, init?: RequestInit, opts
 
 export async function probeConnection(url: string, auth?: { username: string; password: string }): Promise<DiagnosticReport> {
   const parsed = parseUrl(url)
-  log.info("diag", "probe start", url, "parsed", JSON.stringify(parsed))
+  log.info("diag", "probe start", scrubUrl(url), "parsed", JSON.stringify(parsed))
 
   const headers: Record<string, string> = {}
   if (auth) headers["Authorization"] = `Basic ${btoa(`${auth.username}:${auth.password}`)}`
@@ -165,7 +166,10 @@ export function formatReport(report: DiagnosticReport): string {
   lines.push("")
   lines.push("Recent logs:")
   lines.push(formatLogLines())
-  return lines.join("\n")
+  // A pasted URL can carry basic-auth credentials or a ?token= query. Errors
+  // and log lines can echo URLs too, so scrub the whole text before it is
+  // copied or shared — the host itself stays readable for debugging.
+  return scrubString(lines.join("\n"))
 }
 
 // Build a synthetic DiagnosticReport from an unexpected runtime error (e.g.

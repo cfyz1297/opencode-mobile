@@ -8,9 +8,9 @@ A fork of [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile
 
 The repository used to be called `opencode-mobile`; it was renamed to `opencode-v1-v2-mobile` in 0.3.0. Old links redirect, and the APK file name (`opencode-mobile-v2.apk`) is kept unchanged so the built-in update check and the release signature chain keep working.
 
-Version **0.4.0 (67)**. Installs over 0.3.1 — no uninstall needed.
+Version **0.3.2 (67)**. Installs over 0.3.1 — no uninstall needed.
 
-> **Status:** every build runs 635 automated tests plus an Android CUA smoke on an emulator. Not yet exercised against a real opencode 1.18.x server, and the tablet layout, tunnel wizard and offline history have been checked in code and on the emulator only.
+> **Status:** every build runs 638 automated tests plus an Android CUA smoke on an emulator. Not yet exercised against a real opencode 1.18.x server, and the tablet layout, tunnel wizard and offline history have been checked in code and on the emulator only.
 
 ## Is this the app you are looking for?
 
@@ -109,7 +109,7 @@ The base is upstream [dzianisv/opencode-mobile](https://github.com/dzianisv/open
 | What | Upstream | Fork |
 |---|---|---|
 | Server API | API 1.x only (`/session`, `/global/*`) | **both**: 1.x (`/session`, `/global/*`) and 2.x (`/api/*`), auto-detected, forceable in Settings |
-| Version | 0.4.x | fork's own 0.4.x line, currently 0.4.0 (67) |
+| Version | 0.4.x | fork's own 0.3.x line, currently 0.3.2 (67) |
 | Signing and updates | new debug key per build in old versions | permanent keystore, installs in place |
 | Channels | Google Play, self-hosted F-Droid, APK, EAS | APK from GitHub Releases only |
 | Telemetry | Sentry (crash reports) + PostHog | both dependencies removed |
@@ -180,15 +180,16 @@ A separate pure-Java client without Gradle (`aapt → ecj → d8 → apksigner`)
 ## Updates
 
 <details>
-<summary>Changelog by version (0.2.11 – 0.4.0)</summary>
+<summary>Changelog by version (0.2.11 - 0.3.2)</summary>
 
-### 0.4.0
+### 0.3.2
 
 - **Connection editing keeps the right API version.** "Test connection" now survives Save, and saving the same address re-probes it, so swapping a V1 server for V2 on the same URL no longer leaves a stale protocol recorded. An auth rejection on `/api/info` no longer counts as proof of V2 — a password-protected V1 server answers the same way.
 - **Voice input uses the phone's real locale.** `ru-RU` and `zh-CN` reach the recognizer unchanged instead of being rewritten to `ru-US` / `zh-US`.
 - **Localized chat and notifications.** Message role labels and system notification titles/bodies follow en / ru / zh-Hans; server-supplied text still never reaches the lock screen.
 - **Tests are typechecked.** `*.test.ts(x)` are back in `tsconfig.json`, and the 49 test-type errors this exposed are fixed.
-- **Leaner CI and build.** `versionCode` / `versionName` are read from `app.json`, and the signing certificate is compared with a pinned SHA-256 instead of downloading the previous 86 MB APK.
+- **Leaner CI and build.** `versionCode` / `versionName` are read from `app.json`, the signing certificate is compared with a pinned SHA-256 instead of downloading the previous 86 MB APK, and the assembled APK is checked for `SYSTEM_ALERT_WINDOW` and `debuggable`.
+- **Security fixes.** Diagnostics no longer log or share credentials embedded in a URL; a session id from a deep link or notification is validated before it reaches an API path. Full report: `docs/security-review-0.3.2.md`.
 - **Fewer round trips and writes.** Model and agent switches run in parallel; switching the active connection writes SecureStore once.
 - **Removed:** `@tanstack/react-query`, the `agentlabs.cc` waitlist form and retry queue, the dead Chatwoot client, `android/sentry.properties`, and the dev network-inspector flag in release builds. Shared HTTP, stored-JSON parsing and model-picker parts replace the duplicated copies.
 
@@ -315,7 +316,7 @@ A separate pure-Java client without Gradle (`aapt → ecj → d8 → apksigner`)
 - **Getting it running:** run `opencode serve` somewhere reachable, add the address in the app, done. LAN, Tailscale, Cloudflare Tunnel and ngrok all work.
 - **Requirements:** Android 7+ (minSdk 24), an opencode server 1.18+ or 2.x, network access to it.
 - **Code layout:** `app/` (Expo Router screens), `src/lib` (SDK, transport, pure helpers — most of it unit-tested), `src/stores` (zustand), `src/components` (UI). `HANDOFF.md` is the working engineering log; `docs/` holds the upstream review and the security review.
-- **Quality gates:** `npm test` (635 tests, node built-in runner), `npm run typecheck`, `npm run check:versions`, `npm run test:coverage` (≈98 % lines).
+- **Quality gates:** `npm test` (638 tests, node built-in runner), `npm run typecheck`, `npm run check:versions`, `npm run test:coverage` (≈98 % lines).
 - **Machine-readable summary:** [`llms.txt`](llms.txt).
 - **License:** MIT (inherited from upstream).
 

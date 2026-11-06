@@ -144,6 +144,17 @@ jobs:
           grep -q "name='cc.agentlabs.opencode'" /tmp/current-apk.txt
           grep -q "versionCode='$EXPECTED_VERSION_CODE'" /tmp/current-apk.txt
           grep -q "versionName='$EXPECTED_VERSION_NAME'" /tmp/current-apk.txt
+          # The release must not be debuggable and must not carry the dev-menu
+          # draw-over-apps permission. app.json blocks SYSTEM_ALERT_WINDOW at
+          # prebuild time; this asserts the *assembled* APK, not the config.
+          if grep -q "application-debuggable" /tmp/full-apk.txt; then
+            echo "release APK is debuggable"; exit 1
+          fi
+          "$AAPT" dump permissions "$APK" > /tmp/permissions.txt
+          cat /tmp/permissions.txt
+          if grep -q "SYSTEM_ALERT_WINDOW" /tmp/permissions.txt; then
+            echo "SYSTEM_ALERT_WINDOW is present in the release APK"; exit 1
+          fi
           "$SIGNER" verify --print-certs "$APK" > /tmp/current-signers.txt
           cat /tmp/current-signers.txt
           # Production certificate fingerprint. Hardcoded on purpose: downloading

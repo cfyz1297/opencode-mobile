@@ -1,6 +1,6 @@
 # Проблемные места кодовой базы
 
-Зафиксировано 2026-11-06 на коммите `fb0f6d9` (`main`, версия 0.4.0 / 67). Всё ниже — по факту кода и локальных прогонов, не по README.
+Зафиксировано 2026-11-06 на коммите `fb0f6d9` (`main`, версия 0.3.2 / 67). Всё ниже — по факту кода и локальных прогонов, не по README.
 
 ## Обязательные разделы
 
@@ -104,7 +104,7 @@
 | AGENTS.md: «фиксированные ключи переводов в UI» | Заголовки уведомлений — хардкод | `src/stores/events.ts` |
 | AGENTS.md/HANDOFF местами описывают Windows-пути | Разработка идёт в Termux/Linux | `AGENTS.md`, `HANDOFF.md` |
 | README: «34 записи в npm audit» | Совпадает (34, 7 high) | локальный прогон 2026-11-05 |
-| README/`llms.txt`: «635 тестов» | Совпадает | `npm test` 2026-11-06 |
+| README/`llms.txt`: «638 тестов» | Совпадает | `npm test` 2026-11-06 |
 | `.codebase-scan.txt`: «No security configs detected» | Есть gitleaks-workflow | `.github/workflows/security-scan.yml` |
 | «APK не в Git» | Верно с 0.3.0 после чистки; в истории остались два APK из коммита `f8a2d20` (удалён из `main`, но объекты могут сохраняться на GitHub до GC) | `.gitignore`, `git log --all -- dist` |
 

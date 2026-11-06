@@ -50,6 +50,7 @@ import { useCatalog } from "../../src/stores/catalog"
 import { useSpeech } from "../../src/lib/speech"
 import { adaptiveLayout } from '../../src/lib/adaptive-layout'
 import { TabletSessions } from '../../src/components/TabletSessions'
+import { isSafeSessionId } from '../../src/lib/session-id'
 
 
 // --- Builtin slash commands ---
@@ -105,7 +106,10 @@ function getShortDir(dir?: string): string | null {
 }
 
 export default function SessionScreen() {
-  const { id, directory } = useLocalSearchParams<{ id: string; directory?: string }>()
+  const { id: routeId, directory } = useLocalSearchParams<{ id: string; directory?: string }>()
+  // A deep link or notification payload is untrusted input: refuse ids that
+  // could change the shape of the API path (see session-id.ts).
+  const id = isSafeSessionId(routeId) ? routeId : ""
   const router = useRouter()
   const colorScheme = useColorScheme()
   const isDark = colorScheme === "dark"

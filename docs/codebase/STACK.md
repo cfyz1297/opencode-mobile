@@ -2,7 +2,7 @@
 
 Проект: форк `cfyz1297/opencode-v1-v2-mobile` (до 0.3.0 назывался `opencode-mobile`) — Expo/React Native клиент к self-hosted `opencode serve`, работающий с **обоими** поколениями API: V1 (opencode 1.18.x) и V2 (opencode 2.x). Публикуется только как APK через GitHub Releases (`README.md`, `HANDOFF.md`).
 
-Актуально на 2026-11-06, коммит `fb0f6d9` (после релиза 0.4.0; текущий `main`).
+Актуально на 2026-11-06, коммит `fb0f6d9` (после релиза 0.3.2; текущий `main`).
 
 ## Обязательные разделы
 
@@ -15,8 +15,8 @@
 | Runtime тестов / CI | Node.js 24+ (нативное type-stripping для `.test.ts`); на машине разработки — Node 26 | `.github/workflows/build.yml`, `scripts/run-tests.mjs` |
 | Пакетный менеджер | npm; lockfile v3; `legacy-peer-deps=true` | `package-lock.json`, `.npmrc`, `.github/workflows/build.yml` |
 | Модульная система / сборка | Metro + `expo-router/entry` (JS), затем `expo prebuild` → Gradle `assembleRelease` (Android) | `package.json` (`main`), `metro.config.js`, `.github/workflows/build.yml` |
-| Версия приложения | **0.4.0, versionCode 67** | `package.json`, `app.json`, `android/app/build.gradle` |
-| Тесты | **635 тестов, 0 падений**; покрытие 98.35 % строк / 86.26 % ветвей / 97.22 % функций | локальный прогон 2026-11-06 |
+| Версия приложения | **0.3.2, versionCode 67** | `package.json`, `app.json`, `android/app/build.gradle` |
+| Тесты | **638 тестов, 0 падений**; покрытие 98.35 % строк / 86.29 % ветвей / 97.23 % функций | локальный прогон 2026-11-06 |
 
 ### 2) Продакшн-фреймворки и зависимости
 
@@ -68,7 +68,7 @@ npm start                           # Expo dev server
 npm run android                     # dev-сборка (expo run:android)
 npx expo prebuild --platform android --no-install
 cd android && ./gradlew assembleRelease   # релизный APK
-npm test                            # 635 тестов через scripts/run-tests.mjs
+npm test                            # 638 тестов через scripts/run-tests.mjs
 npm run test:coverage               # те же тесты + пороги 80 %
 npm run typecheck                   # tsc --noEmit
 npm run check:versions              # паритет версий в трёх файлах
