@@ -8,9 +8,9 @@ A fork of [dzianisv/opencode-mobile](https://github.com/dzianisv/opencode-mobile
 
 The repository used to be called `opencode-mobile`; it was renamed to `opencode-v1-v2-mobile` in 0.3.0. Old links redirect, and the APK file name (`opencode-mobile-v2.apk`) is kept unchanged so the built-in update check and the release signature chain keep working.
 
-Version **0.3.0 (65)**. Installs over 0.2.30 — no uninstall needed.
+Version **0.3.1 (66)**. Installs over 0.3.0 — no uninstall needed.
 
-> **Status:** every build runs 663 automated tests plus an Android CUA smoke on an emulator. Not yet exercised against a real opencode 1.18.x server, and the tablet layout, tunnel wizard and offline history have been checked in code and on the emulator only.
+> **Status:** every build runs 666 automated tests plus an Android CUA smoke on an emulator. Not yet exercised against a real opencode 1.18.x server, and the tablet layout, tunnel wizard and offline history have been checked in code and on the emulator only.
 
 ## Is this the app you are looking for?
 
@@ -109,7 +109,7 @@ The base is upstream [dzianisv/opencode-mobile](https://github.com/dzianisv/open
 | What | Upstream | Fork |
 |---|---|---|
 | Server API | API 1.x only (`/session`, `/global/*`) | **both**: 1.x (`/session`, `/global/*`) and 2.x (`/api/*`), auto-detected, forceable in Settings |
-| Version | 0.4.x | 0.3.x line, currently 0.3.0 (65) |
+| Version | 0.4.x | 0.3.x line, currently 0.3.1 (66) |
 | Signing and updates | new debug key per build in old versions | permanent keystore, installs in place |
 | Channels | Google Play, self-hosted F-Droid, APK, EAS | APK from GitHub Releases only |
 | Telemetry | Sentry (crash reports) + PostHog | both dependencies removed |
@@ -180,7 +180,11 @@ A separate pure-Java client without Gradle (`aapt → ecj → d8 → apksigner`)
 ## Updates
 
 <details>
-<summary>Changelog by version (0.2.11 – 0.3.0)</summary>
+<summary>Changelog by version (0.2.11 – 0.3.1)</summary>
+
+### 0.3.1
+
+- **No more crash when leaving a session mid-stream.** The session header re-registered its native options on every streamed part, so leaving the screen while a run was producing output could tear it down in the middle of that update (`react-native-screens` "child already has a parent"). Header options are now applied through `navigation.setOptions` in an effect that runs only when the visible header data changes — title, folder badge, ring percentage, theme. Ported from upstream v0.4.17.
 
 ### 0.3.0
 
@@ -301,7 +305,7 @@ A separate pure-Java client without Gradle (`aapt → ecj → d8 → apksigner`)
 - **Getting it running:** run `opencode serve` somewhere reachable, add the address in the app, done. LAN, Tailscale, Cloudflare Tunnel and ngrok all work.
 - **Requirements:** Android 7+ (minSdk 24), an opencode server 1.18+ or 2.x, network access to it.
 - **Code layout:** `app/` (Expo Router screens), `src/lib` (SDK, transport, pure helpers — most of it unit-tested), `src/stores` (zustand), `src/components` (UI). `HANDOFF.md` is the working engineering log; `docs/` holds the upstream review and the security review.
-- **Quality gates:** `npm test` (663 tests, node built-in runner), `npm run typecheck`, `npm run check:versions`, `npm run test:coverage` (≈98 % lines).
+- **Quality gates:** `npm test` (666 tests, node built-in runner), `npm run typecheck`, `npm run check:versions`, `npm run test:coverage` (≈98 % lines).
 - **Machine-readable summary:** [`llms.txt`](llms.txt).
 - **License:** MIT (inherited from upstream).
 

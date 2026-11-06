@@ -1,6 +1,6 @@
 # OpenCode Mobile — мастер-документ (форк cfyz1297)
 
-Актуально на **2026-11-04**.
+Актуально на **2026-11-06**.
 
 - App: **`cc.agentlabs.opencode`** — Expo/React Native Android-клиент к собственному серверу `opencode serve`. Работает с **обоими поколениями API**: V2 (`/api/*`, opencode 2.x) и V1 (`/session`, `/global/event`, opencode 1.18.x); версия определяется автоматически, в настройках можно включить принудительно.
 - Репозиторий форка: **`cfyz1297/opencode-v1-v2-mobile`**. Апстрим для справки: `dzianisv/opencode-mobile`.
@@ -11,15 +11,21 @@
 
 | Что | Значение |
 |---|---|
-| Версия | **0.3.0**, versionCode **65** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
+| Версия | **0.3.1**, versionCode **66** (`app.json`, `package.json`, `android/app/build.gradle`, проверка в CI) |
 | Ветки | `main` = `master` (релизный коммит — см. `git log -1`) |
-| Тег | `v0.3.0` |
-| Release | https://github.com/cfyz1297/opencode-v1-v2-mobile/releases/tag/v0.3.0 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
+| Тег | `v0.3.1` |
+| Release | https://github.com/cfyz1297/opencode-v1-v2-mobile/releases/tag/v0.3.1 — `opencode-mobile-v2.apk` + `SHA256SUMS.txt` |
 | APK | 86 426 305 байт, SHA256 `e712309865686597bdf14337375600e1ff812b94367de9bcb9d00f56b55510f6` (артефакт CI `app-release`, run 41905056528) |
 | Подпись | production keystore, сертификат тот же, что у 0.2.20–0.2.30 → установка поверх без удаления (проверяется в CI сравнением с предыдущим релизом) |
 | Каналы | только `Build Android APK` и `Security scan`. Play / F-Droid / App Store не используются, на тег `v*` не запускаются |
-| Тесты | `npm test` — **663 passed, 0 failed**; `npm run test:coverage` — 98.33% строк / 86.43% ветвей / 96.06% функций; `npm run typecheck` чисто; `npm run check:versions` — 0.3.0 (65) |
+| Тесты | `npm test` — **666 passed, 0 failed**; `npm run test:coverage` — 98.33% строк / 86.43% ветвей / 96.06% функций; `npm run typecheck` чисто; `npm run check:versions` — 0.3.1 (66) |
 | Документация | `README.md` — английский (основной), `README.ru.md` — русский, оба ссылаются друг на друга |
+
+## Что вошло в 0.3.1 (2026-11-06)
+
+- **Краш при выходе из сессии во время стрима.** Экран сессии перерисовывается на каждой порции SSE, а опции заголовка задавались инлайново через `<Stack.Screen options={{…}}>`. Каждая перерисовка заново отправляла конфигурацию нативного хедера; выход из экрана посреди прогона разбирал его одновременно с этим обновлением, и `react-native-screens` падал с «child already has a parent» (апстрим Sentry `OPENCODE-MOBILE-6/-7`, исправлено в v0.4.17 коммитом `0bbfa70`). Теперь опции применяются через `navigation.setOptions` в `useEffect`; в зависимостях только видимые данные заголовка, включая `contextPercent`, поэтому кольцо контекста продолжает обновляться, но не на каждый чанк.
+- **Регрессия закреплена** `src/lib/session-header.regression.test.ts` (3 теста): запрещает `<Stack.Screen` на экране сессии, проверяет `setOptions`, сохранение title/headerRight и полный список зависимостей.
+- **GitHub Pages снова публикуется.** После переименования репозитория деплой `gh-pages` 2026-11-04 завис в `updating_pages` и через 10 минут упал по таймауту (`deploy-pages`, «Timeout reached, aborting!»); Pages остался в статусе `errored`, сайт отдавал 404. Причина — зависшая сборка на стороне Pages, а не содержимое ветки: та же ветка у апстрима собирается за ~32 с. `POST /repos/{owner}/{repo}/pages/builds` пересобрал сайт за 57 с, статус `built`, последний deployment — `success`. Если повторится: тот же POST, при упорном зависании — выключить и снова включить Pages в Settings → Pages.
 
 ## Что вошло в 0.3.0 (ветка `feat/server-api-v1`, 2026-11-04)
 
@@ -136,6 +142,8 @@
 В репозитории остался ветка `gh-pages` от апстрима, и GitHub Pages продолжает её публиковать: `https://cfyz1297.github.io/opencode-v1-v2-mobile/` (поле homepage репозитория). Сайт — маркетинговая страница оригинала, и `/privacy` на нём описывает **другую сборку**: оператор VIBE TECHNOLOGIES, LLC, сбор crash-репортов через Sentry и ссылки на релизы апстрима. В форке телеметрии нет, а сам APK собирается из этого репозитория, поэтому страница устарела.
 
 В само приложение это не попало: строка «Политика конфиденциальности» в настройках открывает `PRIVACY_POLICY_URL = PROJECT_REPO_URL` (README форка), и `src/lib/links.ts` объясняет почему. Решение по сайту не принято — варианты: выключить Pages (`gh api -X DELETE .../pages`), переписать `/privacy` под форк или оставить как исторический сайт апстрима.
+
+2026-11-06: публикация восстановлена принудительной пересборкой (см. раздел 0.3.1) — сайт снова открывается. Вопрос содержимого (`/privacy` описывает сборку апстрима) по-прежнему открыт.
 
 ## Как собрать и выпустить
 
